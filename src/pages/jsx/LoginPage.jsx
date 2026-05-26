@@ -49,7 +49,7 @@ function LoginPage({ switchToRegister }) {
             setMessage("✅ Login Successfully!");
 
             setTimeout(() => {
-                navigate("/home");
+                navigate("/");
             }, 800);
 
         } catch (error) {
@@ -88,7 +88,9 @@ function LoginPage({ switchToRegister }) {
 
             setMessage("✅ Google Login Success!");
 
-            navigate("/home");
+            setTimeout(() => {
+                navigate("/");
+            }, 800)
 
         } catch (error) {
             console.error(error);

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import AuthPage from './pages/jsx/AuthPage';
-import HomePage from './pages/jsx/ProfilePage';
+import HomePage from './pages/jsx/HomePage';
 import ProfilePage from './pages/jsx/ProfilePage';
 
 import ForgotPasswordPage from './pages/jsx/ForgotPasswordPage';
@@ -17,7 +17,8 @@ function App() {
 
   return (
         <Routes>
-          <Route path='/' element={<AuthPage />} />
+          <Route path='/' element={<HomePage />} />
+          <Route path='/auth' element={<AuthPage />}/>
           <Route path='/profile' element={<ProfilePage />}/>
 
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
