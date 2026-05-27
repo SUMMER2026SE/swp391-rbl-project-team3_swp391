@@ -16,11 +16,11 @@ export default function HomePage() {
                 <div className="logo">PrepAce</div>
 
                 <ul className="menu">
-                    <li>🏠 Trang chủ</li>
-                    <li>📚 Khóa học</li>
-                    <li>📝 Luyện đề</li>
-                    <li>📊 Tiến độ</li>
-                    <li>🎯 Tư vấn ngành</li>
+                    <li> Trang chủ</li>
+                    <li> Khóa học</li>
+                    <li> Luyện đề</li>
+                    <li> Tiến độ</li>
+                    <li> Tư vấn ngành</li>
                 </ul>
 
                 <div className="sidebar-actions">
@@ -89,7 +89,7 @@ export default function HomePage() {
                 <section className="hero">
                     <h1>
                         Nền tảng học tập dành cho học sinh THPT
-                        chuẩn bị thi Đại học 🎓
+                        chuẩn bị thi Đại học 
                     </h1>
 
                     <p>
@@ -110,7 +110,7 @@ export default function HomePage() {
                 {/* CARDS */}
                 <section className="cards">
                     <div className="card">
-                        <h3>📚 Khóa học</h3>
+                        <h3> Khóa học</h3>
                         <p>
                             Toán, Lý, Hóa, Văn, Anh đầy đủ theo
                             chương trình THPT.
@@ -118,14 +118,14 @@ export default function HomePage() {
                     </div>
 
                     <div className="card">
-                        <h3>📝 Luyện đề</h3>
+                        <h3> Luyện đề</h3>
                         <p>
                             Hàng trăm đề thi thử và bài kiểm tra.
                         </p>
                     </div>
 
                     <div className="card">
-                        <h3>📊 Tiến độ</h3>
+                        <h3> Tiến độ</h3>
                         <p>
                             Theo dõi kết quả và cải thiện từng ngày.
                         </p>

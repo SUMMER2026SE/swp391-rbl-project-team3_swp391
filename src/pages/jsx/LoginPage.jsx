@@ -40,7 +40,7 @@ function LoginPage({ switchToRegister }) {
             }
 
             if (!response.ok) {
-                setMessage(data.message || "Login Failed");
+                setMessage(data?.message || "Login Failed");
                 return;
             }
 

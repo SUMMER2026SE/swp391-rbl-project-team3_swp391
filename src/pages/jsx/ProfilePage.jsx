@@ -37,12 +37,19 @@ function ProfilePage() {
     }, []);
 
     const handleSave = async () => {
-        try {
-            await axiosClient.put("/auth/profile", user);
-            alert("Saved successfully!");
-        } catch (err) {
-            console.log(err);
-            alert("Save failed!");
+        try{
+            const response = await axiosClient.put("/auth/profile", user);
+
+            //Lay user moi tu backend
+            const updatedUser = response.data;
+
+            //Update UI
+            setUser(updatedUser);
+
+            alert("Save Successfully!!!");
+        }catch(error){
+            console.log(error);
+            alert("Save Failed !!!");
         }
     };
 
