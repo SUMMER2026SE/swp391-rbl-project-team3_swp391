@@ -1,12 +1,26 @@
 import { useState } from 'react';
 
 import AuthPage from './pages/jsx/AuthPage';
-import HomePage from './pages/jsx/ProfilePage';
 import ProfilePage from './pages/jsx/ProfilePage';
 
 import ForgotPasswordPage from './pages/jsx/ForgotPasswordPage';
 import ChangePasswordPage from './pages/jsx/ChangePasswordPage';
 import ResetPasswordPage from './pages/jsx/ResetPasswordPage';
+
+import HomePage from './pages/jsx/HomePage';
+import CourseDetailPage from './pages/jsx/CourseDetailPage';
+import LearningPage from './pages/jsx/LearningPage';
+import AdaptivePathPage from './pages/jsx/AdaptivePathPage';
+import StudyCalendarPage from './pages/jsx/StudyCalendarPage';
+import InstructorProfilePage from './pages/jsx/InstructorProfilePage';
+import AdminDashboardPage from './pages/jsx/AdminDashboardPage';
+import AdminUIConfigPage from './pages/jsx/AdminUIConfigPage';
+import NotificationsPage from './pages/jsx/NotificationsPage';
+import TeacherPreviewPage from './pages/jsx/TeacherPreviewPage';
+import CoursesPage from './pages/jsx/CoursesPage';
+import AdminUsersPage from './pages/jsx/AdminUsersPage';
+import AdminCoursesPage from './pages/jsx/AdminCoursesPage';
+
 
 import {Routes, Route, BrowserRouter} from "react-router-dom";
 import './App.css';
@@ -16,6 +30,7 @@ function App() {
   const [count, setCount] = useState(0)
 
   return (
+    
         <Routes>
           <Route path='/' element={<AuthPage />} />
           <Route path='/profile' element={<ProfilePage />}/>
@@ -23,7 +38,21 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/change-password" element={<ChangePasswordPage />} />
+          <Route path='/home' element={<HomePage />} />
+          <Route path="/course/:id" element={<CourseDetailPage />} />
+          <Route path="/learn/:courseId" element={<LearningPage />} />
+          <Route path="/adaptive-path" element={<AdaptivePathPage />} />
+          <Route path="/calendar" element={<StudyCalendarPage />} />
+          <Route path="/instructor/:id" element={<InstructorProfilePage />} />
+          <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/admin/ui-config" element={<AdminUIConfigPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/teacher/preview/:id" element={<TeacherPreviewPage />} />
+          <Route path="/courses" element={<CoursesPage />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
+<Route path="/admin/courses" element={<AdminCoursesPage />} />
         </Routes>
+        
   )
 }
 

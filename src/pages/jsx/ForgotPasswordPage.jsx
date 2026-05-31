@@ -56,6 +56,9 @@ export default function ForgotPasswordPage() {
                     <button disabled={loading}>
                         {loading ? "Sending..." : "Send Reset Link"}
                     </button>
+                    <p style={{marginTop: '15px', color: '#6366f1', cursor: 'pointer', fontWeight: 'bold'}} onClick={() => navigate("/")}>
+    ← Quay lại Đăng nhập
+</p>
                 </form>
             </div>
         </div>
