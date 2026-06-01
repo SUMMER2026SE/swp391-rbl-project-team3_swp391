@@ -16,7 +16,8 @@ import InstructorProfilePage from './pages/jsx/InstructorProfilePage';
 import AdminDashboardPage from './pages/jsx/AdminDashboardPage';
 import AdminUIConfigPage from './pages/jsx/AdminUIConfigPage';
 import NotificationsPage from './pages/jsx/NotificationsPage';
-import TeacherPreviewPage from './pages/jsx/TeacherPreviewPage';
+// Kiểm tra xem dòng này đã có ở đầu file App.jsx chưa:
+import CoursePreviewPage from './pages/jsx/CoursePreviewPage';
 import CoursesPage from './pages/jsx/CoursesPage';
 import AdminUsersPage from './pages/jsx/AdminUsersPage';
 import AdminCoursesPage from './pages/jsx/AdminCoursesPage';
@@ -47,8 +48,12 @@ function App() {
           <Route path="/admin" element={<AdminDashboardPage />} />
           <Route path="/admin/ui-config" element={<AdminUIConfigPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
-          <Route path="/teacher/preview/:id" element={<TeacherPreviewPage />} />
           <Route path="/courses" element={<CoursesPage />} />
+
+<Route path="/teacher/preview/:id" element={<CoursePreviewPage />} />
+      
+      <Route path="/admin/preview/:id" element={<CoursePreviewPage />} />
+
           <Route path="/admin/users" element={<AdminUsersPage />} />
 <Route path="/admin/courses" element={<AdminCoursesPage />} />
         </Routes>

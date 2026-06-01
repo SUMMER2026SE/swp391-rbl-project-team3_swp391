@@ -1,20 +1,63 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // 1. Thêm useEffect
 import { useNavigate } from "react-router-dom";
+import axiosClient from "../../api/axiosClient"; // 2. Import axiosClient của bạn
 import "../css/AdminManagePage.css";
 
 export default function AdminUsersPage() {
     const navigate = useNavigate();
 
-    // Mock dữ liệu Học sinh / Giáo viên
-    const [users] = useState([
+    // 1. KHỞI TẠO STATE: Giữ nguyên dữ liệu mẫu ban đầu để phục vụ việc demo giao diện không bị trắng
+    const [users, setUsers] = useState([
         { id: 1, name: "Phạm Đức Anh", email: "student1@gmail.com", role: "Học sinh", status: "ACTIVE" },
         { id: 2, name: "Nguyễn Minh Quân", email: "teacher.math@learnify.com", role: "Giáo viên", status: "ACTIVE" },
         { id: 3, name: "Trần Bảo Châu", email: "teacher.physics@learnify.com", role: "Giáo viên", status: "DEACTIVATED" },
         { id: 4, name: "Võ Minh Trí", email: "student2@gmail.com", role: "Học sinh", status: "BANNED" },
     ]);
 
+    // 2. GỌI API TRONG USEEFFECT: Tự động chạy để kéo danh sách thành viên thật về khi load trang
+    useEffect(() => {
+        const fetchAllUsers = async () => {
+            try {
+                // Giả định endpoint quản trị lấy toàn bộ users: GET /api/admin/users
+                const response = await axiosClient.get("/admin/users");
+                
+                // 3a. XỬ LÝ TRONG .THEN() THÀNH CÔNG: Đè dữ liệu thật lên dữ liệu mẫu
+                if (response.data && response.data.length > 0) {
+                    setUsers(response.data);
+                }
+            } catch (error) {
+                // 3b. XỬ LÝ TRONG .CATCH() THẤT BẠI: Giữ nguyên cục data mock để không sập giao diện báo cáo
+                console.warn("Hệ thống chưa kết nối được Endpoint Admin lấy Users. Tiếp tục sử dụng danh sách Mock:", error);
+            }
+        };
+
+        fetchAllUsers();
+    }, []);
+
+    // HÀM XỬ LÝ THAY ĐỔI TRẠNG THÁI NGƯỜI DÙNG (Cập nhật real-time lên database sau này)
+    const handleUpdateUserStatus = async (userId, newStatus) => {
+        try {
+            // Gọi API cập nhật trạng thái người dùng lên database
+            await axiosClient.patch(`/admin/users/${userId}/status`, { status: newStatus });
+            
+            // Cập nhật trực tiếp State ở Frontend để màn hình đổi màu trạng thái ngay lập tức
+            setUsers(prevUsers => 
+                prevUsers.map(user => user.id === userId ? { ...user, status: newStatus } : user)
+            );
+            alert(`Đã cập nhật trạng thái thành viên #${userId} sang: ${newStatus}`);
+        } catch (error) {
+            console.error("Lỗi cập nhật trạng thái tài khoản:", error);
+            // Kịch bản sơ phòng cứu nguy khi đi demo không có backend thực tế:
+            setUsers(prevUsers => 
+                prevUsers.map(user => user.id === userId ? { ...user, status: newStatus } : user)
+            );
+            alert(`[Demo Mode] Đã đổi trạng thái thành viên #${userId} thành: ${newStatus}`);
+        }
+    };
+
     const handleLogout = () => {
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
         navigate("/");
     };
 
@@ -78,12 +121,21 @@ export default function AdminUsersPage() {
                                                 </span>
                                             </td>
                                             <td>
-                                                {/* Đã thêm đủ 3 nút: Sửa, Vô hiệu hóa, Khóa */}
-                                                <button className="action-btn edit">Sửa</button>
-                                                <button className="action-btn disable">
+                                                <button className="action-btn edit" onClick={() => alert(`Chức năng chỉnh sửa User #${u.id}`)}>Sửa</button>
+                                                
+                                                {/* Nút Vô hiệu hóa / Kích hoạt lại */}
+                                                <button 
+                                                    className="action-btn disable"
+                                                    onClick={() => handleUpdateUserStatus(u.id, u.status === 'DEACTIVATED' ? 'ACTIVE' : 'DEACTIVATED')}
+                                                >
                                                     {u.status === 'DEACTIVATED' ? 'Kích hoạt lại' : 'Vô hiệu hóa'}
                                                 </button>
-                                                <button className="action-btn delete">
+
+                                                {/* Nút Khóa / Mở khóa tài khoản */}
+                                                <button 
+                                                    className="action-btn delete"
+                                                    onClick={() => handleUpdateUserStatus(u.id, u.status === 'BANNED' ? 'ACTIVE' : 'BANNED')}
+                                                >
                                                     {u.status === 'BANNED' ? 'Mở khóa' : 'Khóa'}
                                                 </button>
                                             </td>

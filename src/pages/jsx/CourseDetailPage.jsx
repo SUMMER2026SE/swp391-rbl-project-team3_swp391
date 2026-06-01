@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // Đã thêm useEffect
 import { useParams, useNavigate } from "react-router-dom";
+import axiosClient from "../../api/axiosClient"; // Đã thêm import axiosClient
 import "../css/CourseDetailPage.css";
 
 export default function CourseDetailPage() {
@@ -9,8 +10,8 @@ export default function CourseDetailPage() {
     // State quản lý việc đóng/mở các chương học (Accordion)
     const [expandedChapter, setExpandedChapter] = useState(0);
 
-    // Mock dữ liệu chi tiết của khóa học dựa trên Database (Khóa Toán 12)
-    const course = {
+    // 1. KHỞI TẠO STATE: Chuyển dữ liệu mẫu cũ thành giá trị mặc định của State
+    const [course, setCourse] = useState({
         id: id || 1,
         title: "Mastering Mathematics 12",
         description: "Khóa học toàn diện bao phủ toàn bộ kiến thức Toán 12. Cung cấp kỹ năng giải nhanh trắc nghiệm, bứt phá điểm 8+ kỳ thi THPT Quốc gia 2026.",
@@ -49,7 +50,26 @@ export default function CourseDetailPage() {
                 ]
             }
         ]
-    };
+    });
+
+    // 2. GỌI API TRONG USEEFFECT: Tự động chạy mỗi khi ID trên thanh URL thay đổi
+    useEffect(() => {
+        const fetchCourseDetail = async () => {
+            try {
+                const response = await axiosClient.get(`/courses/${id}`);
+                
+                // 3. XỬ LÝ TRONG .THEN() (THÀNH CÔNG): Đè dữ liệu thật từ DB lên dữ liệu mẫu
+                if (response.data) {
+                    setCourse(response.data);
+                }
+            } catch (error) {
+                // 3. XỬ LÝ TRONG .CATCH() (THẤT BẠI): Giữ nguyên dữ liệu mẫu ban đầu để chạy tiếp
+                console.log(`Chưa bật hệ thống Backend hoặc không tìm thấy Course ID #${id}. Đang chạy dữ liệu Mock để demo giao diện:`, error);
+            }
+        };
+
+        fetchCourseDetail();
+    }, [id]);
 
     return (
         <div className="course-detail-page">
@@ -87,7 +107,7 @@ export default function CourseDetailPage() {
                     <div className="section-box">
                         <h2>Đề cương khóa học (Syllabus)</h2>
                         <div className="syllabus-list">
-                            {course.chapters.map((chapter, index) => (
+                            {course.chapters && course.chapters.map((chapter, index) => (
                                 <div className="chapter-item" key={chapter.id}>
                                     <div 
                                         className={`chapter-header ${expandedChapter === index ? 'active' : ''}`}
@@ -99,7 +119,7 @@ export default function CourseDetailPage() {
                                     
                                     {expandedChapter === index && (
                                         <div className="chapter-body">
-                                            {chapter.lessons.map(lesson => (
+                                            {chapter.lessons && chapter.lessons.map(lesson => (
                                                 <div className="lesson-item" key={lesson.id}>
                                                     <div className="lesson-title">
                                                         <span className="play-icon">▶</span>
@@ -134,9 +154,10 @@ export default function CourseDetailPage() {
                             <div className="original-price">{course.originalPrice}</div>
                         </div>
 
-<button className="enroll-btn" onClick={() => navigate(`/learn/${course.id}`)}>
-    Đăng ký học ngay
-</button>                        
+                        <button className="enroll-btn" onClick={() => navigate(`/learn/${course.id}`)}>
+                            Đăng ký học ngay
+                        </button>                        
+                        
                         <div className="course-features">
                             <h4>Khóa học bao gồm:</h4>
                             <ul>
