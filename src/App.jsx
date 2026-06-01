@@ -16,11 +16,12 @@ import InstructorProfilePage from './pages/jsx/InstructorProfilePage';
 import AdminDashboardPage from './pages/jsx/AdminDashboardPage';
 import AdminUIConfigPage from './pages/jsx/AdminUIConfigPage';
 import NotificationsPage from './pages/jsx/NotificationsPage';
-// Kiểm tra xem dòng này đã có ở đầu file App.jsx chưa:
 import CoursePreviewPage from './pages/jsx/CoursePreviewPage';
 import CoursesPage from './pages/jsx/CoursesPage';
 import AdminUsersPage from './pages/jsx/AdminUsersPage';
 import AdminCoursesPage from './pages/jsx/AdminCoursesPage';
+import TeacherDashboard from "./pages/jsx/TeacherDashboard";
+import CourseEditPage from "./pages/jsx/CourseEditPage";
 
 
 import {Routes, Route, BrowserRouter} from "react-router-dom";
@@ -56,6 +57,8 @@ function App() {
 
           <Route path="/admin/users" element={<AdminUsersPage />} />
 <Route path="/admin/courses" element={<AdminCoursesPage />} />
+<Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+      <Route path="/teacher/course/:id/edit" element={<CourseEditPage />} />
         </Routes>
         
   )

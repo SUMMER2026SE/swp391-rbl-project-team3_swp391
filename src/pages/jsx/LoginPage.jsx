@@ -7,6 +7,7 @@ function LoginPage({ switchToRegister }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
+    const [messageType, setMessageType] = useState("");
     const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
@@ -47,14 +48,22 @@ function LoginPage({ switchToRegister }) {
             localStorage.setItem("token", data.token);
 
             setMessage("✅ Login Successfully!");
+            setMessageType("success");
 
             setTimeout(() => {
-                navigate("/home");
+                if (data.user?.role === "TEACHER") {
+                    navigate("/teacher/dashboard");
+                } else if (data.user?.role === "ADMIN") {
+                    navigate("/admin/courses");
+                } else {
+                    navigate("/home");
+                }
             }, 800);
 
         } catch (error) {
             console.error(error);
             setMessage("❌ Server Error");
+            setMessageType("error");
         } finally {
             setLoading(false);
         }
@@ -80,6 +89,7 @@ function LoginPage({ switchToRegister }) {
 
             if (!res.ok) {
                 setMessage(data.message || "Google Login Failed");
+                setMessageType("error");
                 return;
             }
 
@@ -87,8 +97,18 @@ function LoginPage({ switchToRegister }) {
             localStorage.setItem("user", JSON.stringify(data.user));
 
             setMessage("✅ Google Login Success!");
+            setMessageType("success");
+                    navigate("/home");
 
-            navigate("/home");
+            // setTimeout(() => {
+            //     if (data.user?.role === "TEACHER") {
+            //         navigate("/teacher/dashboard");
+            //     } else if (data.user?.role === "ADMIN") {
+            //         navigate("/admin/courses");
+            //     } else {
+            //         navigate("/home");
+            //     }
+            // }, 800);
 
         } catch (error) {
             console.error(error);
@@ -145,7 +165,7 @@ function LoginPage({ switchToRegister }) {
                     </div>
 
                     {message && (
-                        <div className="message-box">
+                        <div className={`message-box ${messageType}`}>
                             {message}
                         </div>
                     )}

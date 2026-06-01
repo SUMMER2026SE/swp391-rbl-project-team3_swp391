@@ -118,25 +118,29 @@ export default function CoursePreviewPage() {
             )}
 
             {/* KỊCH BẢN 2: NẾU NGƯỜI XEM LÀ GIÁO VIÊN */}
-            {currentUser.role === "TEACHER" && (
-                <div className="preview-mode-banner">
-                    <div className="banner-info">
-                        <span className="eye-icon">👁️</span>
-                        <span>Bạn đang xem trước khóa học dưới góc nhìn <strong>Học sinh</strong></span>
-                        <span className="status-badge draft">
-                            {course.status === "DRAFT" ? "Bản nháp" : "Chờ kiểm duyệt"}
-                        </span>
-                    </div>
-                    <div className="banner-actions">
-                        <button className="edit-btn" onClick={() => alert("Quay lại màn hình biên soạn bài học.")}>
-                            ✏️ Tiếp tục chỉnh sửa
-                        </button>
-                        <button className="publish-btn" onClick={() => alert("Đã gửi yêu cầu phê duyệt lên hệ thống Ban quản trị Admin!")}>
-                            🚀 Gửi yêu cầu duyệt
-                        </button>
-                    </div>
-                </div>
-            )}
+{currentUser.role === "TEACHER" && (
+    <div className="preview-mode-banner">
+        <div className="banner-info">
+            <span className="eye-icon">👁️</span>
+            <span>Bạn đang xem trước khóa học dưới góc nhìn <strong>Học sinh</strong></span>
+            <span className="status-badge draft">
+                {course.status === "DRAFT" ? "Bản nháp" : "Chờ kiểm duyệt"}
+            </span>
+        </div>
+        <div className="banner-actions">
+            {/* ĐIỂM SỬA CHỮA CHÍNH TẠI ĐÂY */}
+            <button 
+                className="edit-btn" 
+                onClick={() => navigate(`/teacher/course/${id}/edit`)} // Nhảy ngược lại trang Edit
+            >
+                ✏️ Tiếp tục chỉnh sửa
+            </button>
+            <button className="publish-btn" onClick={() => alert("Đã gửi yêu cầu phê duyệt lên hệ thống Ban quản trị Admin!")}>
+                🚀 Gửi yêu cầu duyệt
+            </button>
+        </div>
+    </div>
+)}
 
             {/* ========================================================= */}
             {/* KHU VỰC GIAO DIỆN HIỂN THỊ CHI TIẾT BÀI GIẢNG (DÙNG CHUNG) */}

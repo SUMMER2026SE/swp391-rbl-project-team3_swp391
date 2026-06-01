@@ -45,7 +45,7 @@ export default function ChangePasswordPage() {
                 <h2>Change Password</h2>
 
                 <p className="subtitle">
-                    Update your password to keep your account secure.
+                    Đổi Mật Khẩu Ở Đây.
                 </p>
 
                 {message && (
@@ -62,7 +62,7 @@ export default function ChangePasswordPage() {
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label>Current Password</label>
+                        <label>Password Hiện Tại</label>
 
                         <input
                             type="password"
@@ -76,7 +76,7 @@ export default function ChangePasswordPage() {
                     </div>
 
                     <div className="form-group">
-                        <label>New Password</label>
+                        <label>Password Mới</label>
 
                         <input
                             type="password"
