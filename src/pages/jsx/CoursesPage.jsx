@@ -38,16 +38,47 @@ export default function CoursesPage() {
             try {
                 const response = await axiosClient.get("/courses");
                 
-                // 3a. XỬ LÝ KHI THÀNH CÔNG: Ghi đè dữ liệu thật từ database lên dữ liệu mẫu
                 if (response.data && response.data.length > 0) {
-                    setAllCourses(response.data);
+                    // Dịch dữ liệu Database sang giao diện
+                    const mappedData = response.data.map(c => {
+    // 1. Phân loại lại giá tiền an toàn (Bảo vệ khỏi lỗi NaN)
+    let displayPrice = "Miễn phí";
+    const rawPrice = c.price || c.Price || 0;
+    if (rawPrice && Number(String(rawPrice).replace(/[^0-9]/g, '')) > 0) {
+        const cleanNumber = Number(String(rawPrice).replace(/[^0-9]/g, ''));
+        displayPrice = `${cleanNumber.toLocaleString('vi-VN')}đ`;
+    }
+
+    // 2. GIỮ LẠI LOGIC CHUẨN HÓA MÔN HỌC (Đã cải tiến để nhận diện cả tiếng Việt)
+    let subjectTag = c.subject || "other";
+    const dbSubjectName = (c.subject_name || c.subjectName || "").toLowerCase();
+    
+    if (dbSubjectName.includes("math") || dbSubjectName.includes("toán")) {
+        subjectTag = "math";
+    } else if (dbSubjectName.includes("physic") || dbSubjectName.includes("vật lý")) {
+        subjectTag = "physics";
+    } else if (dbSubjectName.includes("english") || dbSubjectName.includes("tiếng anh")) {
+        subjectTag = "english";
+    }
+
+    // 3. Map dữ liệu với cơ chế phòng thủ đầy đủ cho cả snake_case và camelCase
+    return {
+        id: c.course_id || c.courseId || c.id,
+        title: c.course_title || c.courseTitle || c.title || "Khóa học chưa tên",
+        thumbnail: c.thumbnail_url || c.thumbnailUrl || c.thumbnail,
+        teacher: c.teacher_name || c.teacherName || c.teacher || "Giáo viên",
+        subject: subjectTag, // Giúp Sidebar filter chạy mượt mà
+        subjectName: c.subject_name || c.subjectName || c.subject || "Chung", // Hiện lên Badge
+        price: displayPrice,
+        students: c.students || c.student_count || c.studentCount || 0,
+        userId: c.teacher_id || c.teacherId || c.userId || 2
+    };
+});
+
+setAllCourses(mappedData);
                 }
             } catch (error) {
-                // 3b. XỬ LÝ KHI LỖI: Giữ nguyên dữ liệu mẫu ban đầu để giao diện không bị sập khi demo
-                console.warn(
-                    "Hệ thống chưa kết nối được Backend. Đang giữ luồng dữ liệu Mock để chạy thử nghiệm:", 
-                    error
-                );
+                console.warn("Hệ thống chưa kết nối được Backend. Đang giữ luồng dữ liệu Mock:", error);
             }
         };
 

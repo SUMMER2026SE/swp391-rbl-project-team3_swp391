@@ -1,9 +1,26 @@
-import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../css/AdminDashboardPage.css";
+import React, { useState, useEffect } from "react"; // <--- Thêm useEffect vào đây
 
 export default function AdminDashboardPage() {
     const navigate = useNavigate();
+    useEffect(() => {
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+
+    if (!token || !storedUser) {
+        alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
+        navigate("/");
+        return;
+    }
+
+    const userObj = JSON.parse(storedUser);
+    if (userObj.role !== "ADMIN") {
+        alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
+        navigate("/home");
+        return;
+    }
+}, [navigate]);
     const [activeMenu, setActiveMenu] = useState("dashboard");
 
     // Mock dữ liệu KPI

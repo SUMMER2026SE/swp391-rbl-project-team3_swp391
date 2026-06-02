@@ -1,42 +1,46 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../css/HomePage.css"; // Dùng chung file CSS layout/sidebar của nhóm cho đồng bộ
-
+import axiosClient from "../../api/axiosClient"; // <--- BẠN ĐANG THIẾU DÒNG NÀY
 export default function TeacherDashboard() {
     const navigate = useNavigate();
     const [myCourses, setMyCourses] = useState([]);
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-    // =========================================================
-    // 🛠️ ĐOẠN CHECK BẢO MẬT: CHƯA ĐĂNG NHẬP LÀ ĐÁ VĂNG RA NGOÀI
-    // =========================================================
+    // 1. Check bảo mật (giữ nguyên logic cũ của bạn)
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
 
-    // Nếu không tìm thấy Token hoặc thông tin User trong máy -> Chưa đăng nhập
     if (!token || !storedUser) {
-        alert("⚠️ Bạn chưa đăng nhập! Vui lòng đăng nhập để vào hệ thống.");
-        navigate("/"); // Đá người dùng về lại trang Login ngay lập tức
-        return; // Dừng không cho chạy code bên dưới
-    }
-
-    // Nếu đã đăng nhập, kiểm tra xem có phải Giáo viên không
-    const userObj = JSON.parse(storedUser);
-    if (userObj.role !== "TEACHER") {
-        alert("❌ Bạn không có quyền truy cập vào khu vực của Giáo viên!");
-        navigate("/home"); // Nếu là Học sinh táy máy gõ link, đá họ về trang chủ Học sinh
+        alert("⚠️ Bạn chưa đăng nhập!");
+        navigate("/");
         return;
     }
 
-    // =========================================================
-    // NẾU HỢP LỆ THÌ MỚI ĐỔ DATA VÀO ĐỂ HIỂN THỊ
-    // =========================================================
+    const userObj = JSON.parse(storedUser);
+    if (userObj.role !== "TEACHER") {
+        alert("❌ Bạn không có quyền truy cập!");
+        navigate("/home");
+        return;
+    }
+
     setUser(userObj);
-    setMyCourses([
-        { id: 4, title: "Tuyệt đỉnh Casio - Giải nhanh Toán", status: "DRAFT", students: 0 },
-        { id: 1, title: "Mastering Mathematics 12", status: "PUBLISHED", students: 1250 }
-    ]);
+
+    const fetchCourses = async () => {
+    try {
+        // Gọi link có chữ teacher như bạn muốn
+        const response = await axiosClient.get("/teacher/courses"); 
+        
+        // Dữ liệu vẫn lọc theo ID như cũ
+        const filtered = response.data.filter(c => String(c.teacher_id) === String(userObj.id)); 
+        setMyCourses(filtered);
+    } catch (error) {
+        console.error("Lỗi tải khóa học:", error);
+    }
+};
+
+    fetchCourses();
 }, [navigate]);
 
     const handleLogout = () => {

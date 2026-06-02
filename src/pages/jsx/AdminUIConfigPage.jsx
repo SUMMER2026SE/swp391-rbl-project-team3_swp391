@@ -1,9 +1,26 @@
-import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../css/AdminUIConfigPage.css";
+import React, { useState, useEffect } from "react"; // <--- Thêm useEffect vào đây
 
 export default function AdminUIConfigPage() {
     const navigate = useNavigate();
+    useEffect(() => {
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+
+    if (!token || !storedUser) {
+        alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
+        navigate("/");
+        return;
+    }
+
+    const userObj = JSON.parse(storedUser);
+    if (userObj.role !== "ADMIN") {
+        alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
+        navigate("/home");
+        return;
+    }
+}, [navigate]);
     
     // State cho Cấu hình Banner
     const [bannerConfig, setBannerConfig] = useState({
@@ -43,11 +60,11 @@ export default function AdminUIConfigPage() {
                     <h2>PrepAce <span>Admin</span></h2>
                 </div>
                 <ul className="admin-menu">
-                    <li onClick={() => navigate("/admin")}>📊 Dashboard</li>
-                    <li>📚 Quản lý khóa học</li>
-                    <li>👥 Quản lý người dùng</li>
-                    <li className="active">🎨 Cấu hình UI & Thông báo</li>
-                </ul>
+    <li onClick={() => navigate("/admin")}>📊 Dashboard</li>
+    <li onClick={() => navigate("/admin/courses")}>📚 Quản lý khóa học</li>
+    <li onClick={() => navigate("/admin/users")}>👥 Quản lý người dùng</li>
+    <li className="active">🎨 Cấu hình UI & Thông báo</li>
+</ul>
                 <div className="admin-logout">
                     <button onClick={handleLogout}>Đăng xuất</button>
                 </div>

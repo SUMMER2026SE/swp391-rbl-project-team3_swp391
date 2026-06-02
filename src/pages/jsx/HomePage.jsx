@@ -43,7 +43,37 @@ export default function HomePage() {
         }, 1000);
 
         axiosClient.get("/courses")
-            .then(res => setFeaturedCourses(res.data.slice(0, 3)))
+    .then(res => {
+        if (res.data && res.data.length > 0) {
+            // 🔥 THÊM DÒNG NÀY: Lọc chỉ lấy những khóa học đã được xuất bản chính thức
+            const approvedCourses = res.data.filter(c => c.status === "PUBLISHED");
+
+            // Đổi res.data.map thành approvedCourses.map
+            const mappedData = approvedCourses.map(c => { 
+                let displayPrice = "Miễn phí";
+                const rawPrice = c.price || c.Price || 0;
+                const cleanNumber = Number(String(rawPrice).replace(/[^0-9]/g, ''));
+                
+                if (cleanNumber > 0) {
+                    displayPrice = `${cleanNumber.toLocaleString('vi-VN')}đ`;
+                }
+
+                return {
+                    id: c.course_id || c.courseId || c.id,
+                    title: c.course_title || c.courseTitle || c.title || "Khóa học chưa tên",
+                    thumbnail: c.thumbnail_url || c.thumbnailUrl || c.thumbnail,
+                    teacher: c.teacher_name || c.teacherName || c.teacher || "Giáo viên",
+                    subject: c.subject_name || c.subjectName || c.subject || "Chung",
+                    price: displayPrice,
+                    students: c.students || c.student_count || c.studentCount || 0,
+                    userId: c.teacher_id || c.teacherId || c.userId || 2
+                };
+            });
+            
+            // Lấy 3 khóa nổi bật trong số các khóa đã duyệt
+            setFeaturedCourses(mappedData.slice(0, 3));
+        }
+    })
             .catch(err => console.log("Dùng data mẫu do chưa kết nối Backend", err));
 
         return () => clearInterval(interval);
@@ -116,7 +146,7 @@ export default function HomePage() {
                     </form>
 
                     <div className="exam-countdown">
-                        🔥 THPT QG 2026: <strong>{timeLeft.days}</strong> ngày <strong>{timeLeft.hours}</strong> giờ
+                        🔥 THPT QG 2026: <strong>{timeLeft.days}</strong> ngày <strong>{timeLeft.hours}</strong> giờ <strong>{timeLeft.minutes}</strong> phút
                     </div>
 
                     <div className="action-icons">

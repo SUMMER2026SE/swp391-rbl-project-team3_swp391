@@ -16,24 +16,37 @@ export default function AdminUsersPage() {
 
     // 2. GỌI API TRONG USEEFFECT: Tự động chạy để kéo danh sách thành viên thật về khi load trang
     useEffect(() => {
-        const fetchAllUsers = async () => {
-            try {
-                // Giả định endpoint quản trị lấy toàn bộ users: GET /api/admin/users
-                const response = await axiosClient.get("/admin/users");
-                
-                // 3a. XỬ LÝ TRONG .THEN() THÀNH CÔNG: Đè dữ liệu thật lên dữ liệu mẫu
-                if (response.data && response.data.length > 0) {
-                    setUsers(response.data);
-                }
-            } catch (error) {
-                // 3b. XỬ LÝ TRONG .CATCH() THẤT BẠI: Giữ nguyên cục data mock để không sập giao diện báo cáo
-                console.warn("Hệ thống chưa kết nối được Endpoint Admin lấy Users. Tiếp tục sử dụng danh sách Mock:", error);
+    // 1. KIỂM TRA QUYỀN ADMIN TRƯỚC
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+
+    if (!token || !storedUser) {
+        alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
+        navigate("/");
+        return;
+    }
+
+    const userObj = JSON.parse(storedUser);
+    if (userObj.role !== "ADMIN") {
+        alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
+        navigate("/home");
+        return;
+    }
+
+    // 2. NẾU HỢP LỆ THÌ MỚI GỌI API LẤY USERS
+    const fetchAllUsers = async () => {
+        try {
+            const response = await axiosClient.get("/admin/users");
+            if (response.data && response.data.length > 0) {
+                setUsers(response.data);
             }
-        };
+        } catch (error) {
+            console.warn("Hệ thống chưa kết nối được Endpoint Admin lấy Users. Tiếp tục sử dụng danh sách Mock:", error);
+        }
+    };
 
-        fetchAllUsers();
-    }, []);
-
+    fetchAllUsers();
+}, [navigate]); // <--- Nhớ đổi [] thành [navigate]
     // HÀM XỬ LÝ THAY ĐỔI TRẠNG THÁI NGƯỜI DÙNG (Cập nhật real-time lên database sau này)
     const handleUpdateUserStatus = async (userId, newStatus) => {
         try {
@@ -108,7 +121,7 @@ export default function AdminUsersPage() {
                                     {users.map((u) => (
                                         <tr key={u.id}>
                                             <td>#{u.id}</td>
-                                            <td><strong>{u.name}</strong></td>
+<td><strong>{u.fullName || "Chưa đặt tên"}</strong></td>
                                             <td>{u.email}</td>
                                             <td>
                                                 <span className={`role-badge ${u.role === 'Giáo viên' ? 'teacher' : 'student'}`}>
@@ -116,9 +129,9 @@ export default function AdminUsersPage() {
                                                 </span>
                                             </td>
                                             <td>
-                                                <span className={`status-badge ${u.status === 'ACTIVE' ? 'success' : (u.status === 'BANNED' ? 'banned' : 'deactivated')}`}>
-                                                    {u.status === 'ACTIVE' ? 'Hoạt động' : (u.status === 'BANNED' ? 'Đã khóa' : 'Vô hiệu hóa')}
-                                                </span>
+                                                <span className={`status-badge ${u.status?.toUpperCase() === 'ACTIVE' ? 'success' : (u.status?.toUpperCase() === 'BANNED' ? 'banned' : 'deactivated')}`}>
+    {u.status?.toUpperCase() === 'ACTIVE' ? 'Hoạt động' : (u.status?.toUpperCase() === 'BANNED' ? 'Đã khóa' : 'Vô hiệu hóa')}
+</span>
                                             </td>
                                             <td>
                                                 <button className="action-btn edit" onClick={() => alert(`Chức năng chỉnh sửa User #${u.id}`)}>Sửa</button>

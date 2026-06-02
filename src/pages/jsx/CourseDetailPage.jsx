@@ -1,83 +1,119 @@
-import React, { useState, useEffect } from "react"; // Đã thêm useEffect
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axiosClient from "../../api/axiosClient"; // Đã thêm import axiosClient
+import axiosClient from "../../api/axiosClient"; 
 import "../css/CourseDetailPage.css";
+
+// Tách dữ liệu Mock ra ngoài component để tránh khởi tạo lại lãng phí RAM mỗi lần re-render
+const MOCK_COURSE_FALLBACK = {
+    title: "Mastering Mathematics 12",
+    description: "Khóa học toàn diện bao phủ toàn bộ kiến thức Toán 12. Cung cấp kỹ năng giải nhanh trắc nghiệm, bứt phá điểm 8+ kỳ thi THPT Quốc gia 2026.",
+    teacher: "Nguyen Minh Quan",
+    price: "599,000đ",
+    originalPrice: "900,000đ",
+    rating: 4.8,
+    reviews: 320,
+    students: 1250,
+    thumbnail: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80",
+    chapters: [
+        {
+            id: 1,
+            title: "Chương 1: Ứng dụng đạo hàm để khảo sát hàm số",
+            lessons: [
+                { id: 101, title: "Sự đồng biến, nghịch biến của hàm số", duration: "45:00", isPreview: true },
+                { id: 102, title: "Cực trị của hàm số", duration: "50:20", isPreview: false }
+            ]
+        }
+    ]
+};
 
 export default function CourseDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
     
-    // State quản lý việc đóng/mở các chương học (Accordion)
-    const [expandedChapter, setExpandedChapter] = useState(0);
+    // Quản lý trạng thái mở chương bằng ID (Thay vì Index) để tránh lỗi lệch dòng dữ liệu
+    const [expandedChapterId, setExpandedChapterId] = useState(null);
+    
+    // FIX lỗi nhấp nháy: Khởi tạo state ban đầu là null để hiển thị màn hình chờ (Loading)
+    const [course, setCourse] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    // 1. KHỞI TẠO STATE: Chuyển dữ liệu mẫu cũ thành giá trị mặc định của State
-    const [course, setCourse] = useState({
-        id: id || 1,
-        title: "Mastering Mathematics 12",
-        description: "Khóa học toàn diện bao phủ toàn bộ kiến thức Toán 12. Cung cấp kỹ năng giải nhanh trắc nghiệm, bứt phá điểm 8+ kỳ thi THPT Quốc gia 2026.",
-        teacher: "Nguyen Minh Quan",
-        price: "599,000đ",
-        originalPrice: "900,000đ",
-        rating: 4.8,
-        reviews: 320,
-        students: 1250,
-        thumbnail: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80",
-        chapters: [
-            {
-                id: 1,
-                title: "Chương 1: Ứng dụng đạo hàm để khảo sát hàm số",
-                lessons: [
-                    { id: 101, title: "Sự đồng biến, nghịch biến của hàm số", duration: "45:00", isPreview: true },
-                    { id: 102, title: "Cực trị của hàm số", duration: "50:20", isPreview: false },
-                    { id: 103, title: "Giá trị lớn nhất và nhỏ nhất", duration: "35:15", isPreview: false }
-                ]
-            },
-            {
-                id: 2,
-                title: "Chương 2: Hàm số Lũy thừa, Mũ và Logarit",
-                lessons: [
-                    { id: 201, title: "Lũy thừa và hàm số lũy thừa", duration: "40:10", isPreview: false },
-                    { id: 202, title: "Logarit", duration: "48:00", isPreview: false },
-                    { id: 203, title: "Phương trình mũ và logarit", duration: "55:30", isPreview: false }
-                ]
-            },
-            {
-                id: 3,
-                title: "Chương 3: Nguyên hàm - Tích phân",
-                lessons: [
-                    { id: 301, title: "Khái niệm Nguyên hàm", duration: "42:15", isPreview: false },
-                    { id: 302, title: "Phương pháp tính Tích phân", duration: "60:00", isPreview: false }
-                ]
-            }
-        ]
-    });
-
-    // 2. GỌI API TRONG USEEFFECT: Tự động chạy mỗi khi ID trên thanh URL thay đổi
     useEffect(() => {
         const fetchCourseDetail = async () => {
+            setLoading(true);
             try {
-                const response = await axiosClient.get(`/courses/${id}`);
-                
-                // 3. XỬ LÝ TRONG .THEN() (THÀNH CÔNG): Đè dữ liệu thật từ DB lên dữ liệu mẫu
+const response = await axiosClient.get(`/courses/${id}`);                
                 if (response.data) {
-                    setCourse(response.data);
+                    const data = response.data;
+                    
+                    // FIX lỗi vỡ định dạng giá tiền từ API đổ về
+                    const cleanPrice = Number(String(data.price || data.Price || 0).replace(/[^0-9]/g, ''));
+                    const cleanOriginal = Number(String(data.original_price || data.originalPrice || 0).replace(/[^0-9]/g, ''));
+
+                    // Map dữ liệu phòng thủ đồng bộ tên biến snake_case từ DB
+                    const mappedData = {
+                        id: data.course_id || data.id || id,
+                        title: data.course_title || data.title || "Khóa học không tên",
+                        description: data.description || data.course_desc || "",
+                        teacher: data.teacher_name || data.teacher || "Giáo viên",
+                        price: cleanPrice > 0 ? `${cleanPrice.toLocaleString('vi-VN')}đ` : "Miễn phí",
+                        originalPrice: cleanOriginal > 0 ? `${cleanOriginal.toLocaleString('vi-VN')}đ` : "",
+                        rating: data.rating || 5.0,
+                        reviews: data.reviews || data.review_count || 0,
+                        students: data.students || data.student_count || 0,
+                        thumbnail: data.thumbnail_url || data.thumbnail || "https://images.unsplash.com/photo-1635070041078-e363dbe005cb",
+                        chapters: (data.chapters || []).map(ch => ({
+                            id: ch.chapter_id || ch.id,
+                            title: ch.chapter_title || ch.title || "Chương mới",
+                            lessons: (ch.lessons || []).map(les => ({
+                                id: les.lesson_id || les.id,
+                                title: les.lesson_title || les.title || "Bài học mới",
+                                duration: les.duration || "00:00",
+                                isPreview: les.is_preview || les.isPreview || false
+                            }))
+                        }))
+                    };
+
+                    setCourse(mappedData);
+                    // Tự động mở chương đầu tiên sau khi load xong dữ liệu thật
+                    if (mappedData.chapters.length > 0) {
+                        setExpandedChapterId(mappedData.chapters[0].id);
+                    }
                 }
             } catch (error) {
-                // 3. XỬ LÝ TRONG .CATCH() (THẤT BẠI): Giữ nguyên dữ liệu mẫu ban đầu để chạy tiếp
-                console.log(`Chưa bật hệ thống Backend hoặc không tìm thấy Course ID #${id}. Đang chạy dữ liệu Mock để demo giao diện:`, error);
+                console.warn("Đang dùng dữ liệu Mock do không kết nối được Backend hoặc ID không tồn tại.", error);
+                // Nếu lỗi, lôi dữ liệu Mock dự phòng ra hiển thị để demo không bị sập màn hình
+                setCourse({ ...MOCK_COURSE_FALLBACK, id: id });
+                if (MOCK_COURSE_FALLBACK.chapters.length > 0) {
+                    setExpandedChapterId(MOCK_COURSE_FALLBACK.chapters[0].id);
+                }
+            } finally {
+                setLoading(false);
             }
         };
 
         fetchCourseDetail();
     }, [id]);
 
+    // Giao diện loading chuyên nghiệp, ngăn chặn hoàn toàn hiện tượng nhấp nháy đổi chữ
+    if (loading) {
+        return (
+            <div className="course-detail-loading">
+                <div className="spinner"></div>
+                <p>Đang tải thông tin khóa học...</p>
+            </div>
+        );
+    }
+
+    // Trường hợp xấu nhất không có dữ liệu
+    if (!course) return <div className="error-text">Không tìm thấy khóa học yêu cầu!</div>;
+
     return (
         <div className="course-detail-page">
-            {/* Thanh điều hướng quay lại */}
+            {/* BREADCRUMB */}
             <div className="breadcrumb">
-                <span onClick={() => navigate("/home")}>Trang chủ</span> 
+                <span onClick={() => navigate("/home")} style={{cursor: 'pointer'}}>Trang chủ</span> 
                 <span className="separator">/</span> 
-                <span onClick={() => navigate("/courses")}>Khóa học</span> 
+                <span onClick={() => navigate("/courses")} style={{cursor: 'pointer'}}>Khóa học</span> 
                 <span className="separator">/</span> 
                 <span className="current">{course.title}</span>
             </div>
@@ -97,29 +133,30 @@ export default function CourseDetailPage() {
                     <div className="section-box">
                         <h2>Mục tiêu khóa học</h2>
                         <ul className="learning-objectives">
-                            <li>Nắm vững 100% lý thuyết SGK Toán 12.</li>
-                            <li>Kỹ năng bấm máy tính Casio giải nhanh trắc nghiệm.</li>
-                            <li>Tư duy giải quyết các câu phân loại cao (Vận dụng - Vận dụng cao).</li>
-                            <li>Làm quen với cấu trúc đề thi mới nhất của Bộ GD&ĐT.</li>
+                            <li>Nắm vững 100% lý thuyết trọng tâm ôn thi Đại học.</li>
+                            <li>Kỹ năng ứng dụng Casio giải nhanh các bài toán trắc nghiệm.</li>
+                            <li>Tập trung cọ xát tư duy vận dụng và vận dụng cao (8+, 9+).</li>
+                            <li>Bám sát cấu trúc form đề thi chuẩn của Bộ Giáo Dục.</li>
                         </ul>
                     </div>
 
                     <div className="section-box">
                         <h2>Đề cương khóa học (Syllabus)</h2>
                         <div className="syllabus-list">
-                            {course.chapters && course.chapters.map((chapter, index) => (
+                            {course.chapters.map((chapter) => (
                                 <div className="chapter-item" key={chapter.id}>
                                     <div 
-                                        className={`chapter-header ${expandedChapter === index ? 'active' : ''}`}
-                                        onClick={() => setExpandedChapter(expandedChapter === index ? null : index)}
+                                        className={`chapter-header ${expandedChapterId === chapter.id ? 'active' : ''}`}
+                                        onClick={() => setExpandedChapterId(expandedChapterId === chapter.id ? null : chapter.id)}
+                                        style={{cursor: 'pointer'}}
                                     >
                                         <h3>{chapter.title}</h3>
-                                        <span className="toggle-icon">{expandedChapter === index ? '▲' : '▼'}</span>
+                                        <span className="toggle-icon">{expandedChapterId === chapter.id ? '▲' : '▼'}</span>
                                     </div>
                                     
-                                    {expandedChapter === index && (
+                                    {expandedChapterId === chapter.id && (
                                         <div className="chapter-body">
-                                            {chapter.lessons && chapter.lessons.map(lesson => (
+                                            {chapter.lessons.map(lesson => (
                                                 <div className="lesson-item" key={lesson.id}>
                                                     <div className="lesson-title">
                                                         <span className="play-icon">▶</span>
@@ -151,7 +188,7 @@ export default function CourseDetailPage() {
 
                         <div className="pricing-box">
                             <div className="price-tag">{course.price}</div>
-                            <div className="original-price">{course.originalPrice}</div>
+                            {course.originalPrice && <div className="original-price">{course.originalPrice}</div>}
                         </div>
 
                         <button className="enroll-btn" onClick={() => navigate(`/learn/${course.id}`)}>
@@ -161,10 +198,10 @@ export default function CourseDetailPage() {
                         <div className="course-features">
                             <h4>Khóa học bao gồm:</h4>
                             <ul>
-                                <li>🎬 45 giờ video bài giảng chất lượng cao</li>
-                                <li>📄 120 bài tập thực hành kèm đáp án chi tiết</li>
-                                <li>📱 Truy cập mọi lúc, mọi nơi trên thiết bị di động</li>
-                                <li>🤖 Lộ trình học thích ứng (AI-powered)</li>
+                                <li>🎬 Video bài giảng chất lượng Full HD</li>
+                                <li>📄 File tài liệu, bài tập PDF đi kèm từng bài học</li>
+                                <li>📱 Tương thích mượt mà trên cả Điện thoại & Máy tính</li>
+                                <li>🤖 Tích hợp Lộ trình thích ứng AI bổ trợ điểm yếu</li>
                             </ul>
                         </div>
                     </div>

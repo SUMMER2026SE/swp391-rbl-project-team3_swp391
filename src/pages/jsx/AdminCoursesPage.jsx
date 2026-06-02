@@ -13,20 +13,38 @@ export default function AdminCoursesPage() {
         { id: 4, title: "Tuyệt đỉnh Casio", teacher: "Nguyễn Minh Quân", price: "299,000đ", status: "PENDING" }, 
     ]);
 
-    // 2. GỌI API TRONG USEEFFECT
     useEffect(() => {
-        const fetchAllCourses = async () => {
-            try {
-                const response = await axiosClient.get("/admin/courses");
-                if (response.data && response.data.length > 0) {
-                    setCourses(response.data);
-                }
-            } catch (error) {
-                console.warn("Hệ thống chưa kết nối Backend. Sử dụng tiếp dữ liệu Mock:", error);
+    // 1. KIỂM TRA QUYỀN ADMIN TRƯỚC
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+
+    if (!token || !storedUser) {
+        alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
+        navigate("/");
+        return;
+    }
+
+    const userObj = JSON.parse(storedUser);
+    if (userObj.role !== "ADMIN") {
+        alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
+        navigate("/home");
+        return;
+    }
+
+    // 2. NẾU HỢP LỆ THÌ MỚI GỌI API LẤY COURSES
+    const fetchAllCourses = async () => {
+        try {
+            const response = await axiosClient.get("/admin/courses");
+            if (response.data && response.data.length > 0) {
+                setCourses(response.data);
             }
-        };
-        fetchAllCourses();
-    }, []);
+        } catch (error) {
+            console.warn("Hệ thống chưa kết nối Backend. Sử dụng tiếp dữ liệu Mock:", error);
+        }
+    };
+
+    fetchAllCourses();
+}, [navigate]); // <--- Nhớ đổi [] thành [navigate]
 
     // HÀM XỬ LÝ DUYỆT
     const handleApproveCourse = async (courseId) => {
@@ -107,22 +125,24 @@ export default function AdminCoursesPage() {
                                     {courses.map((c) => (
                                         <tr key={c.id}>
                                             <td>#{c.id}</td>
-                                            <td><strong>{c.title}</strong></td>
-                                            <td>{c.teacher}</td>
+<td><strong>{c.title || "Khóa học nháp (Chưa đặt tên)"}</strong></td>
+                                            <td>{c.teacher_name || `ID Giáo viên: ${c.teacher_id}`}</td>
                                             <td>{c.price}</td>
                                             <td>
-                                                <span className={`status-badge ${c.status === 'PUBLISHED' ? 'success' : (c.status === 'REJECTED' ? 'banned' : 'pending')}`}>
-                                                    {c.status === 'PUBLISHED' ? 'Đã xuất bản' : (c.status === 'REJECTED' ? 'Yêu cầu sửa' : 'Chờ duyệt')}
-                                                </span>
+                                                <span className={`status-badge ${c.status?.toUpperCase() === 'PUBLISHED' ? 'success' : (c.status?.toUpperCase() === 'REJECTED' ? 'banned' : 'pending')}`}>
+    {c.status?.toUpperCase() === 'PUBLISHED' 
+        ? 'Đã xuất bản' 
+        : (c.status?.toUpperCase() === 'REJECTED' ? 'Yêu cầu sửa' : 'Chờ duyệt')}
+</span>
                                             </td>
                                             <td>
                                                 {/* NÚT XEM TRƯỚC: Mở thẳng sang trang chi tiết khóa học ở một Tab mới */}
                                                 <button 
-                                                    className="action-btn view" 
-                                                    onClick={() => window.open(`/course/${c.id}`, '_blank')}
-                                                >
-                                                    👁️ Xem giao diện
-                                                </button>
+    className="action-btn view" 
+    onClick={() => navigate(`/admin/preview/${c.id}`)}
+>
+    👁️ Thẩm định bài giảng
+</button>
 
                                                 {c.status === 'PENDING' && (
                                                     <>

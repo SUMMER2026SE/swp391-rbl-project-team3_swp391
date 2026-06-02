@@ -6,28 +6,22 @@ import "../css/ProfilePage.css";
 
 function ProfilePage() {
     const navigate = useNavigate();
-
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // =========================================================
+    // TỐI ƯU GỌI API: Dùng axiosClient để thừa hưởng Interceptor bảo mật
+    // =========================================================
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const token = localStorage.getItem("token");
-
-                const response = await fetch(
-                    "http://localhost:8080/api/auth/profile",
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
-
-                const data = await response.json();
-                setUser(data);
+                const response = await axiosClient.get("/auth/profile");
+                setUser(response.data);
             } catch (err) {
                 console.log("Error fetching profile:", err);
+                // Nếu lỗi, thử cứu nguy bằng dữ liệu lưu trong bộ nhớ máy
+                const storedUser = localStorage.getItem("user");
+                if (storedUser) setUser(JSON.parse(storedUser));
             } finally {
                 setLoading(false);
             }
@@ -39,6 +33,8 @@ function ProfilePage() {
     const handleSave = async () => {
         try {
             await axiosClient.put("/auth/profile", user);
+            // Cập nhật lại bộ nhớ local của máy sau khi lưu thành công
+            localStorage.setItem("user", JSON.stringify(user));
             alert("Saved successfully!");
         } catch (err) {
             console.log(err);
@@ -46,47 +42,39 @@ function ProfilePage() {
         }
     };
 
-    if (loading) return <div>Loading...</div>;
+    const handleLogout = () => {
+        localStorage.clear(); // Xóa sạch toàn bộ token và user để bảo mật
+        navigate("/");
+    };
+
+    // MẸO AN TOÀN: Đọc song song cả camelCase và snake_case đề phòng Backend trả về kiểu nào cũng cân được
+    const currentAvatar = user?.avatarUrl || user?.avatar_url || "https://i.pravatar.cc/150?img=12";
+    const currentRole = user?.role || "STUDENT";
+
+    if (loading) return <div className="loading-state">Loading profile...</div>;
 
     return (
         <div className="profile-page">
             {/* NAVBAR */}
             <header className="topbar">
-                <h2>PrepAce</h2>
-
-                <button
-                    className="logout-btn"
-                    onClick={() => {
-                        localStorage.removeItem("token");
-                        navigate("/");
-                    }}
-                >
-                    Logout
-                </button>
+                <h2 onClick={() => navigate(-1)} style={{ cursor: "pointer" }}>PrepAce</h2>
+                <button className="logout-btn" onClick={handleLogout}>Logout</button>
             </header>
 
             <div className="main-layout">
                 {/* SIDEBAR */}
                 <aside className="sidebar">
                     <div className="user-box">
-                        <img
-                            className="sidebar-avatar"
-                            src={
-                                user?.avatarUrl ||
-                                "https://i.pravatar.cc/100?img=12"
-                            }
-                            alt="avatar"
-                        />
-
-                        <h4>{user?.fullName}</h4>
-                        <p>{user?.role || "Student"}</p>
+                        <img className="sidebar-avatar" src={currentAvatar} alt="avatar" />
+                        <h4>{user?.fullName || "Người dùng"}</h4>
+                        <p className={`role-tag ${currentRole.toLowerCase()}`}>{currentRole}</p>
                     </div>
 
                     <ul>
-                        <li>Overview</li>
+                        <li onClick={() => navigate(-1)}>⬅ Quay lại làm việc</li>
                         <li className="active">Profile Settings</li>
                         <li>Security</li>
-                        <li>Study History</li>
+                        {currentRole === "STUDENT" && <li>Study History</li>}
                         <li>Notifications</li>
                     </ul>
                 </aside>
@@ -94,73 +82,49 @@ function ProfilePage() {
                 {/* CONTENT */}
                 <div className="content">
                     <h1>Edit Profile</h1>
-                    <p>
-                        Manage your personal information and how others see you
-                        on the platform.
-                    </p>
+                    <p>Manage your personal information and how others see you on the platform.</p>
 
                     {/* AVATAR */}
                     <div className="avatar-card">
-                        <img
-                            className="avatar"
-                            src={
-                                user?.avatarUrl ||
-                                "https://i.pravatar.cc/150?img=12"
-                            }
-                            alt="avatar"
-                        />
-
+                        <img className="avatar" src={currentAvatar} alt="avatar" />
                         <div>
                             <h3>Profile Photo</h3>
-
                             <AvatarUpload
                                 onUploaded={async (url) => {
+                                    // Cập nhật song song cả 2 định dạng cho an toàn tuyệt đối
                                     setUser((prev) => ({
                                         ...prev,
                                         avatarUrl: url,
+                                        avatar_url: url
                                     }));
 
-                                    await axiosClient.put("/auth/avatar", {
-                                        avatarUrl: url,
-                                    });
+                                    // Gọi API lưu riêng ảnh đại diện lên Database
+                                    await axiosClient.put("/auth/avatar", { avatarUrl: url, avatar_url: url });
                                 }}
                             />
                         </div>
                     </div>
 
-                    {/* FORM */}
+                    {/* FORM INPUTS */}
                     <div className="form-grid">
                         <div>
                             <label>Full Name</label>
                             <input
                                 value={user?.fullName || ""}
-                                onChange={(e) =>
-                                    setUser({
-                                        ...user,
-                                        fullName: e.target.value,
-                                    })
-                                }
+                                onChange={(e) => setUser({ ...user, fullName: e.target.value })}
                             />
                         </div>
 
                         <div>
                             <label>Email</label>
-                            <input
-                                value={user?.email || ""}
-                                disabled
-                            />
+                            <input value={user?.email || ""} disabled />
                         </div>
 
                         <div>
                             <label>Phone Number</label>
                             <input
                                 value={user?.phone || ""}
-                                onChange={(e) =>
-                                    setUser({
-                                        ...user,
-                                        phone: e.target.value,
-                                    })
-                                }
+                                onChange={(e) => setUser({ ...user, phone: e.target.value })}
                             />
                         </div>
 
@@ -168,12 +132,7 @@ function ProfilePage() {
                             <label>School</label>
                             <input
                                 value={user?.school || ""}
-                                onChange={(e) =>
-                                    setUser({
-                                        ...user,
-                                        school: e.target.value,
-                                    })
-                                }
+                                onChange={(e) => setUser({ ...user, school: e.target.value })}
                             />
                         </div>
                     </div>
@@ -183,35 +142,21 @@ function ProfilePage() {
                         <textarea
                             rows="4"
                             value={user?.bio || ""}
-                            onChange={(e) =>
-                                setUser({
-                                    ...user,
-                                    bio: e.target.value,
-                                })
-                            }
+                            onChange={(e) => setUser({ ...user, bio: e.target.value })}
                         />
                     </div>
 
                     <div className="actions">
-                        <button
-                            className="password-btn"
-                            onClick={() => navigate("/change-password")}
-                        >
+                        <button className="password-btn" onClick={() => navigate("/change-password")}>
                             Change Password
                         </button>
 
                         <div className="right-actions">
-                            <button
-                                className="cancel-btn"
-                                onClick={() => navigate("/")}
-                            >
+                            {/* Dùng navigate(-1) để quay về trang trước đó một cách thông minh */}
+                            <button className="cancel-btn" onClick={() => navigate(-1)}>
                                 Cancel
                             </button>
-
-                            <button
-                                className="save-btn"
-                                onClick={handleSave}
-                            >
+                            <button className="save-btn" onClick={handleSave}>
                                 Save Changes
                             </button>
                         </div>
