@@ -379,34 +379,6 @@ body{
     justify-content: center;
 }
 
-<<<<<<< Updated upstream
-=======
-.forgot-password{}
-
-.message-box {
-    padding: 12px 14px;
-    border-radius: 10px;
-    margin-bottom: 15px;
-    font-size: 14px;
-    font-weight: 500;
-    animation: fadeIn 0.2s ease-in-out;
-}
-
-/* SUCCESS - xanh */
-.message-box.success {
-    background-color: #e8f9ef;
-    color: #1a7f37;
-    border: 1px solid #b7ebc6;
-}
-
-/* ERROR - đỏ */
-.message-box.error {
-    background-color: #fde8e8;
-    color: #b42318;
-    border: 1px solid #f5c2c2;
-}
-
->>>>>>> Stashed changes
 /* =========================================
    RESPONSIVE
 ========================================= */
