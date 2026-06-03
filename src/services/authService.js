@@ -1,4 +1,4 @@
-const API = "http://localhost:8080/api/auth/login";
+const API = "http://localhost:8080/api/auth";
 
 export const register = async (userData) => {
     const response = await fetch(`${API}/register`, {

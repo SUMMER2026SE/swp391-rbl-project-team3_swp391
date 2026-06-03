@@ -14,7 +14,7 @@ export default function ForgotPasswordPage() {
         setError("");
 
         if (!email) {
-            setError("Please enter your email");
+            setError("Nhập Email Vào Đây");
             return;
         }
 
@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
                 email,
             });
 
-            setMessage("📩 Check your email for reset instructions!");
+            setMessage("📩 Check email để sắp đặt lại mật khẩu nhé!");
             setEmail("");
         } catch (err) {
             setError(
@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
         <div className="forgot-container">
             <div className="forgot-card">
                 <h2>Forgot Password</h2>
-                <p>Enter your email to receive reset instructions</p>
+                <p>Nhập Email Để Nhận Link Reset Password</p>
 
                 {message && <div className="success-msg">{message}</div>}
                 {error && <div className="error-msg">{error}</div>}
@@ -56,6 +56,9 @@ export default function ForgotPasswordPage() {
                     <button disabled={loading}>
                         {loading ? "Sending..." : "Send Reset Link"}
                     </button>
+                    <p style={{marginTop: '15px', color: '#6366f1', cursor: 'pointer', fontWeight: 'bold'}} onClick={() => navigate("/")}>
+                        ← Quay lại Đăng nhập
+                    </p>
                 </form>
             </div>
         </div>

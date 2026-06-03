@@ -1,0 +1,102 @@
+.ui-config-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.config-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    overflow: hidden;
+}
+
+.card-header {
+    background: #f8fafc;
+    padding: 20px 25px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.card-header h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 18px;
+}
+
+.config-form {
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.form-group input[type="text"],
+.form-group textarea,
+.form-group select {
+    padding: 12px 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
+    font-family: inherit;
+    font-size: 14px;
+    color: #1e293b;
+    outline: none;
+    transition: 0.2s;
+}
+
+.form-group input[type="text"]:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: #3b82f6;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.file-input {
+    font-size: 14px;
+    color: #64748b;
+}
+
+.primary-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    margin-top: 10px;
+}
+
+.primary-btn:hover {
+    background: #1d4ed8;
+}
+
+.send-btn {
+    background: #10b981; /* Màu xanh lá cho nút Gửi thông báo */
+}
+
+.send-btn:hover {
+    background: #059669;
+}
+
+/* RESPONSIVE */
+@media(max-width: 1024px) {
+    .ui-config-content {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,249 @@
+.teacher-preview-page {
+    min-height: 100vh;
+    background: #f5f5fb;
+    font-family: "Poppins", Arial, sans-serif;
+}
+
+/* =========================================
+   PREVIEW BANNER (MÀU CAM CẢNH BÁO)
+========================================= */
+.preview-mode-banner {
+    background: #f59e0b; /* Màu cam hổ phách */
+    color: white;
+    padding: 15px 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+
+.banner-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+}
+
+.eye-icon {
+    font-size: 20px;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-left: 10px;
+}
+
+.status-badge.draft {
+    background: rgba(0,0,0,0.2);
+    color: white;
+}
+
+.banner-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.banner-actions button {
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.2s;
+    border: none;
+}
+
+.edit-btn {
+    background: white;
+    color: #b45309; /* Màu cam đậm */
+}
+
+.edit-btn:hover {
+    background: #fef3c7;
+}
+
+.publish-btn {
+    background: #10b981;
+    color: white;
+}
+
+.publish-btn:hover {
+    background: #059669;
+}
+
+/* =========================================
+   LAYOUT MÔ PHỎNG (Tương tự CourseDetail)
+========================================= */
+.preview-container {
+    padding: 40px 50px;
+    display: flex;
+    gap: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    align-items: flex-start;
+}
+
+.course-left {
+    flex: 1;
+}
+
+.course-right {
+    width: 380px;
+    position: sticky;
+    top: 90px;
+}
+
+.course-title {
+    font-size: 32px;
+    color: #0f172a;
+    margin-bottom: 15px;
+}
+
+.course-description {
+    color: #475569;
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.section-box {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+
+.section-box h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+.chapter-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.chapter-header {
+    background: #f8fafc;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.chapter-header.active {
+    background: #eff6ff;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.chapter-header h3 {
+    margin: 0;
+    font-size: 15px;
+}
+
+.chapter-body {
+    background: white;
+}
+
+.lesson-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 20px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.lesson-item:last-child {
+    border-bottom: none;
+}
+
+.lesson-title {
+    font-size: 14px;
+}
+
+.lesson-meta {
+    font-size: 13px;
+    color: #94a3b8;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.preview-badge {
+    background: #dcfce7;
+    color: #166534;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* WIDGET CỘT PHẢI */
+.floating-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+}
+
+.preview-video {
+    height: 220px;
+    position: relative;
+    background: #000;
+}
+
+.preview-video img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.7;
+}
+
+.play-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.pricing-box {
+    padding: 20px 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.price-tag {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.original-price {
+    font-size: 16px;
+    color: #94a3b8;
+    text-decoration: line-through;
+}
+
+.enroll-btn.disabled-preview {
+    width: calc(100% - 50px);
+    margin: 0 25px 25px;
+    padding: 16px;
+    background: #cbd5e1;
+    color: #475569;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: not-allowed;
+}
