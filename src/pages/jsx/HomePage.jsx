@@ -16,11 +16,11 @@ export default function HomePage() {
                 <div className="logo">PrepAce</div>
 
                 <ul className="menu">
-                    <li> Trang chủ</li>
-                    <li> Khóa học</li>
-                    <li> Luyện đề</li>
-                    <li> Tiến độ</li>
-                    <li> Tư vấn ngành</li>
+                    <li onClick={() => navigate("/home")}>Trang chủ</li>
+                    <li onClick={() => navigate("/courses")}>Khóa học</li>
+                    <li>Luyện đề</li>
+                    <li onClick={() => navigate("/adaptive-path")}>Tiến độ</li>
+                    <li>Tư vấn ngành</li>
                 </ul>
 
                 <div className="sidebar-actions">
