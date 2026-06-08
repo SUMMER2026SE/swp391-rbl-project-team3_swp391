@@ -8,7 +8,6 @@ import ForgotPasswordPage from './pages/jsx/ForgotPasswordPage';
 import ChangePasswordPage from './pages/jsx/ChangePasswordPage';
 import ResetPasswordPage from './pages/jsx/ResetPasswordPage';
 
-import HomePage from './pages/jsx/HomePage';
 import CourseDetailPage from './pages/jsx/CourseDetailPage';
 import LearningPage from './pages/jsx/LearningPage';
 import AdaptivePathPage from './pages/jsx/AdaptivePathPage';
@@ -53,14 +52,14 @@ function App() {
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/courses" element={<CoursesPage />} />
 
-<Route path="/teacher/preview/:id" element={<CoursePreviewPage />} />
-      
-      <Route path="/admin/preview/:id" element={<CoursePreviewPage />} />
+          <Route path="/teacher/preview/:id" element={<CoursePreviewPage />} />
+                
+          <Route path="/admin/preview/:id" element={<CoursePreviewPage />} />
 
           <Route path="/admin/users" element={<AdminUsersPage />} />
-<Route path="/admin/courses" element={<AdminCoursesPage />} />
-<Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-      <Route path="/teacher/course/:id/edit" element={<CourseEditPage />} />
+          <Route path="/admin/courses" element={<AdminCoursesPage />} />
+          <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+          <Route path="/teacher/course/:id/edit" element={<CourseEditPage />} />
         </Routes>
         
   )

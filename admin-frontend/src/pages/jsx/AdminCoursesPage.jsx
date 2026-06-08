@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
-import "../css/AdminUsersPage.css";
+import "../css/AdminCoursesPage.css";
 
 export default function AdminCoursesPage() {
     const navigate = useNavigate();
