@@ -41,7 +41,7 @@ export default function CourseDetailPage() {
         const fetchCourseDetail = async () => {
             setLoading(true);
             try {
-const response = await axiosClient.get(`/courses/${id}`);                
+                const response = await axiosClient.get(`/courses/${id}`);                
                 if (response.data) {
                     const data = response.data;
                     
