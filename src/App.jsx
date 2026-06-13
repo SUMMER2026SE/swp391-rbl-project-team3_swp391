@@ -23,6 +23,10 @@ import AdminCoursesPage from './pages/jsx/AdminCoursesPage';
 import TeacherDashboard from "./pages/jsx/TeacherDashboard";
 import CourseEditPage from "./pages/jsx/CourseEditPage";
 
+//Thi Thu
+import TestListPage from './pages/jsx/TestListPage';
+import TestResult from './pages/jsx/TestResult';
+import TestPage from './pages/jsx/TestPage';
 
 import {Routes, Route, BrowserRouter} from "react-router-dom";
 import './App.css';
@@ -38,15 +42,25 @@ function App() {
           <Route path='/auth' element={<AuthPage />}/>
           <Route path='/profile' element={<ProfilePage />}/>
 
+          {/* Login - Register */}
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/change-password" element={<ChangePasswordPage />} />
+
+          {/* Login - Register */}
           <Route path='/home' element={<HomePage />} />
           <Route path="/course/:id" element={<CourseDetailPage />} />
           <Route path="/learn/:courseId" element={<LearningPage />} />
           <Route path="/adaptive-path" element={<AdaptivePathPage />} />
           <Route path="/calendar" element={<StudyCalendarPage />} />
           <Route path="/instructor/:id" element={<InstructorProfilePage />} />
+
+          {/* Thi - Thi Thử */}
+          <Route path='/tests' element={<TestListPage />} />
+          <Route path='/tests/:sessionId' element={<TestPage />} />
+          <Route path='/tests/result/:sessionId' element={<TestResult />} />
+
+          {/* Admin - Teacher */}
           <Route path="/admin" element={<AdminDashboardPage />} />
           <Route path="/admin/ui-config" element={<AdminUIConfigPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
@@ -60,9 +74,8 @@ function App() {
           <Route path="/admin/courses" element={<AdminCoursesPage />} />
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
           <Route path="/teacher/course/:id/edit" element={<CourseEditPage />} />
-        </Routes>
-        
-  )
+        </Routes>    
+  );
 }
 
 export default App

@@ -1,6 +1,6 @@
 // jsx/QuestionNavigator.jsx
 import React from 'react';
-import "../css/QuestionNavigator";
+import "../css/QuestionNavigator.css";
 
 const QuestionNavigator = ({ questions, answers, currentIndex, setCurrentIndex }) => {
     return (

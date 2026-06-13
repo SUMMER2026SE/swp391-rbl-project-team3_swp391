@@ -18,7 +18,7 @@ export default function HomePage() {
                 <ul className="menu">
                     <li onClick={() => navigate("/home")}>Trang chủ</li>
                     <li onClick={() => navigate("/courses")}>Khóa học</li>
-                    <li>Luyện đề</li>
+                    <li onClick={() => navigate("/tests")}>Luyện đề</li>
                     <li onClick={() => navigate("/adaptive-path")}>Tiến độ</li>
                     <li>Tư vấn ngành</li>
                 </ul>
@@ -100,10 +100,10 @@ export default function HomePage() {
                     <button
                         className="start-btn"
                         onClick={() =>
-                            navigate("/auth")
+                            navigate("/tests")
                         }
                     >
-                        Bắt đầu học ngay
+                        Bắt đầu luyện đề ngay
                     </button>
                 </section>
 
