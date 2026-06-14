@@ -8,8 +8,6 @@
 }
 
 .question-header {
-    display: flex;
-    justify-content: space-between;
     margin-bottom: 20px;
     padding-bottom: 15px;
     border-bottom: 2px solid #f0f0f0;
@@ -54,6 +52,7 @@
     border-color: #2196f3;
     background: #e3f2fd;
     font-weight: 500;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
 }
 
 .option-label {
@@ -67,6 +66,7 @@
     margin-right: 15px;
     font-weight: bold;
     color: #555;
+    flex-shrink: 0;
 }
 
 .option-item.selected .option-label {

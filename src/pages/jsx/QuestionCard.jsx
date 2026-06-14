@@ -15,25 +15,23 @@ const QuestionCard = ({ question, selectedOption, onAnswer }) => {
             </div>
 
             <div className="options-container">
-                {question.options && question.options.map((option, index) => (
-                    <div 
-                        key={option.optionId}
-                        className={`option-item ${selectedOption === option.optionId ? 'selected' : ''}`}
-                        onClick={() => onAnswer(question.questionId, option.optionId)}
-                    >
-                        <span className="option-label">
-                            {String.fromCharCode(65 + index)} 
-                        </span>
-                        <span className="option-text">{option.content}</span>
-                    </div>
-                ))}
+                {question.options && question.options.map((option, index) => {
+                    const isSelected = selectedOption === option.optionId;
+                    
+                    return (
+                        <div 
+                            key={option.optionId}
+                            className={`option-item ${isSelected ? 'selected' : ''}`}
+                            onClick={() => onAnswer(question.questionId, option.optionId)}
+                        >
+                            <span className="option-label">
+                                {String.fromCharCode(65 + index)}
+                            </span>
+                            <span className="option-text">{option.questionContent}</span>
+                        </div>
+                    );
+                })}
             </div>
-
-            {question.explanation && (
-                <div className="explanation-note">
-                    <small>(Giải thích sẽ hiển thị sau khi nộp bài)</small>
-                </div>
-            )}
         </div>
     );
 };
