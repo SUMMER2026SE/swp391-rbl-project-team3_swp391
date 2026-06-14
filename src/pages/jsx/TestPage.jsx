@@ -7,7 +7,7 @@ import QuestionNavigator from './QuestionNavigator';
 import '../css/TestPage.css';
 
 const TestPage = () => {
-    const { sessionId } = useParams();   // Lấy sessionId từ URL
+    const { sessionsId } = useParams();   // Lấy sessionId từ URL
 
     const [questions, setQuestions] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -17,11 +17,20 @@ const TestPage = () => {
 
     useEffect(() => {
         fetchQuestions();
-    }, [sessionId]);
+    }, [sessionsId]);
 
     const fetchQuestions = async () => {
         try {
-            const res = await fetch(`/api/tests/${sessionId}/questions`);
+            const token = localStorage.getItem("token");
+
+            const res = await fetch(
+                `http://localhost:8080/api/tests/${sessionsId}/questions`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
             const data = await res.json();
             setQuestions(data);
             
@@ -38,10 +47,18 @@ const TestPage = () => {
         setAnswers(prev => ({ ...prev, [questionId]: optionId }));
 
         // Auto save
-        fetch(`/api/tests/${sessionId}/answer`, {
+        const token = localStorage.getItem("token");
+
+        fetch(`http://localhost:8080/api/tests/${sessionsId}/answer`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ questionId, selectedOptionId: optionId })
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                questionId,
+                selectedOptionId: optionId
+            })
         }).catch(err => console.error("Auto save thất bại", err));
     };
 
@@ -49,13 +66,17 @@ const TestPage = () => {
         if (!window.confirm("Bạn chắc chắn muốn nộp bài?")) return;
 
         try {
-            await fetch(`/api/tests/${sessionId}/submit`, {
+            const token = localStorage.getItem("token");
+
+            await fetch(`http://localhost:8080/api/tests/${sessionsId}/submit`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionId: parseInt(sessionId) })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
             });
             alert("Nộp bài thành công!");
-            window.location.href = `/test/result/${sessionId}`;
+            window.location.href = `/tests/result/${sessionsId}`;
         } catch (err) {
             alert("Nộp bài thất bại");
         }
@@ -71,7 +92,7 @@ const TestPage = () => {
                 {/* Sửa lỗi comment ở đây */}
                 <Timer 
                     initialTime={remainingTime} 
-                    sessionId={sessionId} 
+                    sessionsId={sessionsId} 
                 />
                 <button onClick={submitTest} className="btn-submit">Nộp Bài</button>
             </div>

@@ -1,19 +1,30 @@
 // jsx/TestResult.jsx
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import '../css/TestResult.css';
 
-const TestResult = ({ sessionId }) => {
+const TestResult = () => {
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(true);
+    const { sessionsId } = useParams();
 
     useEffect(() => {
         fetchResult();
-    }, [sessionId]);
+    }, [sessionsId]);
 
     const fetchResult = async () => {
         try {
-            const res = await fetch(`/api/tests/${sessionId}/result`);
+            const token = localStorage.getItem("token");
+            const res = await fetch(
+                `http://localhost:8080/api/tests/${sessionsId}/result`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
             const data = await res.json();
+            console.log(data);
             setResult(data);
         } catch (err) {
             console.error(err);
@@ -26,7 +37,10 @@ const TestResult = ({ sessionId }) => {
     if (loading) return <div className="loading">Đang tải kết quả...</div>;
     if (!result) return <div>Lỗi khi tải kết quả</div>;
 
-    const percentage = ((result.correctAnswers / result.totalQuestions) * 100).toFixed(1);
+    const percentage =
+    result && result.totalQuestions > 0
+        ? ((result.correctAnswers / result.totalQuestions) * 100).toFixed(1)
+        : "0.0";
 
     return (
         <div className="result-container">
@@ -62,7 +76,7 @@ const TestResult = ({ sessionId }) => {
                             </span>
                         </div>
 
-                        <p className="question-text">{q.content}</p>
+                        <p className="question-text">{p.content}</p>
 
                         <div className="answer-row">
                             <div className="user-answer">

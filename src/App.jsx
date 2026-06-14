@@ -57,8 +57,8 @@ function App() {
 
           {/* Thi - Thi Thử */}
           <Route path='/tests' element={<TestListPage />} />
-          <Route path='/tests/:sessionId' element={<TestPage />} />
-          <Route path='/tests/result/:sessionId' element={<TestResult />} />
+          <Route path='/tests/:sessionsId' element={<TestPage />} />
+          <Route path='/tests/result/:sessionsId' element={<TestResult />} />
 
           {/* Admin - Teacher */}
           <Route path="/admin" element={<AdminDashboardPage />} />

@@ -46,7 +46,7 @@ function LoginPage({ switchToRegister }) {
             }
 
             localStorage.setItem("token", data.token);
-localStorage.setItem("user", JSON.stringify(data.user)); // <--- THÊM DÒNG NÀY VÀO
+            localStorage.setItem("user", JSON.stringify(data.user)); // <--- THÊM DÒNG NÀY VÀO
             setMessage("✅ Login Successfully!");
             setMessageType("success");
 

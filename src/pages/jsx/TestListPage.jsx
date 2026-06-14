@@ -1,45 +1,74 @@
-// jsx/TestListPage.jsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../css/TestListPage.css';
 
 const TestListPage = () => {
     const [quizzes, setQuizzes] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
-        fetch('/api/quizzes')
-            .then(res => res.json())
-            .then(data => {
-                setQuizzes(data);
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error(err);
-                setLoading(false);
-            });
+        fetchQuizzes();
     }, []);
 
-    const startTest = (quizId) => {
-        fetch('/api/tests/start', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ quizId: quizId })
-        })
-        .then(res => res.json())
-        .then(data => {
-            window.location.href = `/test/${data.sessionsId}`;
-        })
-        .catch(() => alert("Không thể bắt đầu bài thi"));
+    const fetchQuizzes = async () => {
+        try {
+            const res = await fetch('http://localhost:8080/api/quizzes'); // ← Chỉnh port nếu khác
+
+            if (!res.ok) {
+                throw new Error(`Lỗi server: ${res.status}`);
+            }
+
+            const data = await res.json();
+            console.log("✅ Dữ liệu quiz:", data);
+            // const text = await res.text();
+            // console.log(text);
+            setQuizzes(data);
+        } catch (err) {
+            console.error("❌ Lỗi:", err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    if (loading) return <p>Đang tải danh sách bài thi...</p>;
+    const startTest = async (quizId) => {
+        try {
+            const token = localStorage.getItem("token");
+
+            const res = await fetch('http://localhost:8080/api/tests/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ quizId })
+            });
+
+            if (!res.ok) {
+                const errorText = await res.text();
+                console.log(errorText);
+                throw new Error(errorText);
+            }
+
+            const data = await res.json();
+            window.location.href = `/tests/${data.sessionsId}`;
+        } catch (err) {
+            alert("Lỗi khi bắt đầu: " + err.message);
+        }
+    };
+
+    if (loading) return <div className="loading">Đang tải danh sách bài thi...</div>;
+    if (error) return <div className="error">Lỗi: {error}</div>;
 
     return (
         <div className="test-list-container">
             <h1>Luyện Tập Trắc Nghiệm & Thi Thử</h1>
-            
+            <span className="back-btn" onClick={() => navigate("/home")}>← Quay lại Trang chủ</span>
+
             {quizzes.length === 0 ? (
-                <p>Chưa có bộ câu hỏi nào. Hãy thêm quiz trong database.</p>
+                <p>Chưa có bài quiz nào trong hệ thống.</p>
             ) : (
                 <div className="quiz-grid">
                     {quizzes.map(quiz => (
