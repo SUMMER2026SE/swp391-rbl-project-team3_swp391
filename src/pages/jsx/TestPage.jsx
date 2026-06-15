@@ -44,6 +44,7 @@ const TestPage = () => {
     };
 
     const handleAnswer = (questionId, optionId) => {
+        console.log(`Chọn câu ${questionId} - Đáp án: ${optionId}`);
         setAnswers(prev => ({ ...prev, [questionId]: optionId }));
 
         // Auto save
