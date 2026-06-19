@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"; // 1. Thêm useEffect
 import { useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient"; // 2. Import axiosClient của bạn
-import "../css/AdminManagePage.css";
+import "../css/AdminUsersPage.css";
 
 export default function AdminUsersPage() {
     const navigate = useNavigate();

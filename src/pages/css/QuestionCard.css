@@ -1,0 +1,75 @@
+/* jsx/QuestionCard.css */
+.question-card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.question-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.question-number {
+    font-weight: bold;
+    color: #1976d2;
+    font-size: 1.1rem;
+}
+
+.question-content {
+    font-size: 1.15rem;
+    line-height: 1.7;
+    color: #333;
+    margin-bottom: 30px;
+}
+
+.options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.option-item {
+    padding: 16px 20px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    font-size: 1.05rem;
+}
+
+.option-item:hover {
+    border-color: #2196f3;
+    background: #f8fbff;
+}
+
+.option-item.selected {
+    border-color: #2196f3;
+    background: #e3f2fd;
+    font-weight: 500;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+}
+
+.option-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    margin-right: 15px;
+    font-weight: bold;
+    color: #555;
+    flex-shrink: 0;
+}
+
+.option-item.selected .option-label {
+    background: #2196f3;
+    color: white;
+}
