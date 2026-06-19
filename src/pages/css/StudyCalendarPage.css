@@ -1,0 +1,227 @@
+.calendar-page {
+    min-height: 100vh;
+    background: #f5f5fb;
+    font-family: "Poppins", Arial, sans-serif;
+    padding: 40px;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.calendar-header h1 {
+    font-size: 32px;
+    color: #0f172a;
+    margin: 0;
+}
+
+.add-event-btn {
+    background: linear-gradient(135deg, #2563eb, #4338ca);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    transition: 0.3s;
+}
+
+.add-event-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+}
+
+.calendar-container {
+    display: flex;
+    gap: 30px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* =========================================
+   CỘT TRÁI (SIDEBAR EVENTS)
+========================================= */
+.sidebar-events {
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.upcoming-box, .filter-box {
+    background: white;
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+}
+
+.upcoming-box h3, .filter-box h3 {
+    margin-bottom: 20px;
+    color: #1e293b;
+    font-size: 18px;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 10px;
+}
+
+.upcoming-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.upcoming-item {
+    display: flex;
+    gap: 15px;
+    padding: 12px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border-left: 4px solid #cbd5e1;
+}
+
+.event-date {
+    font-weight: 700;
+    font-size: 14px;
+    color: #475569;
+}
+
+.event-title {
+    font-size: 14px;
+    color: #1e293b;
+    font-weight: 500;
+}
+
+/* Phân loại màu sắc */
+.math { border-left-color: #3b82f6 !important; background-color: #eff6ff !important; color: #1d4ed8 !important; }
+.physics { border-left-color: #8b5cf6 !important; background-color: #f5f3ff !important; color: #6d28d9 !important; }
+.english { border-left-color: #10b981 !important; background-color: #ecfdf5 !important; color: #047857 !important; }
+.exam { border-left-color: #ef4444 !important; background-color: #fef2f2 !important; color: #b91c1c !important; }
+
+.filter-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.tag {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* =========================================
+   CỘT PHẢI (CALENDAR GRID)
+========================================= */
+.main-calendar {
+    flex: 1;
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.04);
+}
+
+.calendar-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.calendar-toolbar h2 {
+    font-size: 22px;
+    color: #0f172a;
+}
+
+.nav-month-btn {
+    background: #f1f5f9;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.2s;
+}
+
+.nav-month-btn:hover {
+    background: #e2e8f0;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+}
+
+.weekday-header {
+    text-align: center;
+    font-weight: 600;
+    color: #64748b;
+    padding: 15px 0;
+}
+
+.day-cell {
+    min-height: 120px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px;
+    transition: 0.2s;
+}
+
+.day-cell:not(.empty):hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.day-cell.empty {
+    border: none;
+    background: transparent;
+}
+
+.day-number {
+    font-size: 16px;
+    font-weight: 600;
+    color: #334155;
+    display: inline-block;
+    margin-bottom: 8px;
+}
+
+.day-number.highlight {
+    background: #ef4444;
+    color: white;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.day-events {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.event-badge {
+    font-size: 11px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-left: 3px solid;
+    font-weight: 500;
+    cursor: pointer;
+}

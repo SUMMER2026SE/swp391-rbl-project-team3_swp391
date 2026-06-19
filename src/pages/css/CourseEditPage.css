@@ -1,0 +1,261 @@
+/* ==========================================
+   CSS CHO TRANG SOẠN THẢO KHÓA HỌC (TEACHER)
+   ========================================== */
+
+.course-edit-layout {
+    background-color: #f8fafc;
+    min-height: 100vh;
+    padding-bottom: 50px;
+    font-family: 'Inter', sans-serif;
+}
+
+/* --- HEADER --- */
+.edit-header {
+    background-color: #ffffff;
+    padding: 16px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-left h1 {
+    margin: 0;
+    font-size: 20px;
+    color: #1e293b;
+    margin-top: 8px;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    font-weight: 500;
+    padding: 0;
+}
+
+.back-btn:hover {
+    color: #2747d9;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.header-actions button {
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: 0.2s;
+}
+
+.btn-secondary { background: #e2e8f0; color: #334155; }
+.btn-secondary:hover { background: #cbd5e1; }
+
+.btn-preview { background: #eef3ff; color: #2747d9; }
+.btn-preview:hover { background: #dce6ff; }
+
+.btn-primary { background: #2747d9; color: #ffffff; }
+.btn-primary:hover { background: #1e3ac1; }
+
+
+/* --- WORKSPACE (CHIA 2 CỘT) --- */
+.edit-workspace {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    max-width: 1400px;
+    margin: 40px auto;
+    padding: 0 40px;
+}
+
+.edit-workspace h2 {
+    font-size: 18px;
+    margin-bottom: 20px;
+    color: #0f172a;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 10px;
+}
+
+/* --- CỘT TRÁI: FORM NHẬP LIỆU --- */
+.edit-general-info, .edit-syllabus {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    border: 1px solid #f1f5f9;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.form-group label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #475569;
+    margin-bottom: 8px;
+}
+
+.form-group input, .form-group textarea {
+    padding: 12px 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 15px;
+    outline: none;
+    transition: border 0.2s;
+    font-family: inherit;
+}
+
+.form-group input:focus, .form-group textarea:focus {
+    border-color: #2747d9;
+    box-shadow: 0 0 0 3px rgba(39, 71, 217, 0.1);
+}
+
+.thumb-preview {
+    margin-top: 15px;
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+
+/* --- CỘT PHẢI: QUẢN LÝ CHƯƠNG / BÀI HỌC --- */
+.helper-text {
+    font-size: 13px;
+    color: #64748b;
+    margin-top: -10px;
+    margin-bottom: 20px;
+}
+
+.chapter-edit-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.chapter-edit-header {
+    background: #f1f5f9;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.chapter-input-title {
+    font-weight: 700;
+    font-size: 15px;
+    border: none;
+    background: transparent;
+    width: 80%;
+    outline: none;
+    color: #1e293b;
+}
+
+.delete-icon-btn, .settings-icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0.5;
+    transition: 0.2s;
+}
+
+.delete-icon-btn:hover { opacity: 1; color: red; }
+.settings-icon-btn:hover { opacity: 1; color: #2747d9; }
+
+.lessons-edit-list {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.lesson-edit-item {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    padding: 10px;
+    border-radius: 8px;
+    gap: 10px;
+}
+
+.drag-handle {
+    color: #94a3b8;
+    cursor: grab;
+    font-size: 18px;
+}
+
+.lesson-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.lesson-duration {
+    width: 60px;
+    border: none;
+    background: #f1f5f9;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    text-align: center;
+}
+
+.add-lesson-btn {
+    margin-top: 5px;
+    background: none;
+    border: 1px dashed #cbd5e1;
+    padding: 10px;
+    border-radius: 8px;
+    color: #475569;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.add-lesson-btn:hover {
+    border-color: #2747d9;
+    color: #2747d9;
+    background: #f5f8ff;
+}
+
+.add-chapter-btn {
+    width: 100%;
+    background: #eef3ff;
+    color: #2747d9;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 15px;
+    transition: 0.2s;
+}
+
+.add-chapter-btn:hover { background: #dce6ff; }

@@ -1,0 +1,189 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "fullName": "Phạm Đức Anh",
+      "email": "student1@gmail.com",
+      "role": "STUDENT",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "2",
+      "fullName": "Nguyễn Minh Quân",
+      "email": "teacher.math@learnify.com",
+      "role": "TEACHER",
+      "status": "ACTIVE"
+    }
+  ],
+  "courses": [
+    {
+      "id": "1",
+      "title": "Mastering Mathematics 12",
+      "teacher_id": "2",
+      "price": 599000,
+      "students": 1250,
+      "thumbnail": "https://images.unsplash.com/photo-1635070041078-e363dbe005cb",
+      "status": "PUBLISHED",
+      "chapters": [
+        {
+          "id": 1,
+          "title": "Chương 1: Ứng dụng đạo hàm",
+          "lessons": [
+            {
+              "id": 101,
+              "title": "Sự đồng biến, nghịch biến",
+              "duration": "45:00"
+            },
+            {
+              "id": 102,
+              "title": "Cực trị của hàm số",
+              "duration": "50:20"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "title": "Tuyệt đỉnh Casio - Giải nhanh trắc nghiệm Toán",
+      "teacher_id": 2,
+      "price": 299000,
+      "students": 3100,
+      "thumbnail": "https://images.unsplash.com/photo-1596496050827-8299e0220de1",
+      "status": "PUBLISHED",
+      "chapters": [
+        {
+          "id": 1,
+          "title": "Chương 1: Cơ bản",
+          "lessons": [
+            {
+              "id": 101,
+              "title": "Làm quen Fx-880BTG",
+              "duration": "15:00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "H1tXU5GY_uM",
+      "title": "sdasda",
+      "teacher_id": "2",
+      "price": "12345559",
+      "students": 0,
+      "thumbnail": "",
+      "status": "DRAFT",
+      "chapters": [
+        {
+          "id": 1780424553571,
+          "title": "Chương mới ádadckllk",
+          "lessons": [
+            {
+              "id": 1780424554798,
+              "title": "Bài mới adadada",
+              "duration": "00:00"
+            },
+            {
+              "id": 1780424571979,
+              "title": "Bài mớidsdasasd",
+              "duration": "00:00"
+            }
+          ]
+        }
+      ],
+      "teacher_name": "Nguyễn Minh Quân"
+    },
+    {
+      "title": "",
+      "description": "",
+      "price": "",
+      "originalPrice": "",
+      "thumbnail": "",
+      "chapters": [],
+      "id": "E6Rzi4t90Fo"
+    },
+    {
+      "title": "vbbnk",
+      "description": "141412414",
+      "price": "23131412",
+      "originalPrice": "414241",
+      "thumbnail": "",
+      "chapters": [
+        {
+          "id": 1780426836203,
+          "title": "Chương mới4124124",
+          "lessons": [
+            {
+              "id": 1780426838228,
+              "title": "Bài mới241241",
+              "duration": "00:1241"
+            }
+          ]
+        },
+        {
+          "id": 1780426841332,
+          "title": "Chương mới",
+          "lessons": [
+            {
+              "id": 1780426842609,
+              "title": "Bài mới4214241",
+              "duration": "00:00"
+            },
+            {
+              "id": 1780426847280,
+              "title": "Bài mới412412",
+              "duration": "00:00"
+            },
+            {
+              "id": 1780426849560,
+              "title": "Bài 412414",
+              "duration": "00:00"
+            }
+          ]
+        }
+      ],
+      "id": "PkmBYZ-n6xc",
+      "status": "PUBLISHED"
+    },
+    {
+      "title": "hjjbjk",
+      "description": "dasasd",
+      "price": "675989",
+      "originalPrice": "34543",
+      "thumbnail": "",
+      "chapters": [
+        {
+          "id": 1780427323965,
+          "title": "Chương mớidasdadasd",
+          "lessons": [
+            {
+              "id": 1780427324754,
+              "title": "Bài mớidads ",
+              "duration": "00:00"
+            },
+            {
+              "id": 1780427326602,
+              "title": "Bài mớidasd",
+              "duration": "00:00"
+            }
+          ]
+        }
+      ],
+      "teacher_id": 2,
+      "status": "PUBLISHED",
+      "students": 0,
+      "id": "D-cN-XAOYIQ",
+      "note": "quá gà"
+    }
+  ],
+  "payments": [
+    {
+      "id": "TX1001",
+      "student": "Phạm Đức Anh",
+      "course_id": "1",
+      "amount": "599,000đ",
+      "status": "Thành công"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}

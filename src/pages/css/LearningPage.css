@@ -1,0 +1,299 @@
+/* =========================================
+   BỐ CỤC CHUNG
+========================================= */
+.learning-page {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f5f5fb;
+    font-family: "Poppins", Arial, sans-serif;
+    overflow: hidden;
+}
+
+/* =========================================
+   TOPBAR
+========================================= */
+.learning-topbar {
+    height: 60px;
+    background: #1e293b;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+    flex-shrink: 0;
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+}
+
+.topbar-left:hover .back-arrow {
+    transform: translateX(-3px);
+}
+
+.back-arrow {
+    font-size: 20px;
+    transition: 0.2s;
+}
+
+.course-nav-title {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.progress-box {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 14px;
+}
+
+.progress-bar-bg {
+    width: 150px;
+    height: 8px;
+    background: #334155;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: #10b981;
+}
+
+/* =========================================
+   WORKSPACE
+========================================= */
+.learning-workspace {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* =========================================
+   MAIN VIDEO & TABS (CỘT TRÁI)
+========================================= */
+.learning-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.video-container {
+    background: #000;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.video-placeholder {
+    color: white;
+    text-align: center;
+}
+
+.play-button-large {
+    font-size: 60px;
+    color: #2563eb;
+    cursor: pointer;
+    margin-bottom: 15px;
+    transition: 0.2s;
+}
+
+.play-button-large:hover {
+    transform: scale(1.1);
+    color: #3b82f6;
+}
+
+.learning-content {
+    padding: 30px 50px;
+    background: white;
+    flex: 1;
+}
+
+.current-lesson-title {
+    font-size: 24px;
+    color: #0f172a;
+    margin-bottom: 25px;
+}
+
+/* TABS */
+.tabs {
+    display: flex;
+    gap: 30px;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 25px;
+}
+
+.tab {
+    background: none;
+    border: none;
+    font-size: 16px;
+    font-weight: 500;
+    color: #64748b;
+    padding: 10px 0;
+    cursor: pointer;
+    position: relative;
+}
+
+.tab.active {
+    color: #2563eb;
+}
+
+.tab.active::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #2563eb;
+    border-radius: 3px 3px 0 0;
+}
+
+.tab-content {
+    font-size: 15px;
+    color: #334155;
+    line-height: 1.6;
+}
+
+/* MATERIAL TAB */
+.material-file {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.download-btn {
+    background: white;
+    border: 1px solid #2563eb;
+    color: #2563eb;
+    padding: 6px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.download-btn:hover {
+    background: #2563eb;
+    color: white;
+}
+
+/* QNA & NOTES TAB */
+.qna-input, .note-input {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-family: inherit;
+    margin-bottom: 15px;
+    outline: none;
+}
+
+.qna-input:focus, .note-input:focus {
+    border-color: #2563eb;
+}
+
+.ask-btn, .save-note-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* =========================================
+   SIDEBAR PLAYLIST (CỘT PHẢI)
+========================================= */
+.learning-sidebar {
+    width: 400px;
+    background: white;
+    border-left: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.sidebar-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #0f172a;
+}
+
+.playlist {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.chapter-title-box {
+    background: #f8fafc;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.chapter-title-box h4 {
+    margin: 0;
+    font-size: 15px;
+    color: #1e293b;
+}
+
+.playlist-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.playlist-item:hover {
+    background: #f8fafc;
+}
+
+.playlist-item.current {
+    background: #eff6ff;
+    border-left: 4px solid #2563eb;
+}
+
+.lesson-details {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.lesson-details .title {
+    font-size: 14px;
+    color: #334155;
+    font-weight: 500;
+}
+
+.playlist-item.current .title {
+    color: #2563eb;
+    font-weight: 600;
+}
+
+.lesson-details .duration {
+    font-size: 12px;
+    color: #94a3b8;
+}

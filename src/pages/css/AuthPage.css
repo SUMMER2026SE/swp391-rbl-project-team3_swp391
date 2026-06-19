@@ -1,174 +1,135 @@
-*{
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body{
-    font-family: Arial, sans-serif;
-}
-
-.auth-container{
-    width: 100%;
+.auth-container {
     min-height: 100vh;
-
     display: flex;
     justify-content: center;
     align-items: center;
 
-    background:
-        linear-gradient(
-            135deg,
-            #0f172a,
-            #1e3a8a
-        );
-
-    padding: 20px;
+    background: #eef3f9;
+    padding: 32px;
+    box-sizing: border-box;
 }
 
-.auth-card{
+.auth-card {
     width: 100%;
-    max-width: 1100px;
-    height: 700px;
-
-    background: white;
-
-    border-radius: 30px;
-
-    overflow: hidden;
+    max-width: 1200px;
+    min-height: 720px;
 
     display: grid;
     grid-template-columns: 1fr 1fr;
 
+    background: white;
+
+    border-radius: 24px;
+    overflow: hidden;
+
     box-shadow:
-        0 20px 60px rgba(0,0,0,0.4);
+        0 12px 40px rgba(0, 0, 0, 0.08);
 }
 
-.auth-left{
-    background:
-        linear-gradient(
-            135deg,
-            #2563eb,
-            #4338ca
-        );
+/* LEFT */
+.auth-left {
+    position: relative;
 
-    color: white;
-
-    padding: 70px;
-
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.auth-left h1{
-    font-size: 70px;
-    margin-bottom: 20px;
-}
-
-.auth-left p{
-    font-size: 18px;
-    line-height: 1.8;
-}
-
-.auth-right{
     display: flex;
     justify-content: center;
     align-items: center;
 
-    padding: 40px;
-}
+    padding: 60px;
 
-.form-box{
-    width: 100%;
-    max-width: 400px;
-}
-
-.form-box h2{
-    font-size: 42px;
-    margin-bottom: 30px;
-    color: #0f172a;
-}
-
-.form-box form{
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.form-box input{
-    padding: 18px;
-
-    border-radius: 15px;
-
-    border: 1px solid #cbd5e1;
-
-    font-size: 16px;
-}
-
-.form-box input:focus{
-    outline: none;
-
-    border-color: #2563eb;
-}
-
-.form-box button{
-    padding: 18px;
-
-    border: none;
-
-    border-radius: 15px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #2563eb,
-            #4338ca
-        );
+    background: linear-gradient(
+        135deg,
+        #3b82f6,
+        #4338ca
+    );
 
     color: white;
-
-    font-size: 18px;
-    font-weight: bold;
-
-    cursor: pointer;
-
-    transition: 0.3s;
 }
 
-.form-box button:hover{
-    transform: translateY(-2px);
+.left-content {
+    max-width: 420px;
+    z-index: 2;
 }
 
-.form-box p{
-    margin-top: 25px;
-    text-align: center;
-    color: #64748b;
+.left-content h1 {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1.2;
+
+    margin-bottom: 20px;
 }
 
-.form-box span{
-    margin-left: 5px;
-
-    color: #2563eb;
-
-    font-weight: bold;
-
-    cursor: pointer;
+.left-content p {
+    font-size: 17px;
+    line-height: 1.7;
 }
 
-.form-box span:hover{
-    text-decoration: underline;
+.feature-list {
+    margin-top: 30px;
 }
 
-@media(max-width: 900px){
-    .auth-card{
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    margin-bottom: 18px;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+
+    border-radius: 50%;
+    background: white;
+}
+
+/* circles */
+.overlay-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.overlay-circle.top {
+    width: 220px;
+    height: 220px;
+
+    top: -70px;
+    right: -70px;
+}
+
+.overlay-circle.bottom {
+    width: 260px;
+    height: 260px;
+
+    bottom: -90px;
+    left: -90px;
+}
+
+/* RIGHT */
+.auth-right {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 48px;
+}
+
+/* responsive */
+@media (max-width: 900px) {
+    .auth-card {
         grid-template-columns: 1fr;
-        height: auto;
     }
-    .auth-left{
-        display: none;
+
+    .auth-left {
+        padding: 40px;
     }
-    .auth-right{
-        padding: 50px 30px;
+
+    .auth-right {
+        padding: 28px;
+    }
+
+    .left-content h1 {
+        font-size: 34px;
     }
 }

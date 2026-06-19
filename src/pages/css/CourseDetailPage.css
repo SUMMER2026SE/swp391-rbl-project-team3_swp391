@@ -1,0 +1,308 @@
+/* =========================================
+   BỐ CỤC CHUNG
+========================================= */
+.course-detail-page {
+    min-height: 100vh;
+    background: #f5f5fb;
+    padding: 30px 50px;
+    font-family: "Poppins", Arial, sans-serif;
+}
+
+.breadcrumb {
+    font-size: 14px;
+    color: #64748b;
+    margin-bottom: 25px;
+}
+
+.breadcrumb span {
+    cursor: pointer;
+}
+
+.breadcrumb span:hover {
+    color: #2563eb;
+}
+
+.breadcrumb .separator {
+    margin: 0 10px;
+    cursor: default;
+}
+
+.breadcrumb .current {
+    font-weight: 600;
+    color: #0f172a;
+    cursor: default;
+}
+
+.course-detail-container {
+    display: flex;
+    gap: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    align-items: flex-start;
+}
+
+/* =========================================
+   CỘT TRÁI (NỘI DUNG)
+========================================= */
+.course-left {
+    flex: 1;
+}
+
+.course-title {
+    font-size: 36px;
+    color: #0f172a;
+    margin-bottom: 15px;
+    line-height: 1.2;
+}
+
+.course-description {
+    font-size: 16px;
+    color: #475569;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.course-meta-top {
+    display: flex;
+    gap: 25px;
+    font-size: 15px;
+    color: #334155;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.section-box {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+
+.section-box h2 {
+    font-size: 22px;
+    color: #1e293b;
+    margin-bottom: 20px;
+}
+
+.learning-objectives {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.learning-objectives li {
+    position: relative;
+    padding-left: 25px;
+    color: #475569;
+}
+
+.learning-objectives li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #059669;
+    font-weight: bold;
+}
+
+/* SYLLABUS ACCORDION */
+.chapter-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.chapter-header {
+    background: #f8fafc;
+    padding: 18px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.chapter-header:hover {
+    background: #f1f5f9;
+}
+
+.chapter-header.active {
+    background: #eff6ff;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.chapter-header h3 {
+    font-size: 16px;
+    margin: 0;
+    color: #1e293b;
+}
+
+.chapter-body {
+    background: white;
+}
+
+.lesson-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    align-items: center;
+    transition: 0.2s;
+}
+
+.lesson-item:hover {
+    background: #f8fafc;
+}
+
+.lesson-item:last-child {
+    border-bottom: none;
+}
+
+.lesson-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: #334155;
+}
+
+.play-icon {
+    color: #2563eb;
+    font-size: 12px;
+}
+
+.lesson-meta {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.preview-badge {
+    background: #dcfce7;
+    color: #166534;
+    padding: 4px 10px;
+    font-size: 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.preview-badge:hover {
+    background: #bbf7d0;
+}
+
+.duration {
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+/* =========================================
+   CỘT PHẢI (STICKY WIDGET)
+========================================= */
+.course-right {
+    width: 380px;
+    position: sticky;
+    top: 90px; /* Cố định khi cuộn trang */
+}
+
+.floating-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+    border: 1px solid #f1f5f9;
+}
+
+.preview-video {
+    position: relative;
+    height: 220px;
+    cursor: pointer;
+}
+
+.preview-video img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.play-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-weight: 600;
+    font-size: 18px;
+    transition: 0.3s;
+}
+
+.preview-video:hover .play-overlay {
+    background: rgba(0,0,0,0.5);
+}
+
+.pricing-box {
+    padding: 25px 25px 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.price-tag {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.original-price {
+    font-size: 18px;
+    color: #94a3b8;
+    text-decoration: line-through;
+}
+
+.enroll-btn {
+    width: calc(100% - 50px);
+    margin: 20px 25px;
+    padding: 16px;
+    background: linear-gradient(135deg, #2563eb, #4338ca);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.enroll-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.25);
+}
+
+.course-features {
+    padding: 0 25px 25px;
+}
+
+.course-features h4 {
+    margin-bottom: 15px;
+    color: #334155;
+}
+
+.course-features ul {
+    list-style: none;
+    padding: 0;
+}
+
+.course-features li {
+    font-size: 14px;
+    color: #475569;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
