@@ -6,7 +6,8 @@
     background-color: #f8fafc;
     min-height: 100vh;
     padding-bottom: 50px;
-    font-family: 'Inter', sans-serif;
+    /* 🔥 ĐÃ SỬA: Thay 'Inter' bằng Segoe UI để Unikey/EVKey không bị loạn dấu */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
 }
 
 /* --- HEADER --- */
@@ -27,6 +28,7 @@
     font-size: 20px;
     color: #1e293b;
     margin-top: 8px;
+    font-family: 'Segoe UI', sans-serif !important;
 }
 
 .back-btn {
@@ -36,6 +38,7 @@
     cursor: pointer;
     font-weight: 500;
     padding: 0;
+    font-family: 'Segoe UI', sans-serif !important;
 }
 
 .back-btn:hover {
@@ -54,6 +57,7 @@
     cursor: pointer;
     border: none;
     transition: 0.2s;
+    font-family: 'Segoe UI', sans-serif !important;
 }
 
 .btn-secondary { background: #e2e8f0; color: #334155; }
@@ -82,6 +86,7 @@
     color: #0f172a;
     border-bottom: 2px solid #e2e8f0;
     padding-bottom: 10px;
+    font-family: 'Segoe UI', sans-serif !important;
 }
 
 /* --- CỘT TRÁI: FORM NHẬP LIỆU --- */
@@ -113,6 +118,7 @@
     font-size: 14px;
     color: #475569;
     margin-bottom: 8px;
+    font-family: 'Segoe UI', sans-serif !important;
 }
 
 .form-group input, .form-group textarea {
@@ -122,7 +128,8 @@
     font-size: 15px;
     outline: none;
     transition: border 0.2s;
-    font-family: inherit;
+    /* 🔥 ĐÃ SỬA: Ép cứng font hệ thống hỗ trợ tiếng Việt tốt nhất để Unikey không bị nuốt chữ */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
 }
 
 .form-group input:focus, .form-group textarea:focus {
@@ -146,10 +153,11 @@
     color: #64748b;
     margin-top: -10px;
     margin-bottom: 20px;
+    font-family: 'Segoe UI', sans-serif !important;
 }
 
 .chapter-edit-box {
-    background: #f8fafc;
+    background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
     margin-bottom: 20px;
@@ -157,7 +165,7 @@
 }
 
 .chapter-edit-header {
-    background: #f1f5f9;
+    background: #f8fafc;
     padding: 12px 16px;
     display: flex;
     justify-content: space-between;
@@ -172,15 +180,18 @@
     width: 80%;
     outline: none;
     color: #1e293b;
+    /* 🔥 ĐÃ THÊM: Bảo vệ ô input khi sửa tên chương mục */
+    font-family: 'Segoe UI', sans-serif !important;
 }
 
 .delete-icon-btn, .settings-icon-btn {
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 16px;
-    opacity: 0.5;
+    font-size: 14px;
+    opacity: 0.8;
     transition: 0.2s;
+    font-family: 'Segoe UI', sans-serif !important;
 }
 
 .delete-icon-btn:hover { opacity: 1; color: red; }
@@ -214,17 +225,19 @@
     border: none;
     outline: none;
     font-size: 14px;
-    font-family: inherit;
+    /* 🔥 ĐÃ SỬA: Ép cứng font an toàn chống mất dấu Unikey khi sửa bài giảng */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
 }
 
 .lesson-duration {
-    width: 60px;
-    border: none;
-    background: #f1f5f9;
-    padding: 4px 8px;
-    border-radius: 4px;
+    width: 100px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    padding: 6px 10px;
+    border-radius: 6px;
     font-size: 13px;
     text-align: center;
+    font-family: 'Segoe UI', sans-serif !important;
 }
 
 .add-lesson-btn {
@@ -237,6 +250,7 @@
     font-weight: 500;
     cursor: pointer;
     transition: 0.2s;
+    font-family: 'Segoe UI', sans-serif !important;
 }
 
 .add-lesson-btn:hover {
@@ -256,6 +270,7 @@
     cursor: pointer;
     font-size: 15px;
     transition: 0.2s;
+    font-family: 'Segoe UI', sans-serif !important;
 }
 
 .add-chapter-btn:hover { background: #dce6ff; }
