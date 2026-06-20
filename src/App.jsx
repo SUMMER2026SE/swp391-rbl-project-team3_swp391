@@ -13,8 +13,11 @@ import LearningPage from './pages/jsx/LearningPage';
 import AdaptivePathPage from './pages/jsx/AdaptivePathPage';
 import StudyCalendarPage from './pages/jsx/StudyCalendarPage';
 import InstructorProfilePage from './pages/jsx/InstructorProfilePage';
+
 import AdminDashboardPage from './pages/jsx/AdminDashboardPage';
 import AdminUIConfigPage from './pages/jsx/AdminUIConfigPage';
+import AdminLoginPage from './pages/jsx/AdminLoginPage';
+
 import NotificationsPage from './pages/jsx/NotificationsPage';
 import CoursePreviewPage from './pages/jsx/CoursePreviewPage';
 import CoursesPage from './pages/jsx/CoursesPage';
@@ -27,6 +30,8 @@ import CourseEditPage from "./pages/jsx/CourseEditPage";
 import TestListPage from './pages/jsx/TestListPage';
 import TestResult from './pages/jsx/TestResult';
 import TestPage from './pages/jsx/TestPage';
+
+import AdminRoute from './routes/adminRoute';
 
 import {Routes, Route, BrowserRouter} from "react-router-dom";
 import './App.css';
@@ -61,17 +66,47 @@ function App() {
           <Route path='/tests/result/:sessionsId' element={<TestResult />} />
 
           {/* Admin - Teacher */}
-          <Route path="/admin" element={<AdminDashboardPage />} />
-          <Route path="/admin/ui-config" element={<AdminUIConfigPage />} />
+          <Route path="/admin-login" element={<AdminLoginPage />}/>
+          <Route
+              path="/admin"
+              element={
+                  <AdminRoute>
+                      <AdminDashboardPage />
+                  </AdminRoute>
+              }
+          />
+
+          <Route
+              path="/admin/users"
+              element={
+                  <AdminRoute>
+                      <AdminUsersPage />
+                  </AdminRoute>
+              }
+          />
+
+          <Route
+              path="/admin/courses"
+              element={
+                  <AdminRoute>
+                      <AdminCoursesPage />
+                  </AdminRoute>
+              }
+          />
+
+          <Route
+              path="/admin/ui-config"
+              element={
+                  <AdminRoute>
+                      <AdminUIConfigPage />
+                  </AdminRoute>
+              }
+          />
+
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/courses" element={<CoursesPage />} />
-
           <Route path="/teacher/preview/:id" element={<CoursePreviewPage />} />
-                
           <Route path="/admin/preview/:id" element={<CoursePreviewPage />} />
-
-          <Route path="/admin/users" element={<AdminUsersPage />} />
-          <Route path="/admin/courses" element={<AdminCoursesPage />} />
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
           <Route path="/teacher/course/:id/edit" element={<CourseEditPage />} />
         </Routes>    
