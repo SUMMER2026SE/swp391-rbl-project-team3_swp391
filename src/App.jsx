@@ -16,7 +16,6 @@ import InstructorProfilePage from './pages/jsx/InstructorProfilePage';
 
 import AdminDashboardPage from './pages/jsx/AdminDashboardPage';
 import AdminUIConfigPage from './pages/jsx/AdminUIConfigPage';
-import AdminLoginPage from './pages/jsx/AdminLoginPage';
 
 import NotificationsPage from './pages/jsx/NotificationsPage';
 import CoursePreviewPage from './pages/jsx/CoursePreviewPage';
@@ -66,7 +65,6 @@ function App() {
           <Route path='/tests/result/:sessionsId' element={<TestResult />} />
 
           {/* Admin - Teacher */}
-          <Route path="/admin-login" element={<AdminLoginPage />}/>
           <Route
               path="/admin"
               element={
