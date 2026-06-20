@@ -376,9 +376,16 @@ export default function CourseDetailPage() {
                             {course.originalPrice && <div className="original-price">{course.originalPrice}</div>}
                         </div>
 
-                        <button className="enroll-btn" onClick={() => navigate(`/learn/${course.id}`)}>
-                            Đăng ký học ngay
-                        </button>                        
+                        <button className="enroll-btn" onClick={() => navigate(`/checkout/${course.id}`)}>
+                            Mua khóa học ngay
+                        </button>
+                        <button
+                            className="enroll-btn"
+                            style={{ background: "transparent", color: "#3b82f6", border: "1px solid #3b82f6", marginTop: "10px" }}
+                            onClick={() => navigate(`/learn/${course.id}`)}
+                        >
+                            Học thử miễn phí
+                        </button>
                         
                         <div className="course-features">
                             <h4>Khóa học bao gồm:</h4>

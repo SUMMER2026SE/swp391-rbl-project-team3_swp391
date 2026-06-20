@@ -20,6 +20,8 @@ import CoursePreviewPage from './pages/jsx/CoursePreviewPage';
 import CoursesPage from './pages/jsx/CoursesPage';
 import AdminUsersPage from './pages/jsx/AdminUsersPage';
 import AdminCoursesPage from './pages/jsx/AdminCoursesPage';
+import AdminSePayGuide from './pages/jsx/AdminSePayGuide';
+import AdminQuestionBankPage from './pages/jsx/AdminQuestionBankPage';
 import TeacherDashboard from "./pages/jsx/TeacherDashboard";
 import CourseEditPage from "./pages/jsx/CourseEditPage";
 
@@ -27,6 +29,17 @@ import CourseEditPage from "./pages/jsx/CourseEditPage";
 import TestListPage from './pages/jsx/TestListPage';
 import TestResult from './pages/jsx/TestResult';
 import TestPage from './pages/jsx/TestPage';
+
+// Nguyễn Văn Hải - Entry Test / Payment / AI Interface
+import EntryTestPage from './pages/jsx/EntryTestPage';
+import EntryTestResultPage from './pages/jsx/EntryTestResultPage';
+import CheckoutPage from './pages/jsx/CheckoutPage';
+import PaymentReturnPage from './pages/jsx/PaymentReturnPage';
+import BankTransferPage from './pages/jsx/BankTransferPage';
+import AiChatbotPage from './pages/jsx/AiChatbotPage';
+import GapDiagnosisPage from './pages/jsx/GapDiagnosisPage';
+import ScoreForecastPage from './pages/jsx/ScoreForecastPage';
+import UniversityAdvisingPage from './pages/jsx/UniversityAdvisingPage';
 
 import {Routes, Route, BrowserRouter} from "react-router-dom";
 import './App.css';
@@ -60,6 +73,21 @@ function App() {
           <Route path='/tests/:sessionsId' element={<TestPage />} />
           <Route path='/tests/result/:sessionsId' element={<TestResult />} />
 
+          {/* #13 Kiểm tra đầu vào */}
+          <Route path='/entry-test' element={<EntryTestPage />} />
+          <Route path='/entry-test/result/:sessionsId' element={<EntryTestResultPage />} />
+
+          {/* #14 Thanh toán / Mua khóa học */}
+          <Route path='/checkout/:courseId' element={<CheckoutPage />} />
+          <Route path='/pay/bank/:courseId' element={<BankTransferPage />} />
+          <Route path='/payment/return' element={<PaymentReturnPage />} />
+
+          {/* #26/28/29/30 AI Interface */}
+          <Route path='/ai/chat' element={<AiChatbotPage />} />
+          <Route path='/ai/gap-diagnosis' element={<GapDiagnosisPage />} />
+          <Route path='/ai/score-forecast' element={<ScoreForecastPage />} />
+          <Route path='/ai/university-advising' element={<UniversityAdvisingPage />} />
+
           {/* Admin - Teacher */}
           <Route path="/admin" element={<AdminDashboardPage />} />
           <Route path="/admin/ui-config" element={<AdminUIConfigPage />} />
@@ -72,9 +100,14 @@ function App() {
 
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/courses" element={<AdminCoursesPage />} />
+          <Route path="/admin/question-bank" element={<AdminQuestionBankPage />} />
+          <Route path="/admin/sepay-guide" element={<AdminSePayGuide />} />
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
           <Route path="/teacher/course/:id/edit" element={<CourseEditPage />} />
-        </Routes>    
+
+          {/* Fallback: route lạ -> về trang chủ (tránh trang trắng) */}
+          <Route path="*" element={<HomePage />} />
+        </Routes>
   );
 }
 

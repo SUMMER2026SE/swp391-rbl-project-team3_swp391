@@ -1,0 +1,48 @@
+.checkout-page {
+    min-height: 100vh;
+    background: #f5f5fb;
+    font-family: "Poppins", Arial, sans-serif;
+    padding: 40px;
+    max-width: 720px;
+    margin: 0 auto;
+}
+.checkout-page .back-btn { color: #64748b; cursor: pointer; font-weight: 500; font-size: 15px; }
+.checkout-page .back-btn:hover { color: #2563eb; }
+.checkout-title { font-size: 28px; color: #0f172a; margin: 16px 0 24px; }
+
+.checkout-status {
+    min-height: 60vh; display: flex; align-items: center; justify-content: center;
+    font-family: "Poppins", Arial, sans-serif; font-size: 18px; color: #475569;
+}
+
+.checkout-card {
+    background: white; border-radius: 22px; padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+.checkout-card.owned { text-align: center; }
+.checkout-card.owned h2 { color: #10b981; }
+
+.checkout-summary h2 { font-size: 18px; color: #1e293b; margin: 0 0 18px; }
+.summary-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0; border-bottom: 1px dashed #e2e8f0; color: #475569; font-size: 15px;
+}
+.summary-row.total { border-bottom: none; font-size: 18px; color: #0f172a; padding-top: 18px; }
+.summary-row.total strong { color: #ef4444; font-size: 22px; }
+
+.checkout-method { margin: 24px 0; }
+.checkout-method h3 { font-size: 16px; color: #1e293b; margin-bottom: 12px; }
+.method-option {
+    display: flex; align-items: center; gap: 10px;
+    border: 2px solid #3b82f6; border-radius: 12px; padding: 14px 16px;
+    background: #eff6ff; cursor: pointer; font-weight: 500; color: #1e293b;
+}
+.method-note { color: #94a3b8; font-size: 13px; margin-top: 8px; }
+
+.checkout-pay-btn {
+    width: 100%; background: #3b82f6; color: white; border: none;
+    padding: 15px; border-radius: 12px; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: 0.2s; margin-top: 10px;
+}
+.checkout-pay-btn:hover { background: #2563eb; }
+.checkout-pay-btn:disabled { background: #94a3b8; cursor: not-allowed; }
