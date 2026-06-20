@@ -1,17 +1,15 @@
 import React from "react";
 import "../css/QuestionCard.css";
 
-const QuestionCard = ({ question, selectedOption, onAnswer }) => {
+const QuestionCard = ({ question, selectedOption, onAnswer, index }) => {
     if (!question) {
         return <div>Đang tải câu hỏi...</div>;
     }
 
-    console.log("Question ID:", question.questionId, "Selected:", selectedOption); // Debug
-
     return (
         <div className="question-card">
             <div className="question-header">
-                <span className="question-number">Câu {question.questionId}</span>
+                <span className="question-number">Câu {index != null ? index + 1 : question.questionId}</span>
             </div>
             
             <div className="question-content">
