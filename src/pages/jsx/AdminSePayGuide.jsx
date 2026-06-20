@@ -47,7 +47,7 @@ const AdminSePayGuide = () => {
                         <br/><br/>
                         Học viên mở ứng dụng ngân hàng và chuyển khoản với nội dung là <code>PREPACE 15</code>.
                         <br/><br/>
-                        Ngân hàng báo có -> SePay nhận được giao dịch -> SePay gửi dữ liệu (POST) qua Webhook -> Hệ thống PrepAce đọc nội dung, tìm thấy chữ <code>PREPACE 15</code>, và tự động kích hoạt khóa học cho học viên.
+                        Ngân hàng báo có ➔ SePay nhận được giao dịch ➔ SePay gửi dữ liệu (POST) qua Webhook ➔ Hệ thống PrepAce đọc nội dung, tìm thấy chữ <code>PREPACE 15</code>, và tự động kích hoạt khóa học cho học viên.
                     </p>
                 </div>
 

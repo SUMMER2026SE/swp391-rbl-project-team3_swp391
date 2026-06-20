@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import aiService from "../../services/aiService";
 import "../css/AiChatbotPage.css";
 
@@ -75,9 +77,9 @@ export default function AiChatbotPage() {
                         <div key={i} className={`chat-msg ${m.role}`}>
                             {m.role === "ai" && <span className="msg-avatar">🤖</span>}
                             <div className="msg-bubble">
-                                {m.text.split("\n").map((line, j) => (
-                                    <p key={j}>{line}</p>
-                                ))}
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {m.text}
+                                </ReactMarkdown>
                                 {m.source === "FALLBACK" && <span className="msg-tag">chế độ ngoại tuyến</span>}
                             </div>
                         </div>

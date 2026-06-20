@@ -58,23 +58,6 @@ export default function CheckoutPage() {
         }
     };
 
-    const handleZaloPay = async () => {
-        try {
-            setProcessing(true);
-            const order = await paymentService.createZaloPay(Number(courseId));
-            if (order.order_url) {
-                // Chuyển thẳng sang cổng ZaloPay thật
-                window.location.href = order.order_url;
-            } else {
-                alert("ZaloPay không trả về liên kết thanh toán.");
-                setProcessing(false);
-            }
-        } catch (e) {
-            alert("Không thể tạo đơn ZaloPay: " + (e.response?.data?.message || e.message));
-            setProcessing(false);
-        }
-    };
-
     if (loading) return <div className="checkout-status">Đang tải thông tin thanh toán...</div>;
 
     return (
@@ -121,21 +104,12 @@ export default function CheckoutPage() {
                     </div>
 
                     <button
-                        className="checkout-pay-btn"
+                        className="checkout-pay-btn primary-gradient"
                         disabled={processing}
                         onClick={() => navigate(`/pay/bank/${courseId}`)}
-                        style={{ background: "#0068ff" }}
                     >
-                        🏦 Thanh toán qua chuyển khoản (VietQR)
-                    </button>
-
-                    <button
-                        className="checkout-pay-btn"
-                        disabled={processing}
-                        onClick={handleZaloPay}
-                        style={{ background: "#0d6efd", marginTop: 10, opacity: 0.92 }}
-                    >
-                        {processing ? "Đang xử lý..." : "💳 Thanh toán qua ZaloPay"}
+                        <i className="fa-solid fa-qrcode" style={{marginRight: '8px'}}></i>
+                        Thanh toán qua chuyển khoản (VietQR)
                     </button>
                 </div>
             )}
