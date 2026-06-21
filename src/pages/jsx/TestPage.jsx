@@ -12,7 +12,10 @@ const TestPage = () => {
     const [questions, setQuestions] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [answers, setAnswers] = useState({});
-    const [remainingTime, setRemainingTime] = useState(3600); // mặc định 60 phút
+    const [remainingTime] = useState(() => {
+        const saved = localStorage.getItem(`test_time_${sessionsId}`);
+        return saved ? parseInt(saved, 10) : 3600; // lấy thời gian thực từ lúc bắt đầu
+    });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -63,8 +66,8 @@ const TestPage = () => {
         }).catch(err => console.error("Auto save thất bại", err));
     };
 
-    const submitTest = async () => {
-        if (!window.confirm("Bạn chắc chắn muốn nộp bài?")) return;
+    const submitTest = async (auto = false) => {
+        if (!auto && !window.confirm("Bạn chắc chắn muốn nộp bài?")) return;
 
         try {
             const token = localStorage.getItem("token");
@@ -76,7 +79,8 @@ const TestPage = () => {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            alert("Nộp bài thành công!");
+            localStorage.removeItem(`test_time_${sessionsId}`);
+            alert(auto ? "Hết giờ! Bài thi đã được tự động nộp." : "Nộp bài thành công!");
             window.location.href = `/tests/result/${sessionsId}`;
         } catch (err) {
             alert("Nộp bài thất bại");
@@ -91,18 +95,20 @@ const TestPage = () => {
         <div className="test-page">
             <div className="test-header">
                 {/* Sửa lỗi comment ở đây */}
-                <Timer 
-                    initialTime={remainingTime} 
-                    sessionsId={sessionsId} 
+                <Timer
+                    initialTime={remainingTime}
+                    sessionsId={sessionsId}
+                    onTimeout={() => submitTest(true)}
                 />
-                <button onClick={submitTest} className="btn-submit">Nộp Bài</button>
+                <button onClick={() => submitTest(false)} className="btn-submit">Nộp Bài</button>
             </div>
 
             <div className="test-content">
-                <QuestionCard 
-                    question={currentQuestion} 
-                    selectedOption={answers[currentQuestion?.questionId]} 
+                <QuestionCard
+                    question={currentQuestion}
+                    selectedOption={answers[currentQuestion?.questionId]}
                     onAnswer={handleAnswer}
+                    index={currentIndex}
                 />
 
                 <QuestionNavigator 

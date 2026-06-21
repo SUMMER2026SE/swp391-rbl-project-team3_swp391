@@ -53,6 +53,10 @@ const TestListPage = () => {
             }
 
             const data = await res.json();
+            // Lưu thời gian làm bài thực tế (giây) để TestPage đếm ngược đúng
+            if (data.remainingTime) {
+                localStorage.setItem(`test_time_${data.sessionsId}`, data.remainingTime);
+            }
             window.location.href = `/tests/${data.sessionsId}`;
         } catch (err) {
             alert("Lỗi khi bắt đầu: " + err.message);

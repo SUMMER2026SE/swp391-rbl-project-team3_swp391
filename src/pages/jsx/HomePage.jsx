@@ -12,15 +12,15 @@ export default function HomePage() {
 
     const [featuredCourses, setFeaturedCourses] = useState([
         {
-            id: 1, title: "Mastering Mathematics 12", teacher: "Nguyen Minh Quan", userId: 2, subject: "Toán học",
+            id: 1, title: "Mastering Mathematics 12 kk", teacher: "Nguyen Minh Quan", userId: 2, subject: "Toán học",
             price: "599,000đ", students: 1250, thumbnail: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=400&q=80"
         },
         {
-            id: 2, title: "Physics Problem Solving Techniques", teacher: "Tran Bao Chau", userId: 3, subject: "Vật lý",
+            id: 2, title: "Physics Problem Solving Techniques kk", teacher: "Tran Bao Chau", userId: 3, subject: "Vật lý",
             price: "499,000đ", students: 980, thumbnail: "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?auto=format&fit=crop&w=400&q=80"
         },
         {
-            id: 3, title: "English Vocabulary & Grammar", teacher: "Le Hoang Nam", userId: 5, subject: "Tiếng Anh",
+            id: 3, title: "English Vocabulary & Grammar kk", teacher: "Le Hoang Nam", userId: 5, subject: "Tiếng Anh",
             price: "399,000đ", students: 2100, thumbnail: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=400&q=80"
         }
     ]);
@@ -55,10 +55,29 @@ export default function HomePage() {
         axiosClient.get("/courses")
             .then(res => {
                 console.log(">>> DỮ LIỆU KHÓA HỌC:", res.data);
-                // ... (giữ nguyên code xử lý courses của bạn)
+                const data = res.data?.data || res.data;
+                const mappedData = Array.isArray(data) ? data.map(c => {
+                    const priceValue = c.price || c.course_price || c.coursePrice || 0;
+                    const displayPrice = priceValue > 0 ? priceValue.toLocaleString() + "đ" : "Miễn phí";
+                    
+                    return {
+                        id: c.course_id || c.courseId || c.id,
+                        title: c.course_title || c.courseTitle || c.title || "Khóa học chưa tên",
+                        thumbnail: c.thumbnail_url || c.thumbnailUrl || c.thumbnail,
+                        teacher: c.teacher_name || c.teacherName || c.teacher || "Giáo viên",
+                        subject: c.subject_name || c.subjectName || c.subject || "Chung",
+                        price: displayPrice,
+                        students: c.students || c.student_count || c.studentCount || 0,
+                        userId: c.teacher_id || c.teacherId || c.userId || 2
+                    };
+                }) : [];
+                
+                // Đẩy thẳng 3 khóa học xịn từ Database lên màn hình
+                if (mappedData.length > 0) {
+                    setFeaturedCourses(mappedData.slice(0, 3));
+                }
             })
-            .catch(err => console.log("Dùng data mẫu", err));
-
+            .catch(err => console.log("Dùng data mẫu do chưa kết nối Backend", err));
         return () => clearInterval(interval);
     }, []);
 
@@ -85,9 +104,12 @@ export default function HomePage() {
                 <ul className="menu">
                     <li onClick={() => navigate("/home")}>Trang chủ</li>
                     <li onClick={() => navigate("/courses")}>Khóa học</li>
+                    <li onClick={() => navigate("/entry-test")}>Kiểm tra đầu vào</li>
                     <li onClick={() => navigate("/tests")}>Luyện đề</li>
-                    <li onClick={() => navigate("/adaptive-path")}>Tiến độ</li>
-                    <li>Tư vấn ngành</li>
+                    <li onClick={() => navigate("/adaptive-path")}>Lộ trình AI</li>
+                    <li onClick={() => navigate("/ai/gap-diagnosis")}>Lỗ hổng kiến thức</li>
+                    <li onClick={() => navigate("/ai/score-forecast")}>Dự đoán điểm</li>
+                    <li onClick={() => navigate("/ai/university-advising")}>Tư vấn ngành</li>
                 </ul>
 
                 <div className="sidebar-actions">
@@ -183,6 +205,15 @@ export default function HomePage() {
                     </button>
                 </section>
             </main>
+
+            {/* Nút trợ lý AI nổi - Consult AI Chatbot (#26) */}
+            <button
+                className="ai-fab"
+                title="Hỏi trợ lý AI PrepAce"
+                onClick={() => navigate("/ai/chat")}
+            >
+                🤖
+            </button>
         </div>
     );
 }
