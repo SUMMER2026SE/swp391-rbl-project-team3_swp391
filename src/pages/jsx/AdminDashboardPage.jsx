@@ -50,9 +50,14 @@ export default function AdminDashboardPage() {
     ];
 
     const handleLogout = () => {
+        console.log("Before:", localStorage.getItem("user"));
+        
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        navigate("/");
+
+        console.log("After:", localStorage.getItem("user"));
+
+        navigate("/auth");
     };
 
     return (

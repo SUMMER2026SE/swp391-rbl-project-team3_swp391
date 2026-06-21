@@ -92,7 +92,7 @@ export default function HomePage() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         setUser(null);
-        navigate("/home");
+        navigate("/auth");
     };
 
     return (
