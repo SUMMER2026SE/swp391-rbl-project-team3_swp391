@@ -33,7 +33,6 @@ import TestPage from './pages/jsx/TestPage';
 import AdminRoute from './routes/adminRoute';
 
 import {Routes, Route, BrowserRouter} from "react-router-dom";
-import './App.css';
 
 
 function App() {

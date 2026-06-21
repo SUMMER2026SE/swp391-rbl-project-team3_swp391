@@ -11,7 +11,7 @@ export default function AdminRoute({ children }) {
     }
 
     if (!user || user.role !== "ADMIN") {
-        return <Navigate to="/home" />;
+        return <Navigate to="/auth" />;
     }
 
     return children;
