@@ -71,8 +71,10 @@
 ========================================= */
 .learning-workspace {
     display: flex;
-    flex: 1;
+    width: 100%;
+    height: calc(100vh - 60px); /* Trừ đi chiều cao của thanh topbar */
     overflow: hidden;
+    background-color: #f8f9fa;
 }
 
 /* =========================================
@@ -80,20 +82,32 @@
 ========================================= */
 .learning-main {
     flex: 1;
-    display: flex;
-    flex-direction: column;
+    width: 75%;
+    padding: 20px;
     overflow-y: auto;
+    height: 100%;
 }
 
+/* Khung bọc video để khống chế tỷ lệ 16:9 không bị tràn */
+/* Khung chứa video: Cho phép rộng tối đa và căn giữa */
 .video-container {
-    background: #000;
     width: 100%;
-    aspect-ratio: 16 / 9;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    max-width: 100%; /* Sửa từ 1000px thành 100% để nó bung hết không gian bên trái */
+    background-color: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    aspect-ratio: 16 / 9; /* 🔥 QUAN TRỌNG: Ép khung video luôn giữ tỷ lệ vàng 16:9 Cinema */
 }
 
+/* Thẻ video thực tế bên trong */
+.video-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Giúp video không bị méo hình dù ở bất kỳ độ phân giải nào */
+    display: block;
+}
 .video-placeholder {
     color: white;
     text-align: center;
@@ -220,11 +234,15 @@
    SIDEBAR PLAYLIST (CỘT PHẢI)
 ========================================= */
 .learning-sidebar {
-    width: 400px;
-    background: white;
-    border-left: 1px solid #e2e8f0;
+    width: 25%;
+    min-width: 300px; /* Đảm bảo không bị bóp quá nhỏ trên màn hình thấp */
+    max-width: 400px;
+    border-left: 1px solid #e0e0e0;
+    background-color: #ffffff;
     display: flex;
     flex-direction: column;
+    height: 100%;
+    overflow-y: auto; /* Tự cuộn khi danh sách chương quá dài */
 }
 
 .sidebar-header {

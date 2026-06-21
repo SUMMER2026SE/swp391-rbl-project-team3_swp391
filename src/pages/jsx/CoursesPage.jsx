@@ -11,22 +11,22 @@ export default function CoursesPage() {
     // 1. KHỞI TẠO STATE: Đút toàn bộ dữ liệu mẫu cũ vào làm bệ đỡ ban đầu để demo mượt mà
     const [allCourses, setAllCourses] = useState([
     {
-        id: 1, title: "Mastering Mathematics 12", teacher: "Nguyen Minh Quan", userId: 2,
+        id: 1, title: "Mastering Mathematics 12.", teacher: "Nguyen Minh Quan", userId: 2,
         subject: "math", subjectName: "Toán học", price: "599,000đ", students: 1250,
         thumbnail: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=400&q=80"
     },
     {
-        id: 2, title: "Physics Problem Solving Techniques", teacher: "Tran Bao Chau", userId: 3,
+        id: 2, title: "Physics Problem Solving Techniques.", teacher: "Tran Bao Chau", userId: 3,
         subject: "physics", subjectName: "Vật lý", price: "499,000đ", students: 980,
         thumbnail: "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?auto=format&fit=crop&w=400&q=80"
     },
     {
-        id: 3, title: "English Vocabulary & Grammar", teacher: "Le Hoang Nam", userId: 5,
+        id: 3, title: "English Vocabulary & Grammar.", teacher: "Le Hoang Nam", userId: 5,
         subject: "english", subjectName: "Tiếng Anh", price: "399,000đ", students: 2100,
         thumbnail: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=400&q=80"
     },
     {
-        id: 4, title: "Tuyệt đỉnh Casio - Giải nhanh trắc nghiệm", teacher: "Nguyen Minh Quan", userId: 2,
+        id: 4, title: "Tuyệt đỉnh Casio - Giải nhanh trắc nghiệm.", teacher: "Nguyen Minh Quan", userId: 2,
         subject: "math", subjectName: "Toán học", price: "299,000đ", students: 3100,
         thumbnail: "https://images.unsplash.com/photo-1596496050827-8299e0220de1?auto=format&fit=crop&w=400&q=80"
     }

@@ -79,37 +79,33 @@ const TestResult = () => {
 
             <div className="review-section">
                 <h2>Chi tiết từng câu</h2>
-                {result.questions && result.questions.map((q, index) => {
-                    const actuallyCorrect = isAnswerCorrect(q) || q.isCorrect === true;
-                    
-                    return (
-                        <div key={`${q.questionId}-${index}`} className={`review-item ${actuallyCorrect ? 'correct' : 'wrong'}`}>
-                            <div className="review-header">
-                                <span className="q-number">Câu {index + 1}</span>
-                                <span className={`status ${actuallyCorrect ? 'correct' : 'wrong'}`}>
-                                    {actuallyCorrect ? '✓ Đúng' : '✗ Sai'}
-                                </span>
-                            </div>
-
-                            <p className="question-text">{q.content}</p>
-
-                            <div className="answer-row">
-                                <div className="user-answer">
-                                    <strong>Bạn chọn:</strong> {q.selectedAnswer || "Chưa trả lời"}
-                                </div>
-                                <div className="correct-answer">
-                                    <strong>Đáp án đúng:</strong> {q.correctAnswer || q.correctedAnswer}
-                                </div>
-                            </div>
-
-                            {q.explanation && (
-                                <div className="explanation">
-                                    <strong>Giải thích:</strong> {q.explanation}
-                                </div>
-                            )}
+                {result.questions && result.questions.map((q, index) => (
+                    <div key={q.questionId} className={`review-item ${q.correct ? 'correct' : 'wrong'}`}>
+                        <div className="review-header">
+                            <span className="q-number">Câu {index + 1}</span>
+                            <span className={`status ${q.correct ? 'correct' : 'wrong'}`}>
+                                {q.correct ? '✓ Đúng' : '✗ Sai'}
+                            </span>
                         </div>
-                    );
-                })}
+
+                        <p className="question-text">{q.content}</p>
+
+                        <div className="answer-row">
+                            <div className="user-answer">
+                                <strong>Bạn chọn:</strong> {q.selectedAnswer}
+                            </div>
+                            <div className="correct-answer">
+                                <strong>Đáp án đúng:</strong> {q.correctedAnswer}
+                            </div>
+                        </div>
+
+                        {q.explanation && (
+                            <div className="explanation">
+                                <strong>Giải thích:</strong> {q.explanation}
+                            </div>
+                        )}
+                    </div>
+                ))}
             </div>
 
             <div className="result-actions">
