@@ -36,6 +36,7 @@ function ProfilePage() {
             // Cập nhật lại bộ nhớ local của máy sau khi lưu thành công
             localStorage.setItem("user", JSON.stringify(user));
             alert("Saved successfully!");
+            navigate("/home")
         } catch (err) {
             console.log(err);
             alert("Save failed!");
@@ -153,9 +154,6 @@ function ProfilePage() {
 
                         <div className="right-actions">
                             {/* Dùng navigate(-1) để quay về trang trước đó một cách thông minh */}
-                            <button className="cancel-btn" onClick={() => navigate(-1)}>
-                                Cancel
-                            </button>
                             <button className="save-btn" onClick={handleSave}>
                                 Save Changes
                             </button>
