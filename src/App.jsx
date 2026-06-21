@@ -44,6 +44,7 @@ import ScoreForecastPage from './pages/jsx/ScoreForecastPage';
 import UniversityAdvisingPage from './pages/jsx/UniversityAdvisingPage';
 
 import {Routes, Route, BrowserRouter} from "react-router-dom";
+import AdminRoute from './routes/adminRoute';
 
 
 function App() {
