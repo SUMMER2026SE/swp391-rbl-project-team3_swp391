@@ -51,9 +51,9 @@ localStorage.setItem("user", JSON.stringify(data.user)); // <--- THÊM DÒNG NÀ
             setMessageType("success");
 
             setTimeout(() => {
-                if (data.user?.role === "TEACHER") {
+                if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
                     navigate("/teacher/dashboard");
-                } else if (data.user?.role === "ADMIN") {
+                } else if (data.user?.role === "ADMIN" || data.user?.roleId === 1) {
                     navigate("/admin/courses");
                 } else {
                     navigate("/home");
@@ -98,17 +98,16 @@ localStorage.setItem("user", JSON.stringify(data.user)); // <--- THÊM DÒNG NÀ
 
             setMessage("✅ Google Login Success!");
             setMessageType("success");
-                    navigate("/home");
 
-            // setTimeout(() => {
-            //     if (data.user?.role === "TEACHER") {
-            //         navigate("/teacher/dashboard");
-            //     } else if (data.user?.role === "ADMIN") {
-            //         navigate("/admin/courses");
-            //     } else {
-            //         navigate("/home");
-            //     }
-            // }, 800);
+            setTimeout(() => {
+                if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
+                    navigate("/teacher/dashboard");
+                } else if (data.user?.role === "ADMIN" || data.user?.roleId === 1) {
+                    navigate("/admin/courses");
+                } else {
+                    navigate("/home");
+                }
+            }, 800);
 
         } catch (error) {
             console.error(error);
