@@ -23,93 +23,131 @@ export default function CheckoutPage() {
             return;
         }
 
-        // Lấy thông tin khóa học để hiển thị (dùng endpoint công khai /courses)
+        // Lấy course info
         axiosClient
             .get("/courses")
             .then((res) => {
-                const found = (res.data || []).find((c) => String(c.id) === String(courseId));
-                setCourse(found || { id: courseId, title: `Khóa học #${courseId}`, price: 0 });
+                const found = (res.data || []).find(
+                    (c) => String(c.courseId || c.id) === String(courseId)
+                );
+
+                setCourse(
+                    found || {
+                        courseId,
+                        title: `Khóa học #${courseId}`,
+                        price: 0,
+                    }
+                );
             })
-            .catch(() => setCourse({ id: courseId, title: `Khóa học #${courseId}`, price: 0 }))
+            .catch(() =>
+                setCourse({
+                    courseId,
+                    title: `Khóa học #${courseId}`,
+                    price: 0,
+                })
+            )
             .finally(() => setLoading(false));
 
-        // Kiểm tra đã sở hữu chưa
-        paymentService
-            .checkEnrolled(courseId)
-            .then((d) => setOwned(!!d.enrolled))
-            .catch(() => {});
+        // ❌ BỎ checkEnrolled (API không tồn tại)
+        setOwned(false);
     }, [courseId, navigate]);
 
     const handlePay = async () => {
         try {
             setProcessing(true);
-            const payment = await paymentService.createPayment(Number(courseId));
-            // Mô phỏng chuyển hướng sang cổng thanh toán
-            navigate(`/payment/return?transactionRef=${payment.transactionRef}`, {
-                state: {
-                    amount: payment.amount,
-                    courseTitle: payment.courseTitle,
-                    courseId: payment.courseId,
-                },
+
+            const res = await paymentService.createBank(courseId);
+
+            navigate(`/payment/bank/${courseId}`, {
+                state: res
             });
+
         } catch (e) {
-            alert("Không thể tạo giao dịch: " + (e.response?.data?.message || e.message));
+            alert(e.response?.data?.message || e.message);
+        } finally {
             setProcessing(false);
         }
     };
 
-    if (loading) return <div className="checkout-status">Đang tải thông tin thanh toán...</div>;
+    if (loading)
+        return (
+            <div className="checkout-status">
+                Đang tải thông tin thanh toán...
+            </div>
+        );
 
     return (
         <div className="checkout-page">
-            <span className="back-btn" onClick={() => navigate(-1)}>← Quay lại</span>
+            <span className="back-btn" onClick={() => navigate(-1)}>
+                ← Quay lại
+            </span>
+
             <h1 className="checkout-title">Thanh toán khóa học</h1>
 
             {owned ? (
                 <div className="checkout-card owned">
                     <h2>✅ Bạn đã sở hữu khóa học này</h2>
-                    <p>Vào học ngay để tiếp tục lộ trình của bạn.</p>
-                    <button className="checkout-pay-btn" onClick={() => navigate(`/learn/${courseId}`)}>
+                    <button
+                        className="checkout-pay-btn"
+                        onClick={() => navigate(`/learn/${courseId}`)}
+                    >
                         Vào học ngay
                     </button>
                 </div>
             ) : (
                 <div className="checkout-card">
+                    {/* SUMMARY */}
                     <div className="checkout-summary">
                         <h2>Thông tin đơn hàng</h2>
+
                         <div className="summary-row">
                             <span>Khóa học</span>
                             <strong>{course.title}</strong>
                         </div>
+
                         <div className="summary-row">
                             <span>Giảng viên</span>
                             <span>{course.teacherName || "PrepAce"}</span>
                         </div>
+
                         <div className="summary-row total">
                             <span>Tổng thanh toán</span>
-                            <strong>{course.price ? formatVnd(course.price) : "Miễn phí"}</strong>
+                            <strong>
+                                {course.price
+                                    ? formatVnd(course.price)
+                                    : "Miễn phí"}
+                            </strong>
                         </div>
                     </div>
 
+                    {/* PAYMENT INFO */}
                     <div className="checkout-method">
                         <h3>Phương thức thanh toán</h3>
+
                         <label className="method-option selected">
                             <input type="radio" checked readOnly />
-                            <span>🏦 Chuyển khoản ngân hàng (Quét mã VietQR)</span>
+                            <span>
+                                💳 Thanh toán hệ thống (Mock Gateway)
+                            </span>
                         </label>
+
                         <p className="method-note">
-                            Bạn sẽ nhận mã QR đã điền sẵn số tiền & nội dung. Chuyển khoản xong hệ thống
-                            tự động mở khóa khóa học.
+                            Hệ thống sẽ tự động xử lý thanh toán và mở khóa khóa học.
                         </p>
                     </div>
 
+                    {/* BUTTON */}
                     <button
                         className="checkout-pay-btn primary-gradient"
                         disabled={processing}
-                        onClick={() => navigate(`/pay/bank/${courseId}`)}
+                        onClick={handlePay}
                     >
-                        <i className="fa-solid fa-qrcode" style={{marginRight: '8px'}}></i>
-                        Thanh toán qua chuyển khoản (VietQR)
+                        <i
+                            className="fa-solid fa-credit-card"
+                            style={{ marginRight: "8px" }}
+                        ></i>
+
+                        {processing ? "Đang xử lý..." : "Thanh toán ngay"}
                     </button>
                 </div>
             )}
