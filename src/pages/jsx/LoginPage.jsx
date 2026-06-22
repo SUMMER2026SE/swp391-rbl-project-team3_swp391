@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../css/LoginPage.css";
 import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
 
 function LoginPage({ switchToRegister }) {
     const [email, setEmail] = useState("");
@@ -11,68 +12,6 @@ function LoginPage({ switchToRegister }) {
     const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
-
-    // NORMAL LOGIN
-    // const handleLogin = async (e) => {
-    //     e.preventDefault();
-
-    //     try {
-    //         setLoading(true);
-
-    //         const response = await fetch(
-    //             "http://localhost:8080/api/auth/login",
-    //             {
-    //                 method: "POST",
-    //                 headers: {
-    //                     "Content-Type": "application/json"
-    //                 },
-    //                 body: JSON.stringify({
-    //                     email: email.trim(),
-    //                     password
-    //                 })
-    //             }
-    //         );
-
-    //         let data = {};
-    //         try {
-    //             data = await response.json();
-    //         } catch {
-    //             data = {};
-    //         }
-
-    //         if (!response.ok) {
-    //             setMessage(data.message || "Login Failed");
-    //             return;
-    //         }
-
-    //         localStorage.setItem("token", data.token);
-    //         if (data.user) {
-    //             localStorage.setItem("user", JSON.stringify(data.user));
-    //         } else {
-    //             console.warn("⚠️ Missing user in response:", data);
-    //             localStorage.removeItem("user");
-    //         }
-    //         setMessage("✅ Login Successfully!");
-    //         setMessageType("success");
-
-    //         setTimeout(() => {
-    //             if (data.user?.role === "TEACHER") {
-    //                 navigate("/teacher/dashboard");
-    //             } else if (data.user?.role === "ADMIN") {
-    //                 navigate("/admin/courses");
-    //             } else {
-    //                 navigate("/");
-    //             }
-    //         }, 800);
-
-    //     } catch (error) {
-    //         console.error(error);
-    //         setMessage("❌ Server Error");
-    //         setMessageType("error");
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
 
     // NORMAL LOGIN - ĐÃ SỬA
     const handleLogin = async (e) => {
@@ -101,23 +40,76 @@ function LoginPage({ switchToRegister }) {
             }
 
             // Lưu token
-            if (data.token) {
-                localStorage.setItem("token", data.token);
-            }
+            // if (data.token) {
+            //     localStorage.setItem("token", data.token);
+            // }
 
-            // Lưu user (xử lý nhiều trường hợp backend trả về)
-            if (data.user) {
-                localStorage.setItem("user", JSON.stringify(data.user));
-            } else if (data.data && data.data.user) {
-                localStorage.setItem("user", JSON.stringify(data.data.user));
-            } else {
-                // Tạo user tạm từ email (vì backend chưa trả user)
-                const tempUser = {
-                    fullName: email.split('@')[0] || "Người dùng",
-                    email: email,
-                    role: "STUDENT"
+            // // Lưu user (xử lý nhiều trường hợp backend trả về)
+            // if (data.user) {
+            //     localStorage.setItem("user", JSON.stringify(data.user));
+            // } else if (data.data && data.data.user) {
+            //     localStorage.setItem("user", JSON.stringify(data.data.user));
+            // } else {
+            //     // Tạo user tạm từ email (vì backend chưa trả user)
+            //     const tempUser = {
+            //         fullName: email.split('@')[0] || "Người dùng",
+            //         email: email,
+            //         role: "STUDENT"
+            //     };
+            //     localStorage.setItem("user", JSON.stringify(tempUser));
+            // }
+
+            // setMessage("✅ Đăng nhập thành công!");
+            // setMessageType("success");
+
+            // // Redirect về trang chủ
+            // setTimeout(() => {
+            //     const user = JSON.parse(localStorage.getItem("user"));
+
+            //     if (user?.role === "ADMIN") {
+            //         navigate("/admin");
+            //     }
+            //     else if (user?.role === "TEACHER") {
+            //         navigate("/teacher/dashboard");
+            //     }
+            //     else {
+            //         navigate("/home");
+            //     }
+
+            // }, 700);
+            if (data.token) {
+                // Lưu token
+                localStorage.setItem("token", data.token);
+
+                // Giải mã JWT
+                const decoded = jwtDecode(data.token);
+
+                const user = {
+                    id: decoded.userId,
+                    fullName: decoded.fullName,
+                    email: decoded.sub,
+                    role: decoded.role.replace("ROLE_", "")
                 };
-                localStorage.setItem("user", JSON.stringify(tempUser));
+                // Lưu user
+                localStorage.setItem(
+                    "user",
+                    JSON.stringify(user)
+                );
+                console.log("User:", user);
+
+                // Điều hướng theo role
+                switch (user.role) {
+                    case "ADMIN":
+                        navigate("/admin");
+                        break;
+                    case "TEACHER":
+                        navigate("/teacher/dashboard");
+                        break;
+                    default:
+                        navigate("/home");
+                }
+            } else {
+                setError("Đăng nhập thất bại!");
             }
 
             setMessage("✅ Đăng nhập thành công!");

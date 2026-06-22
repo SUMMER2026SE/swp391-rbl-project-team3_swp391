@@ -24,7 +24,7 @@ const TestResult = () => {
                 }
             );
             const data = await res.json();
-            console.log(data);
+            console.log("📊 Dữ liệu kết quả từ backend:", data);
             setResult(data);
         } catch (err) {
             console.error(err);
@@ -38,16 +38,28 @@ const TestResult = () => {
     if (!result) return <div>Lỗi khi tải kết quả</div>;
 
     const percentage =
-    result && result.totalQuestions > 0
-        ? ((result.correctAnswers / result.totalQuestions) * 100).toFixed(1)
-        : "0.0";
+        result && result.totalQuestions > 0
+            ? ((result.correctAnswers / result.totalQuestions) * 100).toFixed(1)
+            : "0.0";
+
+    // Hàm so sánh thông minh (đồng bộ với backend)
+    const isAnswerCorrect = (q) => {
+        if (!q.selectedAnswer || !q.correctAnswer) return false;
+        
+        const selected = String(q.selectedAnswer).trim().toLowerCase();
+        const correct = String(q.correctAnswer).trim().toLowerCase();
+
+        return selected === correct || 
+               correct.includes(selected) || 
+               selected.includes(correct);
+    };
 
     return (
         <div className="result-container">
             <div className="result-header">
                 <h1>Kết Quả Bài Thi</h1>
                 <div className="score-circle">
-                    <span className="score">{result.score}</span>
+                    <span className="score">{result.score?.toFixed(2) || "0.00"}</span>
                     <span className="score-label">/10</span>
                 </div>
                 <p className="percentage">{percentage}% đúng</p>
@@ -68,32 +80,37 @@ const TestResult = () => {
             <div className="review-section">
                 <h2>Chi tiết từng câu</h2>
                 {result.questions && result.questions.map((q, index) => (
-                    <div key={q.questionId} className={`review-item ${q.isCorrect ? 'correct' : 'wrong'}`}>
+                    <div key={q.questionId} className={`review-item ${q.correct ? 'correct' : 'wrong'}`}>
                         <div className="review-header">
                             <span className="q-number">Câu {index + 1}</span>
-                            <span className={`status ${q.isCorrect ? 'correct' : 'wrong'}`}>
-                                {q.isCorrect ? '✓ Đúng' : '✗ Sai'}
+                            <span className={`status ${q.correct ? 'correct' : 'wrong'}`}>
+                                {q.correct ? '✓ Đúng' : '✗ Sai'}
                             </span>
                         </div>
 
-                        <p className="question-text">{p.content}</p>
+                        <p className="question-text">{q.content}</p>
 
-                        <div className="answer-row">
-                            <div className="user-answer">
-                                <strong>Bạn chọn:</strong> {q.selectedAnswer}
+                            <div className="answer-row">
+                                <div className="user-answer">
+                                    <strong>Bạn chọn:</strong> {q.selectedAnswer || "Chưa trả lời"}
+                                </div>
+                                <div className="correct-answer">
+                                    <strong>Đáp án đúng:</strong> {q.correctAnswer || q.correctedAnswer}
+                                </div>
                             </div>
                             <div className="correct-answer">
-                                <strong>Đáp án đúng:</strong> {q.correctAnswer}
+                                <strong>Đáp án đúng:</strong> {q.correctedAnswer}
                             </div>
                         </div>
 
-                        {q.explanation && (
-                            <div className="explanation">
-                                <strong>Giải thích:</strong> {q.explanation}
-                            </div>
-                        )}
-                    </div>
-                ))}
+                            {q.explanation && (
+                                <div className="explanation">
+                                    <strong>Giải thích:</strong> {q.explanation}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
 
             <div className="result-actions">

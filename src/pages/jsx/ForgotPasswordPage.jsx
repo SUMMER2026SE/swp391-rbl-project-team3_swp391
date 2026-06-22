@@ -24,7 +24,6 @@ export default function ForgotPasswordPage() {
             await axiosClient.post("/auth/forgot-password", {
                 email,
             });
-
             setMessage("📩 Check email để sắp đặt lại mật khẩu nhé!");
             setEmail("");
         } catch (err) {
