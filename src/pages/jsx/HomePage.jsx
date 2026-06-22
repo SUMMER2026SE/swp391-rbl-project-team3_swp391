@@ -95,7 +95,7 @@ export default function HomePage() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         setUser(null);
-        navigate("/home");
+        navigate("/auth");
     };
 
     return (
@@ -107,9 +107,12 @@ export default function HomePage() {
                 <ul className="menu">
                     <li onClick={() => navigate("/home")}>Trang chủ</li>
                     <li onClick={() => navigate("/courses")}>Khóa học</li>
+                    <li onClick={() => navigate("/entry-test")}>Kiểm tra đầu vào</li>
                     <li onClick={() => navigate("/tests")}>Luyện đề</li>
-                    <li onClick={() => navigate("/adaptive-path")}>Tiến độ</li>
-                    <li>Tư vấn ngành</li>
+                    <li onClick={() => navigate("/adaptive-path")}>Lộ trình AI</li>
+                    <li onClick={() => navigate("/ai/gap-diagnosis")}>Lỗ hổng kiến thức</li>
+                    <li onClick={() => navigate("/ai/score-forecast")}>Dự đoán điểm</li>
+                    <li onClick={() => navigate("/ai/university-advising")}>Tư vấn ngành</li>
                 </ul>
 
                 <div className="sidebar-actions">
@@ -206,6 +209,15 @@ export default function HomePage() {
                     </button>
                 </section>
             </main>
+
+            {/* Nút trợ lý AI nổi - Consult AI Chatbot (#26) */}
+            <button
+                className="ai-fab"
+                title="Hỏi trợ lý AI PrepAce"
+                onClick={() => navigate("/ai/chat")}
+            >
+                🤖
+            </button>
         </div>
     );
 }

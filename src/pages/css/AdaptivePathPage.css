@@ -249,9 +249,47 @@
     color: white;
 }
 
+/* RADAR CHART */
+.radar-chart {
+    display: block;
+    margin: 0 auto 30px;
+    max-width: 320px;
+}
+
+/* DEMO BANNER */
+.demo-banner {
+    margin-left: 95px;
+    margin-top: 10px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    max-width: 760px;
+}
+
+.link-inline {
+    color: #2563eb;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.loading {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #475569;
+    font-family: "Poppins", Arial, sans-serif;
+}
+
 /* RESPONSIVE */
 @media(max-width: 1024px) {
     .adaptive-container {
         grid-template-columns: 1fr;
     }
+    .demo-banner { margin-left: 0; }
 }

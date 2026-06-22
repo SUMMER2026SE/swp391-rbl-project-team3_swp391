@@ -1,13 +1,16 @@
 import React, {useState, useEffect} from "react";
 import "../css/Timer.css";
 
-const Timer = ({initialTime, sessionsId}) => {
+const Timer = ({initialTime, sessionsId, onTimeout}) => {
     const [timeLeft, setTimeLeft] = useState(initialTime || 3600);
+    const firedRef = useState({ done: false })[0];
 
     useEffect(() => {
         if(timeLeft <= 0){
-            alert("Hết thời gian! Bài thi sẽ được tự động nộp !!!");
-            //Gọi API nộp bài
+            if (!firedRef.done) {
+                firedRef.done = true;
+                if (typeof onTimeout === "function") onTimeout(); // Tự động nộp bài
+            }
             return;
         }
 
