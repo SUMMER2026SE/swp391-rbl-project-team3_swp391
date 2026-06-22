@@ -112,6 +112,20 @@ function LoginPage({ switchToRegister }) {
                 setError("Đăng nhập thất bại!");
             }
 
+            setMessage("✅ Đăng nhập thành công!");
+            setMessageType("success");
+
+            // Redirect về trang chủ
+            setTimeout(() => {
+                if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
+                    navigate("/teacher/dashboard");
+                } else if (data.user?.role === "ADMIN" || data.user?.roleId === 1) {
+                    navigate("/admin/courses");
+                } else {
+                    navigate("/home");
+                }
+            }, 800);
+
         } catch (error) {
             console.error("Login error:", error);
             setMessage("❌ Lỗi kết nối với server");
@@ -150,17 +164,16 @@ function LoginPage({ switchToRegister }) {
 
             setMessage("✅ Google Login Success!");
             setMessageType("success");
-                    navigate("/home");
 
-            // setTimeout(() => {
-            //     if (data.user?.role === "TEACHER") {
-            //         navigate("/teacher/dashboard");
-            //     } else if (data.user?.role === "ADMIN") {
-            //         navigate("/admin/courses");
-            //     } else {
-            //         navigate("/home");
-            //     }
-            // }, 800);
+            setTimeout(() => {
+                if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
+                    navigate("/teacher/dashboard");
+                } else if (data.user?.role === "ADMIN" || data.user?.roleId === 1) {
+                    navigate("/admin/courses");
+                } else {
+                    navigate("/home");
+                }
+            }, 800);
 
         } catch (error) {
             console.error(error);
