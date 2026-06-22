@@ -140,20 +140,34 @@ export default function TeacherDashboard() {
     };
 
     const handleSendReply = async () => {
-        if (!replyContent.trim()) return alert("Vui lòng nhập nội dung trả lời");
-        try {
-            await axiosClient.post(`/questions/${selectedQa.id}/answers`, {
-                content: replyContent
-            });
-            setReplyModalOpen(false);
-            fetchQaList(); // Tải lại danh sách để cập nhật trạng thái
-            alert("Đã gửi câu trả lời thành công!");
-        } catch (error) {
-            console.error("Lỗi gửi trả lời:", error);
-            alert("Lỗi khi gửi câu trả lời");
-        }
-    };
+    if (!replyContent.trim()) return alert("Vui lòng nhập nội dung trả lời");
+    
+    // 1. Tự động lấy Id đúng (thử questionId trước, nếu không có thì lấy id)
+    const questionIdToUse = selectedQa?.questionId || selectedQa?.id;
+    
+    // Kiểm tra nếu cả 2 đều không có thì chặn lại luôn không gửi lên Server
+    if (!questionIdToUse || questionIdToUse === 'undefined') {
+        console.error("Dữ liệu câu hỏi bị lỗi:", selectedQa);
+        return alert("❌ Lỗi: Không tìm thấy ID của câu hỏi để gửi câu trả lời!");
+    }
 
+    try {
+        // 2. Gửi request với ID chuẩn đã tìm được ở trên
+        await axiosClient.post(`/questions/${questionIdToUse}/answers`, {
+            content: replyContent
+        });
+        
+        setReplyModalOpen(false);
+        fetchQaList(); // Tải lại danh sách để cập nhật trạng thái
+        alert("🎉 Đã gửi câu trả lời thành công!");
+    } catch (error) {
+        console.error("Lỗi chi tiết từ hệ thống:", error);
+        
+        // 3. Hiển thị trực tiếp nội dung lỗi cụ thể từ Backend trả về lên màn hình
+        const serverErrorMessage = error.response?.data?.message || error.message;
+        alert("❌ Lỗi từ hệ thống: " + serverErrorMessage);
+    }
+};
     return (
         <div className="home-layout">
             
