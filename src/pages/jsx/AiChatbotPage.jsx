@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import aiService from "../../services/aiService";
+
+import "katex/dist/katex.min.css";
 import "../css/AiChatbotPage.css";
 
 const SUGGESTIONS = [
@@ -40,13 +44,30 @@ export default function AiChatbotPage() {
         setLoading(true);
         try {
             const res = await aiService.chat(content);
-            setMessages((prev) => [...prev, { role: "ai", text: res.reply, source: res.source }]);
-        } catch (e) {
+
+            console.log("AI response:", res);
+
             setMessages((prev) => [
                 ...prev,
-                { role: "ai", text: "Xin lỗi, mình gặp sự cố khi xử lý. Bạn thử lại sau nhé. (" + (e.response?.data?.message || e.message) + ")" },
+                {
+                    role: "ai",
+                    text: res.aiResponse
+                }
             ]);
-        } finally {
+        }
+        catch (e) {
+            setMessages((prev) => [
+                ...prev,
+                {
+                    role: "ai",
+                    text:
+                        "Xin lỗi, mình gặp sự cố khi xử lý. Bạn thử lại sau nhé. ("
+                        + (e.response?.data?.message || e.message)
+                        + ")"
+                }
+            ]);
+        }
+        finally {
             setLoading(false);
         }
     };
@@ -77,7 +98,8 @@ export default function AiChatbotPage() {
                         <div key={i} className={`chat-msg ${m.role}`}>
                             {m.role === "ai" && <span className="msg-avatar">🤖</span>}
                             <div className="msg-bubble">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]}
+                                                rehypePlugins={[rehypeKatex]}>
                                     {m.text}
                                 </ReactMarkdown>
                                 {m.source === "FALLBACK" && <span className="msg-tag">chế độ ngoại tuyến</span>}

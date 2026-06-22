@@ -165,13 +165,48 @@ export default function LearningPage() {
                 <div className="learning-main">
                     <div className="video-container">
                         {currentLesson.videoUrl ? (
-                            <video
-                                ref={videoRef}
-                                src={`http://localhost:8080${currentLesson.videoUrl}`}
-                                controls
-                                onTimeUpdate={handleTimeUpdate}
-                                style={{ width: "100%", display: "block", borderRadius: "8px", backgroundColor: "#000" }}
-                            />
+
+                            currentLesson.videoUrl.includes("youtube.com") ||
+                            currentLesson.videoUrl.includes("youtu.be")
+
+                                ? (
+
+                                    <iframe
+                                        width="100%"
+                                        height="700"
+                                        src={
+                                            currentLesson.videoUrl
+                                                .replace("watch?v=", "embed/")
+                                                .replace("youtu.be/", "www.youtube.com/embed/")
+                                        }
+                                        title={currentLesson.title}
+                                        frameBorder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                        style={{ borderRadius: "8px" }}
+                                    />
+
+                                ) : (
+
+                                    <video
+                                        ref={videoRef}
+                                        src={
+                                            currentLesson.videoUrl.startsWith("http")
+                                                ? currentLesson.videoUrl
+                                                : `http://localhost:8080${currentLesson.videoUrl}`
+                                        }
+                                        controls
+                                        onTimeUpdate={handleTimeUpdate}
+                                        style={{
+                                            width: "100%",
+                                            display: "block",
+                                            borderRadius: "8px",
+                                            backgroundColor: "#000"
+                                        }}
+                                    />
+
+                                )
+
                         ) : (
                             <div className="video-placeholder">
                                 <div className="play-button-large">▶</div>
