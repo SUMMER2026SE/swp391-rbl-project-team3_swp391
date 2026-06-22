@@ -30,11 +30,17 @@ export default function TeacherDashboard() {
     const fetchCourses = async () => {
     try {
         // Gọi link có chữ teacher như bạn muốn
-        const response = await axiosClient.get("/teacher/courses"); 
+        const response = await axiosClient.get("/teacher/dashboard", {
+            headers: {
+                "X-Teacher-Id": userObj.id
+            }
+        });
+
+        setMyCourses(response.data.courses);
         
-        // Dữ liệu vẫn lọc theo ID như cũ
-        const filtered = response.data.filter(c => String(c.teacher_id) === String(userObj.id)); 
-        setMyCourses(filtered);
+        // // Dữ liệu vẫn lọc theo ID như cũ
+        // const filtered = response.data.filter(c => String(c.teacher_id) === String(userObj.id)); 
+        // setMyCourses(filtered);
     } catch (error) {
         console.error("Lỗi tải khóa học:", error);
     }
@@ -46,7 +52,7 @@ export default function TeacherDashboard() {
     const handleLogout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        navigate("/");
+        navigate("/auth");
     };
 
     return (
@@ -113,7 +119,7 @@ export default function TeacherDashboard() {
                                     onMouseOver={(e) => e.currentTarget.style.background = "#e2e8f0"}
                                     onMouseOut={(e) => e.currentTarget.style.background = "#f1f5f9"}
                                 >
-                                    ✏️ Biên soạn (Edit)
+                                    ✏️ Biên soạn
                                 </button>
                             </div>
                         </div>
