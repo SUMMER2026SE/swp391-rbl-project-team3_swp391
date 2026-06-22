@@ -140,19 +140,29 @@ export default function TeacherDashboard() {
     };
 
     const handleSendReply = async () => {
-        if (!replyContent.trim()) return alert("Vui lòng nhập nội dung trả lời");
-        try {
-            await axiosClient.post(`/questions/${selectedQa.id}/answers`, {
-                content: replyContent
-            });
-            setReplyModalOpen(false);
-            fetchQaList(); // Tải lại danh sách để cập nhật trạng thái
-            alert("Đã gửi câu trả lời thành công!");
-        } catch (error) {
-            console.error("Lỗi gửi trả lời:", error);
-            alert("Lỗi khi gửi câu trả lời");
-        }
-    };
+    if (!replyContent.trim()) return alert("Vui lòng nhập nội dung trả lời");
+    
+    // Tự động lấy Id đúng (thử questionId trước, nếu không có thì lấy id)
+    const questionIdToUse = selectedQa?.questionId || selectedQa?.id;
+    
+    // Khóa chốt an toàn tại Frontend
+    if (!questionIdToUse || questionIdToUse === 'undefined') {
+        return alert("❌ Lỗi: Không tìm thấy ID của câu hỏi để gửi câu trả lời!");
+    }
+
+    try {
+        await axiosClient.post(`/questions/${questionIdToUse}/answers`, {
+            content: replyContent
+        });
+        setReplyModalOpen(false);
+        fetchQaList(); // Tải lại danh sách để cập nhật trạng thái
+        alert("🎉 Đã gửi câu trả lời thành công!");
+    } catch (error) {
+        console.error("Lỗi chi tiết từ hệ thống:", error);
+        const serverErrorMessage = error.response?.data?.message || error.message;
+        alert("❌ Lỗi từ hệ thống: " + serverErrorMessage);
+    }
+};
 
     return (
         <div className="home-layout">
@@ -295,7 +305,7 @@ export default function TeacherDashboard() {
                                     {qaList.length > 0 ? qaList.map(qa => {
                                         const isAnswered = qa.answers && qa.answers.length > 0;
                                         return (
-                                            <tr key={qa.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+<tr key={qa.questionId || qa.id} style={{ borderBottom: "1px solid #f1f5f9" }}>                                                
                                                 <td style={{ padding: "16px", verticalAlign: "top" }}>
                                                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                                         <img src={qa.userAvatarUrl || "https://ui-avatars.com/api/?name=" + qa.userFullName} alt="" style={{ width: "32px", height: "32px", borderRadius: "50%" }} />
