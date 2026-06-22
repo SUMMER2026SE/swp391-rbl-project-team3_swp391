@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "../css/RegisterPage.css";
+import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import axiosClient from "../../api/axiosClient";
 
@@ -15,7 +16,8 @@ export default function RegisterPage({ switchToLogin }) {
     const [registeredEmail, setRegisteredEmail] = useState("");
     const [loading, setLoading] = useState(false);
     const [showVerifyBox, setShowVerifyBox] = useState(false);
-    
+
+    const navigate = useNavigate();
 
     // HANDLE INPUT
     const handleChange = (e) => {
@@ -121,6 +123,8 @@ export default function RegisterPage({ switchToLogin }) {
             localStorage.setItem("user", JSON.stringify(data.user));
 
             setMessage("✅ Google Register Success!");
+
+            navigate("/");
 
             console.log(data);
 

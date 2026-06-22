@@ -343,30 +343,23 @@ body{
 
 .divider{
     margin: 25px 0;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     position: relative;
 }
 
 .divider::before,
 .divider::after{
     content: "";
-
     flex: 1;
-
     height: 1px;
-
     background: #cbd5e1;
 }
 
 .divider span{
     margin: 0 14px;
-
     color: #64748b;
-
     font-size: 14px;
 }
 

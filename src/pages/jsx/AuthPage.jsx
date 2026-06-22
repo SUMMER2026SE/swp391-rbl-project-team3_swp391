@@ -3,6 +3,7 @@ import "../css/RegisterPage.css";
 import LoginPage from "./LoginPage";
 import RegisterPage from "./RegisterPage";
 
+
 export default function AuthPage(){
     const [isLogin, setIsLogin] = useState(true);
 

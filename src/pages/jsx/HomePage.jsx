@@ -26,9 +26,18 @@ export default function HomePage() {
     ]);
 
     useEffect(() => {
+        // ===== SỬA AN TOÀN PHẦN USER =====
         const storedUser = localStorage.getItem("user");
-        if (storedUser) setUser(JSON.parse(storedUser));
+        if (storedUser) {
+            try {
+                setUser(JSON.parse(storedUser));
+            } catch (e) {
+                console.error("Lỗi parse user:", e);
+                localStorage.removeItem("user");
+            }
+        }
 
+        // Countdown đếm ngược ngày thi THPT Quốc Gia
         const examDate = new Date("2026-06-28T00:00:00").getTime();
         const interval = setInterval(() => {
             const now = new Date().getTime();
@@ -42,58 +51,36 @@ export default function HomePage() {
             }
         }, 1000);
 
-        
-axiosClient.get("/courses")
-.then(res => {
-    console.log(">>> DỮ LIỆU THỰC TẾ TOÀN GỬI VỀ LÀ:", res.data);
+        // Fetch courses từ API và sửa lỗi lồng ngoặc bị nát do Git Auto-merge
+        axiosClient.get("/courses")
+            .then(res => {
+                console.log(">>> DỮ LIỆU KHÓA HỌC CHUẨN:", res.data);
+                const rawCourses = Array.isArray(res.data) ? res.data : (res.data.courses || []);
+                
+                if (rawCourses.length > 0) {
+                    const mappedData = rawCourses.map(c => {
+                        const displayPrice = typeof c.price === "number"
+                            ? new Intl.NumberFormat("vi-VN").format(c.price) + "đ"
+                            : (c.price || "Miễn phí");
 
-    let rawCourses = [];
-    if (Array.isArray(res.data)) {
-        rawCourses = res.data;
-    } else if (res.data && Array.isArray(res.data.data)) {
-        rawCourses = res.data.data;
-    } else if (res.data && Array.isArray(res.data.content)) {
-        rawCourses = res.data.content;
-    }
+                        return {
+                            id: c.course_id || c.courseId || c.id,
+                            title: c.course_title || c.courseTitle || c.title || "Khóa học chưa tên",
+                            thumbnail: c.thumbnail_url || c.thumbnailUrl || c.thumbnail || "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=400&q=80",
+                            teacher: c.teacher_name || c.teacherName || c.teacher || "Giáo viên",
+                            subject: c.subject_name || c.subjectName || c.subject || "Chung",
+                            price: displayPrice,
+                            students: c.students || c.student_count || c.studentCount || 0,
+                            userId: c.teacher_id || c.teacherId || c.userId || 2
+                        };
+                    });
+                    setFeaturedCourses(mappedData.slice(0, 3));
+                }
+            })
+            .catch(err => {
+                console.log("Dùng data khóa học mẫu do chưa kết nối Backend hoặc sập API:", err);
+            });
 
-    if (rawCourses && rawCourses.length > 0) {
-        
-        // 🔥 ĐÃ SỬA: Bộ lọc thông minh chấp nhận cả c.isPublished lẫn c.is_published
-        const approvedCourses = rawCourses.filter(c => {
-            const publishStatus = c.isPublished !== undefined ? c.isPublished : c.is_published;
-            
-            // LỢI HẠI: Nếu Backend chưa kịp trả về trường này, cứ cho hiện ra để anh em test giao diện
-            if (publishStatus === undefined) return true; 
-            
-            return publishStatus === true || publishStatus === 1 || c.status === "PUBLISHED";
-        });
-
-        const mappedData = approvedCourses.map(c => { 
-            let displayPrice = "Miễn phí";
-            const rawPrice = c.price || c.Price || 0;
-            const cleanNumber = Number(String(rawPrice).replace(/[^0-9]/g, ''));
-            
-            if (cleanNumber > 0) {
-                displayPrice = `${cleanNumber.toLocaleString('vi-VN')}đ`;
-            }
-
-            return {
-                id: c.course_id || c.courseId || c.id,
-                title: c.course_title || c.courseTitle || c.title || "Khóa học chưa tên",
-                thumbnail: c.thumbnail_url || c.thumbnailUrl || c.thumbnail,
-                teacher: c.teacher_name || c.teacherName || c.teacher || "Giáo viên",
-                subject: c.subject_name || c.subjectName || c.subject || "Chung",
-                price: displayPrice,
-                students: c.students || c.student_count || c.studentCount || 0,
-                userId: c.teacher_id || c.teacherId || c.userId || 2
-            };
-        });
-        
-        // Đẩy thẳng 3 khóa học xịn từ Database lên màn hình
-        setFeaturedCourses(mappedData.slice(0, 3));
-    }
-})
-.catch(err => console.log("Dùng data mẫu do chưa kết nối Backend", err));
         return () => clearInterval(interval);
     }, []);
 
@@ -107,20 +94,20 @@ axiosClient.get("/courses")
     const handleLogout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        navigate("/");
+        setUser(null);
+        navigate("/home");
     };
 
     return (
         <div className="home-layout">
-            
-            {/* SIDEBAR TỪ NHÁNH MAIN */}
+            {/* SIDEBAR */}
             <aside className="sidebar">
                 <div className="logo" onClick={() => navigate("/home")} style={{cursor: 'pointer'}}>PrepAce</div>
 
                 <ul className="menu">
                     <li onClick={() => navigate("/home")}>Trang chủ</li>
                     <li onClick={() => navigate("/courses")}>Khóa học</li>
-                    <li>Luyện đề</li>
+                    <li onClick={() => navigate("/tests")}>Luyện đề</li>
                     <li onClick={() => navigate("/adaptive-path")}>Tiến độ</li>
                     <li>Tư vấn ngành</li>
                 </ul>
@@ -140,14 +127,14 @@ axiosClient.get("/courses")
                             <button onClick={() => navigate("/auth", { state: { mode: "login" } })}>Login</button>
                             <button className="register-btn" onClick={() => navigate("/auth", { state: { mode: "register" } })}>Register</button>
                         </>
-                    )}
+                    )
+                }
                 </div>
             </aside>
 
-            {/* PHẦN NỘI DUNG CHÍNH */}
+            {/* MAIN CONTENT */}
             <main className="content">
-                
-                {/* THANH HEADER CHỨA SEARCH VÀ COUNTDOWN CHẠY ĐỘNG */}
+                {/* HEADER */}
                 <div className="content-header">
                     <form className="search-bar" onSubmit={handleSearchSubmit}>
                         <input 
@@ -157,34 +144,18 @@ axiosClient.get("/courses")
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                         <button type="submit" className="search-icon-btn">
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{width: '18px', height: '18px'}}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-    </svg>
-</button>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{width: '18px', height: '18px'}}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                            </svg>
+                        </button>
                     </form>
 
                     <div className="exam-countdown">
                         🔥 THPT QG 2026: <strong>{timeLeft.days}</strong> ngày <strong>{timeLeft.hours}</strong> giờ <strong>{timeLeft.minutes}</strong> phút
                     </div>
-
-                    <div className="action-icons">
-    {/* Nút Lịch học dùng SVG */}
-    <button className="icon-btn" title="Lịch học" onClick={() => navigate('/calendar')}>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" style={{width: '20px', height: '20px', color: '#475569'}}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-        </svg>
-    </button>
-
-    {/* Nút Thông báo dùng SVG */}
-    <button className="icon-btn" title="Thông báo" onClick={() => navigate('/notifications')}>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" style={{width: '20px', height: '20px', color: '#475569'}}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-        </svg>
-    </button>
-</div>
                 </div>
 
-                {/* HERO BANNER CHUẨN MAIN */}
+                {/* HERO */}
                 <section className="hero">
                     <h1>
                         Nền tảng học tập thích ứng <br />
@@ -192,14 +163,14 @@ axiosClient.get("/courses")
                     </h1>
                     <p>
                         Hệ thống ôn thi THPT Quốc gia thông minh. Phân tích năng lực chính xác, 
-                        tự động cá nhân hóa lộ trình bài tập (Adaptive Path) giúp tối ưu hóa điểm số của bạn.
+                        tự động cá nhân hóa lộ trình bài tập.
                     </p>
-                    <button className="start-btn" onClick={() => navigate("/courses")}>
-                        Khám phá ngay
+                    <button className="start-btn" onClick={() => navigate("/tests")}>
+                        Bắt đầu luyện đề ngay
                     </button>
                 </section>
 
-                {/* KHÓA HỌC NỔI BẬT (Đã bọc bằng cấu trúc CSS của main) */}
+                {/* KHÓA HỌC NỔI BẬT */}
                 <div className="section-title-container">
                     <h2>Khóa học Nổi bật</h2>
                     <span className="view-all-link" onClick={() => navigate("/courses")}>Xem tất cả ➔</span>
@@ -226,7 +197,7 @@ axiosClient.get("/courses")
                     ))}
                 </section>
 
-                {/* CTA TỪ NHÁNH MAIN */}
+                {/* CTA */}
                 <section className="cta">
                     <h2>Sẵn sàng cho kỳ thi Đại học?</h2>
                     <p>Đăng ký miễn phí và bắt đầu ngay hôm nay.</p>

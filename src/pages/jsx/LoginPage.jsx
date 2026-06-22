@@ -13,43 +13,117 @@ function LoginPage({ switchToRegister }) {
     const navigate = useNavigate();
 
     // NORMAL LOGIN
+    // const handleLogin = async (e) => {
+    //     e.preventDefault();
+
+    //     try {
+    //         setLoading(true);
+
+    //         const response = await fetch(
+    //             "http://localhost:8080/api/auth/login",
+    //             {
+    //                 method: "POST",
+    //                 headers: {
+    //                     "Content-Type": "application/json"
+    //                 },
+    //                 body: JSON.stringify({
+    //                     email: email.trim(),
+    //                     password
+    //                 })
+    //             }
+    //         );
+
+    //         let data = {};
+    //         try {
+    //             data = await response.json();
+    //         } catch {
+    //             data = {};
+    //         }
+
+    //         if (!response.ok) {
+    //             setMessage(data.message || "Login Failed");
+    //             return;
+    //         }
+
+    //         localStorage.setItem("token", data.token);
+    //         if (data.user) {
+    //             localStorage.setItem("user", JSON.stringify(data.user));
+    //         } else {
+    //             console.warn("⚠️ Missing user in response:", data);
+    //             localStorage.removeItem("user");
+    //         }
+    //         setMessage("✅ Login Successfully!");
+    //         setMessageType("success");
+
+    //         setTimeout(() => {
+    //             if (data.user?.role === "TEACHER") {
+    //                 navigate("/teacher/dashboard");
+    //             } else if (data.user?.role === "ADMIN") {
+    //                 navigate("/admin/courses");
+    //             } else {
+    //                 navigate("/");
+    //             }
+    //         }, 800);
+
+    //     } catch (error) {
+    //         console.error(error);
+    //         setMessage("❌ Server Error");
+    //         setMessageType("error");
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
+    // NORMAL LOGIN - ĐÃ SỬA
     const handleLogin = async (e) => {
         e.preventDefault();
 
         try {
             setLoading(true);
+            setMessage("");
 
-            const response = await fetch(
-                "http://localhost:8080/api/auth/login",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        email: email.trim(),
-                        password
-                    })
-                }
-            );
+            const response = await fetch("http://localhost:8080/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    email: email.trim(), 
+                    password 
+                })
+            });
 
-            let data = {};
-            try {
-                data = await response.json();
-            } catch {
-                data = {};
-            }
+            const data = await response.json();
+            console.log("🔍 Full Response từ backend:", data);   // Debug
 
             if (!response.ok) {
-                setMessage(data.message || "Login Failed");
+                setMessage(data.message || "Đăng nhập thất bại");
+                setMessageType("error");
                 return;
             }
 
-            localStorage.setItem("token", data.token);
-localStorage.setItem("user", JSON.stringify(data.user)); // <--- THÊM DÒNG NÀY VÀO
-            setMessage("✅ Login Successfully!");
+            // Lưu token
+            if (data.token) {
+                localStorage.setItem("token", data.token);
+            }
+
+            // Lưu user (xử lý nhiều trường hợp backend trả về)
+            if (data.user) {
+                localStorage.setItem("user", JSON.stringify(data.user));
+            } else if (data.data && data.data.user) {
+                localStorage.setItem("user", JSON.stringify(data.data.user));
+            } else {
+                // Tạo user tạm từ email (vì backend chưa trả user)
+                const tempUser = {
+                    fullName: email.split('@')[0] || "Người dùng",
+                    email: email,
+                    role: "STUDENT"
+                };
+                localStorage.setItem("user", JSON.stringify(tempUser));
+            }
+
+            setMessage("✅ Đăng nhập thành công!");
             setMessageType("success");
 
+            // Redirect về trang chủ
             setTimeout(() => {
                 if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
                     navigate("/teacher/dashboard");
@@ -61,8 +135,8 @@ localStorage.setItem("user", JSON.stringify(data.user)); // <--- THÊM DÒNG NÀ
             }, 800);
 
         } catch (error) {
-            console.error(error);
-            setMessage("❌ Server Error");
+            console.error("Login error:", error);
+            setMessage("❌ Lỗi kết nối với server");
             setMessageType("error");
         } finally {
             setLoading(false);
