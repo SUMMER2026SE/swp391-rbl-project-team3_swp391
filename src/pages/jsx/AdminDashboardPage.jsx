@@ -64,7 +64,7 @@ export default function AdminDashboardPage() {
         <div className="admin-layout">
             {/* SIDEBAR */}
             <aside className="admin-sidebar">
-                <div className="admin-brand" onClick={() => navigate("/home")}>
+                <div className="admin-brand" onClick={() => navigate("/admin")}>
                     <h2>PrepAce <span>Admin</span></h2>
                 </div>
                 <ul className="admin-menu">

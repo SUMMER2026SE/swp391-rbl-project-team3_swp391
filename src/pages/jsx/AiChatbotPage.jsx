@@ -51,7 +51,7 @@ export default function AiChatbotPage() {
                 ...prev,
                 {
                     role: "ai",
-                    text: res.aiResponse
+                    text: res.aiResponse || "Không có phản hồi từ AI"
                 }
             ]);
         }
