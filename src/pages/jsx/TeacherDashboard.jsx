@@ -67,6 +67,9 @@ export default function TeacherDashboard() {
                     <li className="active" style={{ background: "#eef3ff", color: "#2747d9", fontWeight: "600" }}>
                         👨‍🏫 Quản lý khóa học
                     </li>
+                    <li onClick={() => navigate("/teacher/grading")} style={{ cursor: "pointer", marginTop: "10px" }}>
+        📝 Chấm bài tự luận
+    </li>
                     
                 </ul>
 
