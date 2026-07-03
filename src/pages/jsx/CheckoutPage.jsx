@@ -127,7 +127,7 @@ export default function CheckoutPage() {
                         <label className="method-option selected">
                             <input type="radio" checked readOnly />
                             <span>
-                                💳 Thanh toán hệ thống (Mock Gateway)
+                                💳 Thanh toán hệ thống
                             </span>
                         </label>
 

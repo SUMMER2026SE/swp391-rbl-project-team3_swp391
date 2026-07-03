@@ -8,7 +8,7 @@ export default function HomePage() {
     
     const [user, setUser] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
-    const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0 });
+    const [timeLeft, setTimeLeft] = useState({ years: 0, months: 0, days: 0});
 
     const [featuredCourses, setFeaturedCourses] = useState([
         {
@@ -25,6 +25,47 @@ export default function HomePage() {
         }
     ]);
 
+    //AVATAR
+    const currentAvatar = user?.avatarUrl || user?.avatar_url || null;
+
+    const updateCountdown = () => {
+        const now = new Date();
+        const target = new Date(2027, 5, 28); // 28/06/2027
+
+        if (now >= target) {
+            setTimeLeft({
+                years: 0,
+                months: 0,
+                days: 0
+            });
+            return;
+        }
+        let years = target.getFullYear() - now.getFullYear();
+        let months = target.getMonth() - now.getMonth();
+        let days = target.getDate() - now.getDate();
+
+        // Nếu ngày âm
+        if (days < 0) {
+            months--;
+            const previousMonth = new Date(
+                target.getFullYear(),
+                target.getMonth(),
+                0
+            );
+            days += previousMonth.getDate();
+        }
+
+        // Nếu tháng âm
+        if (months < 0) {
+            years--;
+            months += 12;
+        }
+        setTimeLeft({
+            years,
+            months,
+            days
+        });
+    };
     useEffect(() => {
         // ===== SỬA AN TOÀN PHẦN USER =====
         const storedUser = localStorage.getItem("user");
@@ -38,47 +79,64 @@ export default function HomePage() {
         }
 
         // Countdown
-        const examDate = new Date("2026-06-28T00:00:00").getTime();
-        const interval = setInterval(() => {
-            const now = new Date().getTime();
-            const distance = examDate - now;
-            if (distance > 0) {
-                setTimeLeft({
-                    days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-                    hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-                    minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))
-                });
-            }
-        }, 1000);
+        updateCountdown();
+        const interval = setInterval(updateCountdown, 60000);
 
         // Fetch courses
-        axiosClient.get("/courses")
-            .then(res => {
-                console.log(">>> DỮ LIỆU KHÓA HỌC:", res.data);
-                const data = res.data?.data || res.data;
-                const mappedData = Array.isArray(data) ? data.map(c => {
-                    const priceValue = c.price || c.course_price || c.coursePrice || 0;
-                    const displayPrice = priceValue > 0 ? priceValue.toLocaleString() + "đ" : "Miễn phí";
-                    
-                    return {
-                        id: c.course_id || c.courseId || c.id,
-                        title: c.course_title || c.courseTitle || c.title || "Khóa học chưa tên",
-                        thumbnail: c.thumbnail_url || c.thumbnailUrl || c.thumbnail,
-                        teacher: c.teacher_name || c.teacherName || c.teacher || "Giáo viên",
-                        subject: c.subject_name || c.subjectName || c.subject || "Chung",
-                        price: displayPrice,
-                        students: c.students || c.student_count || c.studentCount || 0,
-                        userId: c.teacher_id || c.teacherId || c.userId || 2
-                    };
-                }) : [];
-                
-                // Đẩy thẳng 3 khóa học xịn từ Database lên màn hình
-                if (mappedData.length > 0) {
-                    setFeaturedCourses(mappedData.slice(0, 3));
+        // Fetch courses
+        // Fetch courses từ API
+        let isMounted = true;
+
+    axiosClient.get("/courses")
+        .then(res => {
+            if (!isMounted) return;
+
+            console.log(">>> RAW DATA TỪ API:", res.data);
+
+            let rawCourses = res.data?.data || res.data || [];
+            if (!Array.isArray(rawCourses)) rawCourses = [];
+
+            const mappedData = rawCourses.map(c => {
+                const priceValue = c.price || c.course_price || 0;
+                const displayPrice = priceValue > 0 ? priceValue.toLocaleString() + "đ" : "Miễn phí";
+
+                let thumbnail = c.thumbnail_url || c.thumbnailUrl || c.thumbnail || "";
+
+                if (thumbnail && !thumbnail.startsWith("http")) {
+                    thumbnail = `http://localhost:8080${thumbnail.startsWith('/') ? '' : '/'}${thumbnail}`;
                 }
-            })
-            .catch(err => console.log("Dùng data mẫu do chưa kết nối Backend", err));
-        return () => clearInterval(interval);
+
+                if (!thumbnail) {
+                    if (c.title?.toLowerCase().includes("toán") || c.title?.toLowerCase().includes("math")) {
+                        thumbnail = "https://images.unsplash.com/photo-1635070041078-e363dbe005cb";
+                    } else if (c.title?.toLowerCase().includes("vật lý")) {
+                        thumbnail = "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa";
+                    } else {
+                        thumbnail = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d";
+                    }
+                }
+
+                return {
+                    id: c.id || c.courseId || c.course_id,
+                    title: c.title || c.courseTitle || c.course_title,
+                    thumbnail: thumbnail + (thumbnail.includes("?") ? "" : "?auto=format&fit=crop&w=400&q=80"),
+                    teacher: c.teacherName || c.teacher_name || "Giáo viên",
+                    subject: c.subject || "Chung",
+                    price: displayPrice,
+                    students: c.students || 0,
+                    userId: c.teacherId || 1
+                };
+            });
+
+            if (mappedData.length > 0) {
+                setFeaturedCourses(mappedData.slice(0, 3));
+            }
+        })
+        .catch(err => console.error("Fetch courses error:", err));
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
     }, []);
 
     const handleSearchSubmit = (e) => {
@@ -99,33 +157,103 @@ export default function HomePage() {
         <div className="home-layout">
             {/* SIDEBAR */}
             <aside className="sidebar">
-                <div className="logo" onClick={() => navigate("/home")} style={{cursor: 'pointer'}}>PrepAce</div>
+                <div
+                    className="logo"
+                    onClick={() => navigate("/home")}
+                    style={{ cursor: "pointer" }}
+                >
+                    <div className="logo-icon">🎓</div>
+
+                    <div className="logo-text">
+                        <h2>PrepAce</h2>
+                        <span>AI Learning Platform</span>
+                    </div>
+                </div>
+                {user && (
+                    <div
+                        className="user-card clickable"
+                        onClick={() => navigate("/profile")}
+                    >
+                        <div className="avatar">
+                            {currentAvatar ? (
+                                <img
+                                    src={currentAvatar}
+                                    alt={user.fullName}
+                                />
+                            ) : (
+                                user.fullName?.charAt(0).toUpperCase()
+                            )}
+                        </div>
+
+                        <div className="user-info">
+                            <h4>{user.fullName}</h4>
+                            <span>Student</span>
+                        </div>
+                    </div>
+                )}
 
                 <ul className="menu">
-                    <li onClick={() => navigate("/home")}>Trang chủ</li>
-                    <li onClick={() => navigate("/courses")}>Khóa học</li>
-                    <li onClick={() => navigate("/entry-test")}>Kiểm tra đầu vào</li>
-                    <li onClick={() => navigate("/tests")}>Luyện đề</li>
-                    <li onClick={() => navigate("/adaptive-path")}>Lộ trình AI</li>
-                    <li onClick={() => navigate("/ai/gap-diagnosis")}>Lỗ hổng kiến thức</li>
-                    <li onClick={() => navigate("/ai/score-forecast")}>Dự đoán điểm</li>
-                    <li onClick={() => navigate("/ai/university-advising")}>Tư vấn ngành</li>
+                    <li onClick={()=>navigate("/home")}>
+                        <span>🏠</span>
+                        Trang chủ
+                    </li>
+
+                    <li onClick={()=>navigate("/courses")}>
+                        <span>📚</span>
+                        Khóa học
+                    </li>
+
+                    <li onClick={()=>navigate("/entry-test")}>
+                        <span>📝</span>
+                        Kiểm tra đầu vào
+                    </li>
+
+                    <li onClick={()=>navigate("/tests")}>
+                        <span>📄</span>
+                        Luyện đề
+                    </li>
+
+                    <li onClick={()=>navigate("/adaptive-path")}>
+                        <span>🧠</span>
+                        Lộ trình AI
+                    </li>
+
+                    <li onClick={()=>navigate("/ai/gap-diagnosis")}>
+                        <span>📈</span>
+                        Lỗ hổng kiến thức
+                    </li>
+
+                    <li onClick={()=>navigate("/ai/score-forecast")}>
+                        <span>🎯</span>
+                        Dự đoán điểm
+                    </li>
+
+                    <li onClick={()=>navigate("/ai/university-advising")}>
+                        <span>🎓</span>
+                        Tư vấn ngành
+                    </li>
                 </ul>
 
                 <div className="sidebar-actions">
                     {user ? (
-                        <>
-                            <button className="profile-btn" onClick={() => navigate("/profile")}>
-                                👤 {user?.fullName || "Profile"}
-                            </button>
-                            <button className="logout-btn" onClick={handleLogout}>
-                                Đăng xuất
-                            </button>
-                        </>
+                        <button className="logout-btn" onClick={handleLogout}>
+                            🚪 Đăng xuất
+                        </button>
                     ) : (
                         <>
-                            <button onClick={() => navigate("/auth", { state: { mode: "login" } })}>Login</button>
-                            <button className="register-btn" onClick={() => navigate("/auth", { state: { mode: "register" } })}>Register</button>
+                            <button
+                                className="login-btn"
+                                onClick={() => navigate("/auth", { state: { mode: "login" } })}
+                            >
+                                🔑 Đăng nhập
+                            </button>
+
+                            <button
+                                className="register-btn"
+                                onClick={() => navigate("/auth", { state: { mode: "register" } })}
+                            >
+                                ✨ Đăng ký
+                            </button>
                         </>
                     )}
                 </div>
@@ -136,82 +264,243 @@ export default function HomePage() {
                 {/* HEADER */}
                 <div className="content-header">
                     <form className="search-bar" onSubmit={handleSearchSubmit}>
-                        <input 
-                            type="text" 
-                            placeholder="Tìm kiếm khóa học, giáo viên..." 
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                        <div className="search-icon">
+                        🔍
+                        </div>
+                        <input
+                        placeholder="Tìm khóa học, giáo viên..."
+                        value={searchQuery}
+                        onChange={(e)=>setSearchQuery(e.target.value)}
                         />
-                        <button type="submit" className="search-icon-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{width: '18px', height: '18px'}}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                            </svg>
+
+                        <div className="shortcut">
+                        ⌘K
+                        </div>
+
+                        <button
+                        type="submit"
+                        className="search-icon-btn"
+                        >
+                        Tìm
                         </button>
                     </form>
 
-                    <div className="exam-countdown">
-                        🔥 THPT QG 2026: <strong>{timeLeft.days}</strong> ngày <strong>{timeLeft.hours}</strong> giờ <strong>{timeLeft.minutes}</strong> phút
+                    <div className="countdown-wrapper">
+                        <div className="countdown-title">
+                        🔥 THPT Quốc gia 2027
+                        </div>
+                        <div className="countdown-box">
+                            <div className="time-card">
+                                <h2>{timeLeft.years}</h2>
+                                <span>Năm</span>
+                            </div>
+                            <div className="time-card">
+                                <h2>{timeLeft.months}</h2>
+                                <span>Tháng</span>
+                            </div>
+
+                            <div className="time-card">
+                                <h2>{timeLeft.days}</h2>
+                                <span>Ngày</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 {/* HERO */}
                 <section className="hero">
-                    <h1>
-                        Nền tảng học tập thích ứng <br />
-                        Bứt phá điểm số cùng Lộ trình AI
-                    </h1>
-                    <p>
-                        Hệ thống ôn thi THPT Quốc gia thông minh. Phân tích năng lực chính xác, 
-                        tự động cá nhân hóa lộ trình bài tập.
-                    </p>
-                    <button className="start-btn" onClick={() => navigate("/tests")}>
-                        Bắt đầu luyện đề ngay
-                    </button>
+                    <div className="hero-left">
+                        <span className="hero-badge">
+                        🚀 AI Powered Learning
+                        </span>
+
+                        <h1>Bứt phá điểm số
+                            <br/>
+                        cùng PrepAce AI
+                        </h1>
+                        <p>
+                        Hệ thống học tập thông minh sử dụng AI
+                        để phân tích năng lực, xây dựng lộ trình cá nhân
+                        và tối ưu kết quả kỳ thi THPT Quốc Gia.
+                        </p>
+                        <div className="hero-buttons">
+                            <button
+                            className="start-btn"
+                            onClick={()=>navigate("/tests")}
+                            >
+                            🚀 Bắt đầu ngay
+                            </button>
+
+                            <button
+                            className="secondary-btn"
+                            onClick={()=>navigate("/courses")}
+                            >
+                            📚 Khóa học
+                            </button>
+                        </div>
+
+                    <div className="hero-stats">
+                        <div className="stat-item">
+                            <h2>12K+</h2>
+                            <p>Học viên</p>
+                        </div>
+
+                        <div className="stat-item">
+                            <h2>98%</h2>
+                            <p>Tỷ lệ đỗ</p>
+                        </div>
+                        <div className="stat-item">
+                            <h2>500+</h2>
+                            <p>Bài học</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="hero-right">
+                    <div className="hero-circle"></div>
+                        <div className="hero-card">
+                            🤖
+                            <h3>PrepAce AI</h3>
+                            <p>
+                            Đang phân tích lộ trình học...
+                            </p>
+                        </div>
+                    </div>
                 </section>
 
                 {/* KHÓA HỌC NỔI BẬT */}
                 <div className="section-title-container">
-                    <h2>Khóa học Nổi bật</h2>
-                    <span className="view-all-link" onClick={() => navigate("/courses")}>Xem tất cả ➔</span>
+                    <div>
+                        <span className="section-badge">
+                            📚 Featured Courses
+                        </span>
+                        <h2>Khóa học nổi bật</h2>
+                        <p>
+                            Những khóa học được học viên đánh giá cao nhất trên PrepAce.
+                        </p>
+                    </div>
+
+                    <button
+                        className="view-all-btn"
+                        onClick={() => navigate("/courses")}
+                    >
+                        Xem tất cả →
+                    </button>
                 </div>
 
                 <section className="course-grid">
-                    {featuredCourses.map((course) => (
-                        <div className="course-card" key={course.id} onClick={() => navigate(`/course/${course.id}`)}>
+                    {featuredCourses.map(course => (
+                        <div
+                            className="course-card"
+                            key={course.id}
+                            onClick={() => navigate(`/course/${course.id}`)}
+                        >
                             <div className="course-thumb">
-                                <img src={course.thumbnail} alt={course.title} />
-                                <span className="subject-badge">{course.subject}</span>
+                                <img
+                                    src={course.thumbnail}
+                                    alt={course.title}
+                                />
+
+                                <span className="subject-badge">
+                                    {course.subject}
+                                </span>
+
+                                <div className="course-overlay">
+                                    <button>
+                                        Xem chi tiết →
+                                    </button>
+                                </div>
                             </div>
+
                             <div className="course-info">
-                                <h3 className="course-title">{course.title}</h3>
-                                <p className="course-teacher" onClick={(e) => { e.stopPropagation(); navigate(`/instructor/${course.userId}`); }}>
+                                <div className="course-rating">
+                                    ⭐⭐⭐⭐⭐
+                                    <span>4.9</span>
+                                </div>
+
+                                <h3 className="course-title">
+                                    {course.title}
+                                </h3>
+
+                                <p
+                                    className="course-teacher"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/instructor/${course.userId}`);
+
+                                    }}
+                                >
                                     👨‍🏫 {course.teacher}
                                 </p>
-                                <div className="course-meta">
-                                    <span className="students">👥 {course.students} học viên</span>
-                                    <span className="price-tag">{course.price}</span>
+
+                                <div className="course-features">
+                                    <span>👥 {course.students}</span>
+                                    <span>🕒 20 giờ</span>
+                                    <span>📄 120 bài</span>
+                                </div>
+
+                                <div className="course-footer">
+                                    <span className="price-tag">
+                                        {course.price}
+                                    </span>
+
+                                    <button>
+                                        Mua ngay
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     ))}
+
                 </section>
 
                 {/* CTA */}
                 <section className="cta">
-                    <h2>Sẵn sàng cho kỳ thi Đại học?</h2>
-                    <p>Đăng ký miễn phí và bắt đầu ngay hôm nay.</p>
-                    <button className="register-btn" onClick={() => navigate("/auth", { state: { mode: "register" } })}>
-                        Đăng Ký Miễn Phí
-                    </button>
+                    <div className="cta-content">
+                        <span className="cta-badge">
+                            🚀 START TODAY
+                        </span>
+                        <h2>
+                            Chinh phục kỳ thi THPT Quốc Gia cùng PrepAce AI
+                        </h2>
+                        <p>
+                            Hơn 12.000 học sinh đang học tập mỗi ngày với hệ thống AI cá nhân hóa.
+                        </p>
+                        <div className="cta-buttons">
+                            <button
+                                className="register-btn"
+                                onClick={() =>
+                                    navigate("/auth", {
+                                        state: {
+                                            mode: "register"
+                                        }
+                                    })
+                                }
+                            >
+                                Đăng ký miễn phí
+                            </button>
+                            <button
+                                className="secondary-btn"
+                                onClick={() => navigate("/courses")}
+                            >
+                                Khám phá khóa học
+                            </button>
+                        </div>
+                    </div>
+                    <div className="cta-decoration">
+                        🎓
+                    </div>
                 </section>
             </main>
 
             {/* Nút trợ lý AI nổi - Consult AI Chatbot (#26) */}
             <button
                 className="ai-fab"
-                title="Hỏi trợ lý AI PrepAce"
+                title="PrepAce AI"
                 onClick={() => navigate("/ai/chat")}
             >
+
+                <span className="pulse"></span>
                 🤖
             </button>
         </div>
