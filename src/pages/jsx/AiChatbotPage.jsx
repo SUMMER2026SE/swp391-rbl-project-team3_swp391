@@ -30,36 +30,47 @@ export default function AiChatbotPage() {
     }, [messages, loading]);
 
     const formatAIResponse = (response) => {
-        if (!response) return "Không có phản hồi.";
-        // Nếu đã là object
+        if (!response) return "Không có phản hồi từ AI.";
+
+        // Nếu backend trả object
         if (typeof response === "object") {
             return objectToMarkdown(response);
         }
-        // Nếu là text bình thường
-        if (typeof response !== "string") {
-            return String(response);
+
+        // Nếu là string
+        if (typeof response === "string") {
+            try {
+                const obj = JSON.parse(response);
+                return objectToMarkdown(obj);
+            } catch {
+                return response;
+            }
         }
-        // Thử parse JSON
-        try {
-            const obj = JSON.parse(response);
-            return objectToMarkdown(obj);
-        } catch {
-            return response;
-        }
+
+        return String(response);
     };
 
     const objectToMarkdown = (obj) => {
-        let md = "";
-        if (obj.title) {
-            md += `# ${obj.title}\n\n`;
-        }
-        if (Array.isArray(obj.content)) {
-            obj.content.forEach((item) => {
+        // Chat bình thường
+        if (obj.response) return obj.response;
+        if (obj.answer) return obj.answer;
+        if (obj.message) return obj.message;
+        if (obj.text) return obj.text;
+
+        // Tóm tắt lý thuyết
+        if (obj.title && Array.isArray(obj.content)) {
+            let md = `# ${obj.title}\n\n`;
+
+            obj.content.forEach(item => {
                 md += `## ${item.heading}\n\n`;
                 md += `${item.text}\n\n`;
             });
+
+            return md;
         }
-        return md;
+
+        // Fallback
+        return JSON.stringify(obj, null, 2);
     };
 
     const send = async (text) => {
