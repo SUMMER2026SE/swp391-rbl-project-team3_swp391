@@ -39,6 +39,18 @@ export default function TeacherDashboard() {
 
     const fetchCourses = async () => {
     try {
+        // Gọi link có chữ teacher như bạn muốn
+        const response = await axiosClient.get("/teacher/dashboard", {
+            headers: {
+                "X-Teacher-Id": userObj.id
+            }
+        });
+
+        setMyCourses(response.data.courses);
+        
+        // // Dữ liệu vẫn lọc theo ID như cũ
+        // const filtered = response.data.filter(c => String(c.teacher_id) === String(userObj.id)); 
+        // setMyCourses(filtered);
         const response = await axiosClient.get("/courses"); 
         
         // Vì Model Course hiện tại không lưu teacher_id, tạm thời hiển thị tất cả các khóa học
@@ -77,7 +89,7 @@ export default function TeacherDashboard() {
     const handleLogout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        navigate("/");
+        navigate("/auth");
     };
 
     const handleOpenReport = async (course) => {
@@ -142,14 +154,27 @@ export default function TeacherDashboard() {
     const handleSendReply = async () => {
     if (!replyContent.trim()) return alert("Vui lòng nhập nội dung trả lời");
     
-    // 1. Tự động lấy Id đúng (thử questionId trước, nếu không có thì lấy id)
+    // Tự động lấy Id đúng (thử questionId trước, nếu không có thì lấy id)
     const questionIdToUse = selectedQa?.questionId || selectedQa?.id;
     
-    // Kiểm tra nếu cả 2 đều không có thì chặn lại luôn không gửi lên Server
+    // Khóa chốt an toàn tại Frontend
     if (!questionIdToUse || questionIdToUse === 'undefined') {
-        console.error("Dữ liệu câu hỏi bị lỗi:", selectedQa);
         return alert("❌ Lỗi: Không tìm thấy ID của câu hỏi để gửi câu trả lời!");
     }
+
+    try {
+        await axiosClient.post(`/questions/${questionIdToUse}/answers`, {
+            content: replyContent
+        });
+        setReplyModalOpen(false);
+        fetchQaList(); // Tải lại danh sách để cập nhật trạng thái
+        alert("🎉 Đã gửi câu trả lời thành công!");
+    } catch (error) {
+        console.error("Lỗi chi tiết từ hệ thống:", error);
+        const serverErrorMessage = error.response?.data?.message || error.message;
+        alert("❌ Lỗi từ hệ thống: " + serverErrorMessage);
+    }
+};
 
     try {
         // 2. Gửi request với ID chuẩn đã tìm được ở trên
@@ -184,6 +209,10 @@ export default function TeacherDashboard() {
                     >
                         👨‍🏫 Quản lý khóa học
                     </li>
+                    <li onClick={() => navigate("/teacher/grading")} style={{ cursor: "pointer", marginTop: "10px" }}>
+        📝 Chấm bài tự luận
+    </li>
+                    
                     <li 
                         className={activeTab === "QA" ? "active" : ""} 
                         onClick={() => setActiveTab("QA")}
@@ -310,7 +339,7 @@ export default function TeacherDashboard() {
                                     {qaList.length > 0 ? qaList.map(qa => {
                                         const isAnswered = qa.answers && qa.answers.length > 0;
                                         return (
-                                            <tr key={qa.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+<tr key={qa.questionId || qa.id} style={{ borderBottom: "1px solid #f1f5f9" }}>                                                
                                                 <td style={{ padding: "16px", verticalAlign: "top" }}>
                                                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                                         <img src={qa.userAvatarUrl || "https://ui-avatars.com/api/?name=" + qa.userFullName} alt="" style={{ width: "32px", height: "32px", borderRadius: "50%" }} />
@@ -461,6 +490,7 @@ export default function TeacherDashboard() {
                                     onClick={() => setReplyModalOpen(false)}
                                     style={{ padding: "10px 16px", background: "#f1f5f9", color: "#475569", border: "none", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}
                                 >
+                                    ✏️ Biên soạn
                                     Hủy
                                 </button>
                                 <button 

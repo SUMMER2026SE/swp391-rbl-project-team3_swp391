@@ -1,5 +1,5 @@
 // jsx/TestPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import Timer from './Timer';
 import QuestionCard from './QuestionCard';
@@ -45,13 +45,37 @@ const TestPage = () => {
             setLoading(false);
         }
     };
+const saveTimeoutRef = useRef(null);
+    const handleAnswer = (questionId, optionId, essayText = null) => {
+        // Xác định giá trị hiện tại để lưu vào State UI
+        const currentAnswerValue = essayText !== null ? essayText : optionId;
+        
+        // Cập nhật State ngay lập tức để giao diện mượt mà, học sinh gõ chữ không bị lag
+        setAnswers(prev => ({ ...prev, [questionId]: currentAnswerValue }));
 
-    const handleAnswer = (questionId, optionId) => {
-        console.log(`Chọn câu ${questionId} - Đáp án: ${optionId}`);
-        setAnswers(prev => ({ ...prev, [questionId]: optionId }));
+        // TRƯỜNG HỢP 1: Nếu là Trắc nghiệm (bấm chọn là ăn luôn, lưu ngay không cần chờ)
+        if (optionId !== null) {
+            sendAnswerToBackend(questionId, optionId, null);
+            return;
+        }
 
-        // Auto save
+        // TRƯỜNG HỢP 2: Nếu là Điền số/Tự luận (Đang gõ chữ)
+        // Nếu có hẹn giờ cũ đang chạy -> Xóa đi để hẹn giờ lại từ đầu
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+        }
+
+        // Tạo hẹn giờ mới: Ngừng gõ đủ 500ms thì mới chính thức gọi API lưu vào DB
+        saveTimeoutRef.current = setTimeout(() => {
+            sendAnswerToBackend(questionId, null, essayText);
+        }, 500); 
+    };
+
+    // 🔥 TÁCH HÀM GỬI API RA RIÊNG CHO SẠCH CODE:
+    const sendAnswerToBackend = (questionId, optionId, essayText) => {
         const token = localStorage.getItem("token");
+        
+        console.log(`📡 Đang tự động lưu câu ${questionId} về DB...`);
 
         fetch(`http://localhost:8080/api/tests/${sessionsId}/answer`, {
             method: 'POST',
@@ -61,7 +85,8 @@ const TestPage = () => {
             },
             body: JSON.stringify({
                 questionId,
-                selectedOptionId: optionId
+                selectedOptionId: optionId,
+                essayAnswer: essayText
             })
         }).catch(err => console.error("Auto save thất bại", err));
     };

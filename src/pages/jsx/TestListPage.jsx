@@ -14,20 +14,54 @@ const TestListPage = () => {
 
     const fetchQuizzes = async () => {
         try {
-            const res = await fetch('http://localhost:8080/api/quizzes'); // ← Chỉnh port nếu khác
+            const token = localStorage.getItem("token");
 
-            if (!res.ok) {
-                throw new Error(`Lỗi server: ${res.status}`);
+            if (!token) {
+                setError("Vui lòng đăng nhập để xem danh sách bài thi");
+                setLoading(false);
+                return;
             }
 
-            const data = await res.json();
-            console.log("✅ Dữ liệu quiz:", data);
-            // const text = await res.text();
-            // console.log(text);
-            setQuizzes(data);
+            const res = await fetch('http://localhost:8080/api/quizzes', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            // Đọc toàn bộ response dưới dạng text
+            const responseText = await res.text();
+            
+            console.log("📊 Status:", res.status);
+            console.log("📄 Response Length:", responseText.length);
+            console.log("🔍 First 300 characters:", responseText.substring(0, 300));
+            console.log("🔍 Last 200 characters:", responseText.slice(-200));
+
+            if (!res.ok) {
+                if (res.status === 401) {
+                    setError("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
+                } else if (res.status === 403) {
+                    setError("Bạn không có quyền truy cập. Vui lòng đăng nhập với tài khoản phù hợp.");
+                } else {
+                    setError(`Lỗi server: ${res.status}`);
+                }
+                return;
+            }
+
+            // Nếu là JSON hợp lệ thì parse
+            try {
+                const data = JSON.parse(responseText);
+                console.log("✅ Dữ liệu quiz hợp lệ:", data);
+                setQuizzes(Array.isArray(data) ? data : []);
+            } catch (parseError) {
+                console.error("❌ Parse JSON thất bại:", parseError);
+                setError("Dữ liệu trả về không đúng định dạng JSON. Backend đang trả về lỗi HTML.");
+            }
+
         } catch (err) {
-            console.error("❌ Lỗi:", err);
-            setError(err.message);
+            console.error("❌ Lỗi fetchQuizzes:", err);
+            setError("Không thể kết nối đến server");
         } finally {
             setLoading(false);
         }

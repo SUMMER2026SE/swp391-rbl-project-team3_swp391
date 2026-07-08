@@ -9,7 +9,9 @@ function LoginPage({ switchToRegister }) {
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState("");
+
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
     const navigate = useNavigate();
 
@@ -78,27 +80,35 @@ function LoginPage({ switchToRegister }) {
 
             // }, 700);
             if (data.token) {
-                // Lưu token
                 localStorage.setItem("token", data.token);
 
                 // Giải mã JWT
                 const decoded = jwtDecode(data.token);
+                console.log("🔍 Decoded JWT:", decoded);   // ← Debug quan trọng
+
+                // Xử lý role an toàn (phòng trường hợp backend chưa có role hoặc tên field khác)
+                let role = "STUDENT"; // Mặc định
+
+                if (decoded.role) {
+                    role = decoded.role.replace("ROLE_", "");
+                } else if (decoded.roles) {
+                    role = Array.isArray(decoded.roles) ? decoded.roles[0].replace("ROLE_", "") : "STUDENT";
+                } else if (decoded.authorities) {
+                    role = decoded.authorities[0]?.replace("ROLE_", "") || "STUDENT";
+                }
 
                 const user = {
-                    id: decoded.userId,
-                    fullName: decoded.fullName,
-                    email: decoded.sub,
-                    role: decoded.role.replace("ROLE_", "")
+                    id: decoded.userId || decoded.id,
+                    fullName: decoded.fullName || decoded.name || email.split('@')[0] || "Người dùng", 
+                    email: decoded.sub || decoded.email || email,
+                    role: role
                 };
-                // Lưu user
-                localStorage.setItem(
-                    "user",
-                    JSON.stringify(user)
-                );
-                console.log("User:", user);
+
+                localStorage.setItem("user", JSON.stringify(user));
+                console.log("✅ User đã lưu:", user);
 
                 // Điều hướng theo role
-                switch (user.role) {
+                switch (role) {
                     case "ADMIN":
                         navigate("/admin");
                         break;
@@ -109,7 +119,8 @@ function LoginPage({ switchToRegister }) {
                         navigate("/home");
                 }
             } else {
-                setError("Đăng nhập thất bại!");
+                setMessage("Đăng nhập thất bại! (Không nhận được token)");
+                setMessageType("error");
             }
 
             setMessage("✅ Đăng nhập thành công!");

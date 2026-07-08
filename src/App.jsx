@@ -42,9 +42,11 @@ import AiChatbotPage from './pages/jsx/AiChatbotPage';
 import GapDiagnosisPage from './pages/jsx/GapDiagnosisPage';
 import ScoreForecastPage from './pages/jsx/ScoreForecastPage';
 import UniversityAdvisingPage from './pages/jsx/UniversityAdvisingPage';
+import BankPaymentPage from './pages/jsx/BankPaymentPage';
 
 import {Routes, Route, BrowserRouter} from "react-router-dom";
-
+import AdminRoute from './routes/adminRoute';
+import TeacherGrading from "./pages/jsx/TeacherGrading";
 
 function App() {
   const [count, setCount] = useState(0)
@@ -80,7 +82,8 @@ function App() {
 
           {/* #14 Thanh toán / Mua khóa học */}
           <Route path='/checkout/:courseId' element={<CheckoutPage />} />
-          <Route path='/pay/bank/:courseId' element={<BankTransferPage />} />
+          {/* <Route path='/payment/bank/:courseId' element={<BankPaymentPage />} /> */}
+          <Route path='/payment/bank/:courseId' element={<BankTransferPage />} />
           <Route path='/payment/return' element={<PaymentReturnPage />} />
 
           {/* #26/28/29/30 AI Interface */}
@@ -137,7 +140,7 @@ function App() {
           <Route path="/admin/sepay-guide" element={<AdminSePayGuide />} />
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
           <Route path="/teacher/course/:id/edit" element={<CourseEditPage />} />
-
+<Route path="/teacher/grading" element={<TeacherGrading />} />
           {/* Fallback: route lạ -> về trang chủ (tránh trang trắng) */}
           <Route path="*" element={<HomePage />} />
         </Routes>
