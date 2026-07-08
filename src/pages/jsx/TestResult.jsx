@@ -78,35 +78,51 @@ const TestResult = () => {
             </div>
 
             <div className="review-section">
-                <h2>Chi tiết từng câu</h2>
-                {result.questions && result.questions.map((q, index) => (
-                    <div key={q.questionId} className={`review-item ${q.correct ? 'correct' : 'wrong'}`}>
-                        <div className="review-header">
-                            <span className="q-number">Câu {index + 1}</span>
-                            <span className={`status ${q.correct ? 'correct' : 'wrong'}`}>
-                                {q.correct ? '✓ Đúng' : '✗ Sai'}
-                            </span>
-                        </div>
+    <h2>Chi tiết từng câu</h2>
+    {result.questions && result.questions.map((q, index) => {
+        const isEssay = q.questionType === "ESSAY" || q.questionType === "TEXT";
 
-                        <p className="question-text">{q.content}</p>
+        return (
+            <div key={q.questionId} className={`review-item ${isEssay ? 'essay-style' : q.correct ? 'correct' : 'wrong'}`}>
+                <div className="review-header">
+                    <span className="q-number">Câu {index + 1} {isEssay ? "(Tự luận)" : ""}</span>
+                    <span className={`status ${isEssay ? 'essay' : q.correct ? 'correct' : 'wrong'}`}>
+                        {isEssay 
+                            ? (q.score !== null && q.score !== undefined ? `💯 Điểm: ${q.score}` : '⏳ Chờ chấm điểm')
+                            : (q.correct ? '✓ Đúng' : '✗ Sai')}
+                    </span>
+                </div>
 
-                        <div className="answer-row">
-                            <div className="user-answer">
-                                <strong>Bạn chọn:</strong> {q.selectedAnswer}
-                            </div>
-                            <div className="correct-answer">
-                                <strong>Đáp án đúng:</strong> {q.correctedAnswer}
-                            </div>
-                        </div>
+                <p className="question-text">{q.content}</p>
 
-                        {q.explanation && (
-                            <div className="explanation">
-                                <strong>Giải thích:</strong> {q.explanation}
-                            </div>
-                        )}
+                <div className="answer-row">
+                    <div className="user-answer">
+                        <strong>Bạn làm:</strong> {q.selectedAnswer || "Chưa trả lời"}
                     </div>
-                ))}
+                    {/* Chỉ hiện đáp án chuẩn nếu là câu hỏi trắc nghiệm */}
+                    {!isEssay && (
+                        <div className="correct-answer">
+                            <strong>Đáp án đúng:</strong> {q.correctedAnswer}
+                        </div>
+                    )}
+                </div>
+
+                {/* HIỂN THỊ LỜI PHÊ GIÁO VIÊN NẾU CÓ */}
+                {isEssay && q.teacherComment && (
+                    <div className="explanation" style={{background: "#f0fdf4", borderColor: "#bbf7d0", color: "#166534"}}>
+                        <strong>📝 Lời phê của giáo viên:</strong> {q.teacherComment}
+                    </div>
+                )}
+
+                {!isEssay && q.explanation && (
+                    <div className="explanation">
+                        <strong>Giải thích:</strong> {q.explanation}
+                    </div>
+                )}
             </div>
+        );
+    })}
+</div>
 
             <div className="result-actions">
                 <button onClick={() => window.location.href = '/tests'} className="btn-back">

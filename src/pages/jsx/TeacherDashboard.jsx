@@ -191,6 +191,10 @@ export default function TeacherDashboard() {
                     >
                         👨‍🏫 Quản lý khóa học
                     </li>
+                    <li onClick={() => navigate("/teacher/grading")} style={{ cursor: "pointer", marginTop: "10px" }}>
+        📝 Chấm bài tự luận
+    </li>
+                    
                     <li 
                         className={activeTab === "QA" ? "active" : ""} 
                         onClick={() => setActiveTab("QA")}

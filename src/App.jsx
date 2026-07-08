@@ -46,7 +46,7 @@ import BankPaymentPage from './pages/jsx/BankPaymentPage';
 
 import {Routes, Route, BrowserRouter} from "react-router-dom";
 import AdminRoute from './routes/adminRoute';
-
+import TeacherGrading from "./pages/jsx/TeacherGrading";
 
 function App() {
   const [count, setCount] = useState(0)
@@ -140,7 +140,7 @@ function App() {
           <Route path="/admin/sepay-guide" element={<AdminSePayGuide />} />
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
           <Route path="/teacher/course/:id/edit" element={<CourseEditPage />} />
-
+<Route path="/teacher/grading" element={<TeacherGrading />} />
           {/* Fallback: route lạ -> về trang chủ (tránh trang trắng) */}
           <Route path="*" element={<HomePage />} />
         </Routes>
