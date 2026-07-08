@@ -90,27 +90,22 @@ const TestResult = () => {
 
                         <p className="question-text">{q.content}</p>
 
-                            <div className="answer-row">
-                                <div className="user-answer">
-                                    <strong>Bạn chọn:</strong> {q.selectedAnswer || "Chưa trả lời"}
-                                </div>
-                                <div className="correct-answer">
-                                    <strong>Đáp án đúng:</strong> {q.correctAnswer || q.correctedAnswer}
-                                </div>
+                        <div className="answer-row">
+                            <div className="user-answer">
+                                <strong>Bạn chọn:</strong> {q.selectedAnswer}
                             </div>
                             <div className="correct-answer">
                                 <strong>Đáp án đúng:</strong> {q.correctedAnswer}
                             </div>
                         </div>
 
-                            {q.explanation && (
-                                <div className="explanation">
-                                    <strong>Giải thích:</strong> {q.explanation}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
+                        {q.explanation && (
+                            <div className="explanation">
+                                <strong>Giải thích:</strong> {q.explanation}
+                            </div>
+                        )}
+                    </div>
+                ))}
             </div>
 
             <div className="result-actions">

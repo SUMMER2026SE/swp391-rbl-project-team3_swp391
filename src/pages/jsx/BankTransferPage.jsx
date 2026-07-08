@@ -72,20 +72,35 @@ export default function BankTransferPage() {
 
     return (
         <div style={st.page}>
+            <span style={st.back} onClick={() => navigate(-1)}>← Quay lại</span>
             <div style={st.card}>
-                <span style={st.back} onClick={() => navigate(-1)}>← Quay lại</span>
+                
                 <h1 style={st.title}>Chuyển khoản ngân hàng</h1>
                 <p style={st.course}>{order.courseTitle}</p>
                 <div style={st.amount}>{formatVnd(order.amount)}</div>
 
-                <img src={order.qrUrl} alt="VietQR" style={st.qr} />
+                <div style={{ textAlign: "center", margin: "20px 0 24px" }}>
+                    <img 
+                        src={`https://img.vietqr.io/image/970436-9703391695-compact2.jpg?amount=${order?.amount || 0}&addInfo=${encodeURIComponent(order?.content || '')}&accountName=NGUYEN%20CUU%20THANG`} 
+                        alt="VietQR Động" 
+                        style={st.qr} 
+                        onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/src/assets/myqrcode.jpg"; // fallback QR tĩnh
+                        }}
+                    />
+                    <p style={{ marginTop: 12, fontSize: 14, color: "#64748b", fontWeight: 500 }}>
+                        Quét mã QR bằng app ngân hàng<br/>
+                        (Đã điền sẵn số tiền & nội dung chuyển khoản)
+                    </p>
+                </div>
 
                 <div style={st.info}>
-                    <Row label="Ngân hàng" value={`VietQR (BIN ${order.bankBin})`} />
-                    <Row label="Số tài khoản" value={order.accountNo} copy />
-                    <Row label="Chủ tài khoản" value={order.accountName} />
-                    <Row label="Số tiền" value={formatVnd(order.amount)} />
-                    <Row label="Nội dung CK" value={order.content} copy highlight />
+                    <Row label="Ngân hàng" value="VietQR (VCB)" />
+                    <Row label="Số tài khoản" value="9703391695" copy />
+                    <Row label="Chủ tài khoản" value="NGUYEN CUU THANG" />
+                    <Row label="Số tiền" value={formatVnd(order?.amount)} />
+                    <Row label="Nội dung CK" value={order?.content} copy highlight />
                 </div>
 
                 <p style={st.note}>

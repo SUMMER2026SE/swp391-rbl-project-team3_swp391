@@ -39,6 +39,18 @@ export default function TeacherDashboard() {
 
     const fetchCourses = async () => {
     try {
+        // Gọi link có chữ teacher như bạn muốn
+        const response = await axiosClient.get("/teacher/dashboard", {
+            headers: {
+                "X-Teacher-Id": userObj.id
+            }
+        });
+
+        setMyCourses(response.data.courses);
+        
+        // // Dữ liệu vẫn lọc theo ID như cũ
+        // const filtered = response.data.filter(c => String(c.teacher_id) === String(userObj.id)); 
+        // setMyCourses(filtered);
         const response = await axiosClient.get("/courses"); 
         
         // Vì Model Course hiện tại không lưu teacher_id, tạm thời hiển thị tất cả các khóa học
@@ -77,7 +89,7 @@ export default function TeacherDashboard() {
     const handleLogout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        navigate("/");
+        navigate("/auth");
     };
 
     const handleOpenReport = async (course) => {
@@ -456,6 +468,7 @@ export default function TeacherDashboard() {
                                     onClick={() => setReplyModalOpen(false)}
                                     style={{ padding: "10px 16px", background: "#f1f5f9", color: "#475569", border: "none", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}
                                 >
+                                    ✏️ Biên soạn
                                     Hủy
                                 </button>
                                 <button 
