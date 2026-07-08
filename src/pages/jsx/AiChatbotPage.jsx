@@ -29,6 +29,50 @@ export default function AiChatbotPage() {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, loading]);
 
+    const formatAIResponse = (response) => {
+        if (!response) return "Không có phản hồi từ AI.";
+
+        // Nếu backend trả object
+        if (typeof response === "object") {
+            return objectToMarkdown(response);
+        }
+
+        // Nếu là string
+        if (typeof response === "string") {
+            try {
+                const obj = JSON.parse(response);
+                return objectToMarkdown(obj);
+            } catch {
+                return response;
+            }
+        }
+
+        return String(response);
+    };
+
+    const objectToMarkdown = (obj) => {
+        // Chat bình thường
+        if (obj.response) return obj.response;
+        if (obj.answer) return obj.answer;
+        if (obj.message) return obj.message;
+        if (obj.text) return obj.text;
+
+        // Tóm tắt lý thuyết
+        if (obj.title && Array.isArray(obj.content)) {
+            let md = `# ${obj.title}\n\n`;
+
+            obj.content.forEach(item => {
+                md += `## ${item.heading}\n\n`;
+                md += `${item.text}\n\n`;
+            });
+
+            return md;
+        }
+
+        // Fallback
+        return JSON.stringify(obj, null, 2);
+    };
+
     const send = async (text) => {
         const content = (text ?? input).trim();
         if (!content || loading) return;
@@ -51,7 +95,7 @@ export default function AiChatbotPage() {
                 ...prev,
                 {
                     role: "ai",
-                    text: res.aiResponse || "Không có phản hồi từ AI"
+                    text: formatAIResponse(res.aiResponse)
                 }
             ]);
         }

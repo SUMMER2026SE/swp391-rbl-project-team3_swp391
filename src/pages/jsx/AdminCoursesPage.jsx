@@ -14,14 +14,47 @@ export default function AdminCoursesPage() {
     ]);
 
     useEffect(() => {
-        // 1. KIỂM TRA QUYỀN ADMIN TRƯỚC
-        const token = localStorage.getItem("token");
-        const storedUser = localStorage.getItem("user");
+    // 1. KIỂM TRA QUYỀN ADMIN TRƯỚC
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
 
-        if (!token || !storedUser) {
-            alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
-            navigate("/");
-            return;
+    if (!token || !storedUser) {
+        alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
+        navigate("/");
+        return;
+    }
+
+    const userObj = JSON.parse(storedUser);
+    if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
+        alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
+        navigate("/home");
+        return;
+    }
+
+    // 2. NẾU HỢP LỆ THÌ MỚI GỌI API LẤY COURSES
+    const fetchAllCourses = async () => {
+        try {
+            const response = await axiosClient.get("/admin/courses");
+            if (response.data && response.data.length > 0) {
+                setCourses(response.data);
+            }
+        } catch (error) {
+            console.warn("Hệ thống chưa kết nối Backend. Sử dụng tiếp dữ liệu Mock:", error);
+        }
+    };
+
+    fetchAllCourses();
+}, [navigate]); // <--- Nhớ đổi [] thành [navigate]
+
+    // HÀM XỬ LÝ DUYỆT
+    const handleApproveCourse = async (courseId) => {
+        try {
+            await axiosClient.patch(`/admin/courses/${courseId}/status`, { status: "PUBLISHED" });
+            setCourses(prev => prev.map(c => c.id === courseId ? { ...c, status: "PUBLISHED" } : c));
+            alert(`Khóa học #${courseId} đã được duyệt và xuất bản!`);
+        } catch (error) {
+            setCourses(prev => prev.map(c => c.id === courseId ? { ...c, status: "PUBLISHED" } : c));
+            alert(`[Demo Mode] Đã duyệt khóa học #${courseId}!`);
         }
 
         const userObj = JSON.parse(storedUser);
