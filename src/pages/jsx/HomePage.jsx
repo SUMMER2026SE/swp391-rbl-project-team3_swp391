@@ -78,65 +78,51 @@ export default function HomePage() {
             }
         }
 
-        // Countdown
-        updateCountdown();
-        const interval = setInterval(updateCountdown, 60000);
+        // Countdown đếm ngược ngày thi THPT Quốc Gia
+        const examDate = new Date("2026-06-28T00:00:00").getTime();
+        const interval = setInterval(() => {
+            const now = new Date().getTime();
+            const distance = examDate - now;
+            if (distance > 0) {
+                setTimeLeft({
+                    days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                    minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))
+                });
+            }
+        }, 1000);
 
-        // Fetch courses
-        // Fetch courses
-        // Fetch courses từ API
-        let isMounted = true;
+        // Fetch courses từ API và sửa lỗi lồng ngoặc bị nát do Git Auto-merge
+        axiosClient.get("/courses")
+            .then(res => {
+                console.log(">>> DỮ LIỆU KHÓA HỌC CHUẨN:", res.data);
+                const rawCourses = Array.isArray(res.data) ? res.data : (res.data.courses || []);
+                
+                if (rawCourses.length > 0) {
+                    const mappedData = rawCourses.map(c => {
+                        const displayPrice = typeof c.price === "number"
+                            ? new Intl.NumberFormat("vi-VN").format(c.price) + "đ"
+                            : (c.price || "Miễn phí");
 
-    axiosClient.get("/courses")
-        .then(res => {
-            if (!isMounted) return;
-
-            console.log(">>> RAW DATA TỪ API:", res.data);
-
-            let rawCourses = res.data?.data || res.data || [];
-            if (!Array.isArray(rawCourses)) rawCourses = [];
-
-            const mappedData = rawCourses.map(c => {
-                const priceValue = c.price || c.course_price || 0;
-                const displayPrice = priceValue > 0 ? priceValue.toLocaleString() + "đ" : "Miễn phí";
-
-                let thumbnail = c.thumbnail_url || c.thumbnailUrl || c.thumbnail || "";
-
-                if (thumbnail && !thumbnail.startsWith("http")) {
-                    thumbnail = `http://localhost:8080${thumbnail.startsWith('/') ? '' : '/'}${thumbnail}`;
+                        return {
+                            id: c.course_id || c.courseId || c.id,
+                            title: c.course_title || c.courseTitle || c.title || "Khóa học chưa tên",
+                            thumbnail: c.thumbnail_url || c.thumbnailUrl || c.thumbnail || "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=400&q=80",
+                            teacher: c.teacher_name || c.teacherName || c.teacher || "Giáo viên",
+                            subject: c.subject_name || c.subjectName || c.subject || "Chung",
+                            price: displayPrice,
+                            students: c.students || c.student_count || c.studentCount || 0,
+                            userId: c.teacher_id || c.teacherId || c.userId || 2
+                        };
+                    });
+                    setFeaturedCourses(mappedData.slice(0, 3));
                 }
-
-                if (!thumbnail) {
-                    if (c.title?.toLowerCase().includes("toán") || c.title?.toLowerCase().includes("math")) {
-                        thumbnail = "https://images.unsplash.com/photo-1635070041078-e363dbe005cb";
-                    } else if (c.title?.toLowerCase().includes("vật lý")) {
-                        thumbnail = "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa";
-                    } else {
-                        thumbnail = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d";
-                    }
-                }
-
-                return {
-                    id: c.id || c.courseId || c.course_id,
-                    title: c.title || c.courseTitle || c.course_title,
-                    thumbnail: thumbnail + (thumbnail.includes("?") ? "" : "?auto=format&fit=crop&w=400&q=80"),
-                    teacher: c.teacherName || c.teacher_name || "Giáo viên",
-                    subject: c.subject || "Chung",
-                    price: displayPrice,
-                    students: c.students || 0,
-                    userId: c.teacherId || 1
-                };
+            })
+            .catch(err => {
+                console.log("Dùng data khóa học mẫu do chưa kết nối Backend hoặc sập API:", err);
             });
 
-            if (mappedData.length > 0) {
-                setFeaturedCourses(mappedData.slice(0, 3));
-            }
-        })
-        .catch(err => console.error("Fetch courses error:", err));
-        return () => {
-            isMounted = false;
-            clearInterval(interval);
-        };
+        return () => clearInterval(interval);
     }, []);
 
     const handleSearchSubmit = (e) => {
@@ -256,6 +242,13 @@ export default function HomePage() {
                             </button>
                         </>
                     )}
+                    ) : (
+                        <>
+                            <button onClick={() => navigate("/auth", { state: { mode: "login" } })}>Login</button>
+                            <button className="register-btn" onClick={() => navigate("/auth", { state: { mode: "register" } })}>Register</button>
+                        </>
+                    )
+                }
                 </div>
             </aside>
 
