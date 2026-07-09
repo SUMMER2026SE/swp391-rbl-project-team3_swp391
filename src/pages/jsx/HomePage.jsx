@@ -223,6 +223,14 @@ export default function HomePage() {
                         <span>🎓</span>
                         Tư vấn ngành
                     </li>
+                    <li onClick={() => navigate("/calendar")}>
+                        <span>📅</span>
+                        Lịch học
+                    </li>
+                    <li onClick={() => navigate("/notifications")}>
+                        <span>🔔</span>
+                        Thông báo
+                    </li>
                 </ul>
 <div className="sidebar-actions">
     {user ? (
