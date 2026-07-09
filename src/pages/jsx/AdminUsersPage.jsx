@@ -16,52 +16,52 @@ export default function AdminUsersPage() {
 
     // 2. GỌI API TRONG USEEFFECT: Tự động chạy để kéo danh sách thành viên thật về khi load trang
     useEffect(() => {
-    // 1. KIỂM TRA QUYỀN ADMIN TRƯỚC
-    const token = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
+        // 1. KIỂM TRA QUYỀN ADMIN TRƯỚC
+        const token = localStorage.getItem("token");
+        const storedUser = localStorage.getItem("user");
 
-    if (!token || !storedUser) {
-        alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
-        navigate("/");
-        return;
-    }
-
-    const userObj = JSON.parse(storedUser);
-    if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
-        alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
-        navigate("/home");
-        return;
-    }
-
-    // 2. NẾU HỢP LỆ THÌ MỚI GỌI API LẤY USERS
-    const fetchAllUsers = async () => {
-        try {
-            const response = await axiosClient.get("/admin/users");
-            if (response.data && response.data.length > 0) {
-                setUsers(response.data);
-            }
-        } catch (error) {
-            console.warn("Hệ thống chưa kết nối được Endpoint Admin lấy Users. Tiếp tục sử dụng danh sách Mock:", error);
+        if (!token || !storedUser) {
+            alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
+            navigate("/");
+            return;
         }
-    };
 
-    fetchAllUsers();
-}, [navigate]); // <--- Nhớ đổi [] thành [navigate]
+        const userObj = JSON.parse(storedUser);
+        if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
+            alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
+            navigate("/home");
+            return;
+        }
+
+        // 2. NẾU HỢP LỆ THÌ MỚI GỌI API LẤY USERS
+        const fetchAllUsers = async () => {
+            try {
+                const response = await axiosClient.get("/admin/users");
+                if (response.data && response.data.length > 0) {
+                    setUsers(response.data);
+                }
+            } catch (error) {
+                console.warn("Hệ thống chưa kết nối được Endpoint Admin lấy Users. Tiếp tục sử dụng danh sách Mock:", error);
+            }
+        };
+
+        fetchAllUsers();
+    }, [navigate]); // <--- Nhớ đổi [] thành [navigate]
     // HÀM XỬ LÝ THAY ĐỔI TRẠNG THÁI NGƯỜI DÙNG (Cập nhật real-time lên database sau này)
     const handleUpdateUserStatus = async (userId, newStatus) => {
         try {
             // Gọi API cập nhật trạng thái người dùng lên database
             await axiosClient.patch(`/admin/users/${userId}/status`, { status: newStatus });
-            
+
             // Cập nhật trực tiếp State ở Frontend để màn hình đổi màu trạng thái ngay lập tức
-            setUsers(prevUsers => 
+            setUsers(prevUsers =>
                 prevUsers.map(user => user.id === userId ? { ...user, status: newStatus } : user)
             );
             alert(`Đã cập nhật trạng thái thành viên #${userId} sang: ${newStatus}`);
         } catch (error) {
             console.error("Lỗi cập nhật trạng thái tài khoản:", error);
             // Kịch bản sơ phòng cứu nguy khi đi demo không có backend thực tế:
-            setUsers(prevUsers => 
+            setUsers(prevUsers =>
                 prevUsers.map(user => user.id === userId ? { ...user, status: newStatus } : user)
             );
             alert(`[Demo Mode] Đã đổi trạng thái thành viên #${userId} thành: ${newStatus}`);
@@ -81,10 +81,15 @@ export default function AdminUsersPage() {
                     <h2>PrepAce <span>Admin</span></h2>
                 </div>
                 <ul className="admin-menu">
-                    <li onClick={() => navigate("/admin")}>📊 Dashboard</li>
-                    <li onClick={() => navigate("/admin/courses")}>📚 Quản lý khóa học</li>
-                    <li className="active">👥 Quản lý người dùng</li>
-                    <li onClick={() => navigate("/admin/ui-config")}>🎨 Cấu hình UI</li>
+                    <li className={activeMenu === "dashboard" ? "active" : ""} onClick={() => navigate("/admin")}>📊 Dashboard</li>
+                    <li className={activeMenu === "courses" ? "active" : ""} onClick={() => navigate("/admin/courses")}>📚 Quản lý khóa học</li>
+                    <li className={activeMenu === "users" ? "active" : ""} onClick={() => navigate("/admin/users")}>👥 Quản lý người dùng</li>
+                    <li className={activeMenu === "question-bank" ? "active" : ""} onClick={() => navigate("/admin/question-bank")}>📝 Quản lý thư viện đề</li>
+
+                    <li className={activeMenu === "violations" ? "active" : ""} onClick={() => navigate("/admin/violations")}>🚨 Quản lý vi phạm</li>
+
+                    <li className={activeMenu === "ui" ? "active" : ""} onClick={() => navigate("/admin/ui-config")}>🎨 Cấu hình UI</li>
+                    <li className={activeMenu === "sepay" ? "active" : ""} onClick={() => navigate("/admin/sepay-guide")}>💳 Cấu hình SePay</li>
                 </ul>
                 <div className="admin-logout">
                     <button onClick={handleLogout}>Đăng xuất</button>
@@ -121,7 +126,7 @@ export default function AdminUsersPage() {
                                     {users.map((u) => (
                                         <tr key={u.id}>
                                             <td>#{u.id}</td>
-<td><strong>{u.fullName || "Chưa đặt tên"}</strong></td>
+                                            <td><strong>{u.fullName || "Chưa đặt tên"}</strong></td>
                                             <td>{u.email}</td>
                                             <td>
                                                 <span className={`role-badge ${u.role === 'Giáo viên' ? 'teacher' : 'student'}`}>
@@ -130,14 +135,14 @@ export default function AdminUsersPage() {
                                             </td>
                                             <td>
                                                 <span className={`status-badge ${u.status?.toUpperCase() === 'ACTIVE' ? 'success' : (u.status?.toUpperCase() === 'BANNED' ? 'banned' : 'deactivated')}`}>
-    {u.status?.toUpperCase() === 'ACTIVE' ? 'Hoạt động' : (u.status?.toUpperCase() === 'BANNED' ? 'Đã khóa' : 'Vô hiệu hóa')}
-</span>
+                                                    {u.status?.toUpperCase() === 'ACTIVE' ? 'Hoạt động' : (u.status?.toUpperCase() === 'BANNED' ? 'Đã khóa' : 'Vô hiệu hóa')}
+                                                </span>
                                             </td>
                                             <td>
                                                 <button className="action-btn edit" onClick={() => alert(`Chức năng chỉnh sửa User #${u.id}`)}>Sửa</button>
-                                                
+
                                                 {/* Nút Vô hiệu hóa / Kích hoạt lại */}
-                                                <button 
+                                                <button
                                                     className="action-btn disable"
                                                     onClick={() => handleUpdateUserStatus(u.id, u.status === 'DEACTIVATED' ? 'ACTIVE' : 'DEACTIVATED')}
                                                 >
@@ -145,7 +150,7 @@ export default function AdminUsersPage() {
                                                 </button>
 
                                                 {/* Nút Khóa / Mở khóa tài khoản */}
-                                                <button 
+                                                <button
                                                     className="action-btn delete"
                                                     onClick={() => handleUpdateUserStatus(u.id, u.status === 'BANNED' ? 'ACTIVE' : 'BANNED')}
                                                 >
