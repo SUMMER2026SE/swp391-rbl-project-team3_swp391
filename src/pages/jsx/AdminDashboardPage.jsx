@@ -5,22 +5,22 @@ import React, { useState, useEffect } from "react"; // <--- Thêm useEffect vào
 export default function AdminDashboardPage() {
     const navigate = useNavigate();
     useEffect(() => {
-    const token = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
+        const token = localStorage.getItem("token");
+        const storedUser = localStorage.getItem("user");
 
-    if (!token || !storedUser) {
-        alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
-        navigate("/");
-        return;
-    }
+        if (!token || !storedUser) {
+            alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
+            navigate("/");
+            return;
+        }
 
-    const userObj = JSON.parse(storedUser);
-    if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
-        alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
-        navigate("/home");
-        return;
-    }
-}, [navigate]);
+        const userObj = JSON.parse(storedUser);
+        if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
+            alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
+            navigate("/home");
+            return;
+        }
+    }, [navigate]);
     const [activeMenu, setActiveMenu] = useState("dashboard");
 
     // Mock dữ liệu KPI
@@ -51,7 +51,7 @@ export default function AdminDashboardPage() {
 
     const handleLogout = () => {
         console.log("Before:", localStorage.getItem("user"));
-        
+
         localStorage.removeItem("token");
         localStorage.removeItem("user");
 
@@ -68,18 +68,20 @@ export default function AdminDashboardPage() {
                     <h2>PrepAce <span>Admin</span></h2>
                 </div>
                 <ul className="admin-menu">
-    <li className={activeMenu === "dashboard" ? "active" : ""} onClick={() => navigate("/admin")}>📊 Dashboard</li>
-    <li className={activeMenu === "courses" ? "active" : ""} onClick={() => navigate("/admin/courses")}>📚 Quản lý khóa học</li>
-    <li className={activeMenu === "users" ? "active" : ""} onClick={() => navigate("/admin/users")}>👥 Quản lý người dùng</li>
-    <li className={activeMenu === "question-bank" ? "active" : ""} onClick={() => navigate("/admin/question-bank")}>📝 Quản lý thư viện đề</li>
-    <li className={activeMenu === "ui" ? "active" : ""} onClick={() => navigate("/admin/ui-config")}>🎨 Cấu hình UI</li>
-    <li className={activeMenu === "sepay" ? "active" : ""} onClick={() => navigate("/admin/sepay-guide")}>💳 Cấu hình SePay</li>
-</ul>
+                    <li className={activeMenu === "dashboard" ? "active" : ""} onClick={() => navigate("/admin")}>📊 Dashboard</li>
+                    <li className={activeMenu === "courses" ? "active" : ""} onClick={() => navigate("/admin/courses")}>📚 Quản lý khóa học</li>
+                    <li className={activeMenu === "users" ? "active" : ""} onClick={() => navigate("/admin/users")}>👥 Quản lý người dùng</li>
+                    <li className={activeMenu === "question-bank" ? "active" : ""} onClick={() => navigate("/admin/question-bank")}>📝 Quản lý thư viện đề</li>
+
+                    <li className={activeMenu === "violations" ? "active" : ""} onClick={() => navigate("/admin/violations")}>🚨 Quản lý vi phạm</li>
+
+                    <li className={activeMenu === "ui" ? "active" : ""} onClick={() => navigate("/admin/ui-config")}>🎨 Cấu hình UI</li>
+                    <li className={activeMenu === "sepay" ? "active" : ""} onClick={() => navigate("/admin/sepay-guide")}>💳 Cấu hình SePay</li>
+                </ul>
                 <div className="admin-logout">
                     <button onClick={handleLogout}>Đăng xuất</button>
                 </div>
             </aside>
-
             {/* MAIN CONTENT */}
             <main className="admin-main">
                 <header className="admin-header">
