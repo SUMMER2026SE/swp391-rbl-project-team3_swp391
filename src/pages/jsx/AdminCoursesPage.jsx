@@ -46,47 +46,7 @@ export default function AdminCoursesPage() {
     fetchAllCourses();
 }, [navigate]); // <--- Nhớ đổi [] thành [navigate]
 
-    // HÀM XỬ LÝ DUYỆT
-    const handleApproveCourse = async (courseId) => {
-        try {
-            await axiosClient.patch(`/admin/courses/${courseId}/status`, { status: "PUBLISHED" });
-            setCourses(prev => prev.map(c => c.id === courseId ? { ...c, status: "PUBLISHED" } : c));
-            alert(`Khóa học #${courseId} đã được duyệt và xuất bản!`);
-        } catch (error) {
-            setCourses(prev => prev.map(c => c.id === courseId ? { ...c, status: "PUBLISHED" } : c));
-            alert(`[Demo Mode] Đã duyệt khóa học #${courseId}!`);
-        }
-
-        const userObj = JSON.parse(storedUser);
-        if (userObj.role !== "ADMIN") {
-            alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
-            navigate("/home");
-            return;
-        }
-
-        // 2. NẾU HỢP LỆ THÌ MỚI GỌI API LẤY COURSES
-        const fetchAllCourses = async () => {
-            try {
-                const response = await axiosClient.get("/admin/courses");
-
-                const raw = response.data;
-
-                const data =
-                    Array.isArray(raw)
-                        ? raw
-                        : raw?.data || raw?.content;
-
-                if (Array.isArray(data)) {
-                    setCourses(data);
-                }
-            } catch (error) {
-                console.warn("Backend lỗi:", error);
-                // không xoá state
-            }
-        };
-
-        fetchAllCourses();
-    }, [navigate]); // <--- Nhớ đổi [] thành [navigate]
+   
 
         // HÀM XỬ LÝ DUYỆT
         const handleApproveCourse = async (courseId) => {

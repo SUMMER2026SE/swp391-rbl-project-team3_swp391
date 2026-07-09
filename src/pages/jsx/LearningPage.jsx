@@ -416,146 +416,97 @@ export default function LearningPage() {
 
             <div className="learning-workspace">
                 <div className="learning-main">
-                    <div className="video-container">
-                        {currentLesson.videoUrl ? (
+    {/* KHỐI VIDEO CONTAINER ĐÃ ĐƯỢC LÀM SẠCH CÚ PHÁP */}
+    <div className="video-container" style={{ position: "relative", width: "100%", aspectRatio: "16/9", backgroundColor: "#000", borderRadius: "8px", overflow: "hidden" }}>
+        <div key={currentLesson.id} style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}>
+            {currentLesson.videoUrl ? (
+                isYouTube(currentLesson.videoUrl) ? (
+                    // Phải dùng thẻ div rỗng để YouTube API tự động nhúng iframe vào đây một cách chính xác
+                    <div id="youtube-player-container" style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}></div>
+                ) : (
+                    <video
+                        ref={videoRef}
+                        src={currentLesson.videoUrl.startsWith("http") ? currentLesson.videoUrl : `http://localhost:8080${currentLesson.videoUrl}`}
+                        controls
+                        onTimeUpdate={handleTimeUpdate}
+                        style={{ width: "100%", height: "100%", display: "block", position: "absolute", top: 0, left: 0 }}
+                    />
+                )
+            ) : (
+                <div className="video-placeholder" style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>
+                    <div className="play-button-large" style={{ fontSize: "40px", marginBottom: "10px" }}>▶</div>
+                    <p style={{ margin: 0, color: "#fff" }}>Chưa có video: {currentLesson.title}</p>
+                </div>
+            )}
+        </div>
 
-                            currentLesson.videoUrl.includes("youtube.com") ||
-                            currentLesson.videoUrl.includes("youtu.be")
-
-                                ? (
-
-                                    <iframe
-                                        width="100%"
-                                        height="700"
-                                        src={
-                                            currentLesson.videoUrl
-                                                .replace("watch?v=", "embed/")
-                                                .replace("youtu.be/", "www.youtube.com/embed/")
-                                        }
-                                        title={currentLesson.title}
-                                        frameBorder="0"
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                        allowFullScreen
-                                        style={{ borderRadius: "8px" }}
-                                    />
-
-                                ) : (
-
-                                    <video
-                                        ref={videoRef}
-                                        src={
-                                            currentLesson.videoUrl.startsWith("http")
-                                                ? currentLesson.videoUrl
-                                                : `http://localhost:8080${currentLesson.videoUrl}`
-                                        }
-                                        controls
-                                        onTimeUpdate={handleTimeUpdate}
-                                        style={{
-                                            width: "100%",
-                                            display: "block",
-                                            borderRadius: "8px",
-                                            backgroundColor: "#000"
-                                        }}
-                                    />
-
-                                )
-
-                        ) : (
-                            <div className="video-placeholder">
-                                <div className="play-button-large">▶</div>
-                                <p>Đang phát: {currentLesson.title}</p>
-                    <div className="video-container" style={{ position: "relative", width: "100%", aspectRatio: "16/9", backgroundColor: "#000", borderRadius: "8px", overflow: "hidden" }}>
-                        <div key={currentLesson.id} style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}>
-                            {currentLesson.videoUrl ? (
-                                isYouTube(currentLesson.videoUrl) ? (
-                                    // Phải dùng thẻ div rỗng để YouTube API tự động nhúng iframe vào đây
-                                    <div id="youtube-player-container" style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}></div>
-                                ) : (
-                                    <video
-                                        ref={videoRef}
-                                        src={currentLesson.videoUrl.startsWith("http") ? currentLesson.videoUrl : `http://localhost:8080${currentLesson.videoUrl}`}
-                                        controls
-                                        onTimeUpdate={handleTimeUpdate}
-                                        style={{ width: "100%", height: "100%", display: "block", position: "absolute", top: 0, left: 0 }}
-                                    />
-                                )
-                            ) : (
-                                <div className="video-placeholder" style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>
-                                    <div className="play-button-large" style={{ fontSize: "40px", marginBottom: "10px" }}>▶</div>
-                                    <p style={{ margin: 0, color: "#fff" }}>Chưa có video: {currentLesson.title}</p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* POP-UP QUIZ OVERLAY */}
-                        {currentQuiz && (
-                            <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.85)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 50, fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
-                                <div style={{ background: "#fff", padding: "30px", borderRadius: "12px", width: "80%", maxWidth: "550px", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "10px", borderBottom: "2px solid #fde68a", paddingBottom: "10px", marginBottom: "20px" }}>
-                                        <span style={{ fontSize: "24px" }}>🧠</span>
-                                        <h3 style={{ margin: 0, color: "#b45309", fontSize: "18px", fontWeight: "700" }}>Câu hỏi tương tác</h3>
-                                    </div>
-                                    <p style={{ fontSize: "16px", fontWeight: "600", marginBottom: "20px", color: "#1e293b", lineHeight: "1.5" }}>{currentQuiz.questionText}</p>
-                                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                                        {['A', 'B', 'C', 'D'].map(opt => (
-                                            <button 
-                                                key={opt}
-                                                onClick={() => setQuizSelectedOption(opt)}
-                                                style={{ 
-                                                    padding: "12px 15px", 
-                                                    textAlign: "left", 
-                                                    background: quizSelectedOption === opt ? "#eff6ff" : "#f8fafc", 
-                                                    border: `2px solid ${quizSelectedOption === opt ? "#3b82f6" : "#e2e8f0"}`, 
-                                                    borderRadius: "8px", 
-                                                    cursor: "pointer",
-                                                    fontSize: "14px",
-                                                    fontWeight: quizSelectedOption === opt ? "600" : "500",
-                                                    color: quizSelectedOption === opt ? "#1d4ed8" : "#334155",
-                                                    transition: "all 0.2s ease"
-                                                }}
-                                            >
-                                                <strong style={{ display: "inline-block", width: "25px", color: quizSelectedOption === opt ? "#2563eb" : "#64748b" }}>{opt}.</strong> {currentQuiz[`option${opt}`]}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <div style={{ marginTop: "25px", display: "flex", justifyContent: "flex-end" }}>
-                                        <button 
-                                            onClick={() => {
-                                                if (!quizSelectedOption) return alert("Vui lòng chọn 1 đáp án!");
-                                                if (quizSelectedOption === currentQuiz.correctOption) {
-                                                    alert("Chính xác! Mời bạn tiếp tục xem bài giảng.");
-                                                    
-                                                    // ĐÁNH DẤU ĐÃ TRẢ LỜI
-                                                    setAnsweredQuizzes(prev => {
-                                                        const newSet = new Set(prev);
-                                                        newSet.add(currentQuiz.id);
-                                                        return newSet;
-                                                    });
-                                                    
-                                                    setCurrentQuiz(null);
-                                                    
-                                                    // Resume video
-                                                    if (isYouTube(currentLesson.videoUrl)) {
-                                                        const iframe = document.getElementById('youtube-player-container');
-                                                        if (iframe && iframe.contentWindow) {
-                                                            iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-                                                        }
-                                                    } else {
-                                                        if (videoRef.current) videoRef.current.play();
-                                                    }
-                                                } else {
-                                                    alert("Sai rồi! Hãy suy nghĩ lại và chọn đáp án chính xác để được học tiếp nhé.");
-                                                }
-                                            }}
-                                            style={{ padding: "12px 25px", background: "#f59e0b", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "15px", boxShadow: "0 4px 6px rgba(245, 158, 11, 0.2)" }}
-                                        >
-                                            Trả lời & Xem tiếp
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+        {/* POP-UP QUIZ OVERLAY */}
+        {currentQuiz && (
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.85)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 50, fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
+                <div style={{ background: "#fff", padding: "30px", borderRadius: "12px", width: "80%", maxWidth: "550px", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", borderBottom: "2px solid #fde68a", paddingBottom: "10px", marginBottom: "20px" }}>
+                        <span style={{ fontSize: "24px" }}>🧠</span>
+                        <h3 style={{ margin: 0, color: "#b45309", fontSize: "18px", fontWeight: "700" }}>Câu hỏi tương tác</h3>
                     </div>
+                    <p style={{ fontSize: "16px", fontWeight: "600", marginBottom: "20px", color: "#1e293b", lineHeight: "1.5" }}>{currentQuiz.questionText}</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                        {['A', 'B', 'C', 'D'].map(opt => (
+                            <button 
+                                key={opt}
+                                onClick={() => setQuizSelectedOption(opt)}
+                                style={{ 
+                                    padding: "12px 15px", 
+                                    textAlign: "left", 
+                                    background: quizSelectedOption === opt ? "#eff6ff" : "#f8fafc", 
+                                    border: `2px solid ${quizSelectedOption === opt ? "#3b82f6" : "#e2e8f0"}`, 
+                                    borderRadius: "8px", 
+                                    cursor: "pointer",
+                                    fontSize: "14px",
+                                    fontWeight: quizSelectedOption === opt ? "600" : "500",
+                                    color: quizSelectedOption === opt ? "#1d4ed8" : "#334155",
+                                    transition: "all 0.2s ease"
+                                }}
+                            >
+                                <strong style={{ display: "inline-block", width: "25px", color: quizSelectedOption === opt ? "#2563eb" : "#64748b" }}>{opt}.</strong> {currentQuiz[`option${opt}`]}
+                            </button>
+                        ))}
+                    </div>
+                    <div style={{ marginTop: "25px", display: "flex", justifyContent: "flex-end" }}>
+                        <button 
+                            onClick={() => {
+                                if (!quizSelectedOption) return alert("Vui lòng chọn 1 đáp án!");
+                                if (quizSelectedOption === currentQuiz.correctOption) {
+                                    alert("Chính xác! Mời bạn tiếp tục xem bài giảng.");
+                                    
+                                    setAnsweredQuizzes(prev => {
+                                        const newSet = new Set(prev);
+                                        newSet.add(currentQuiz.id);
+                                        return newSet;
+                                    });
+                                    
+                                    setCurrentQuiz(null);
+                                    
+                                    if (isYouTube(currentLesson.videoUrl)) {
+                                        const iframe = document.getElementById('youtube-player-container');
+                                        if (iframe && iframe.contentWindow) {
+                                            iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+                                        }
+                                    } else {
+                                        if (videoRef.current) videoRef.current.play();
+                                    }
+                                } else {
+                                    alert("Sai rồi! Hãy suy nghĩ lại và chọn đáp án chính xác để được học tiếp nhé.");
+                                }
+                            }}
+                            style={{ padding: "12px 25px", background: "#f59e0b", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "15px", boxShadow: "0 4px 6px rgba(245, 158, 11, 0.2)" }}
+                        >
+                            Trả lời & Xem tiếp
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+    </div>
 
                     <div className="learning-content">
                         <h1 className="current-lesson-title">{currentLesson.title}</h1>

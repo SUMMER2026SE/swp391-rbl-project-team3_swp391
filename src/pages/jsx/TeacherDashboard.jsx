@@ -51,12 +51,11 @@ export default function TeacherDashboard() {
         // // Dữ liệu vẫn lọc theo ID như cũ
         // const filtered = response.data.filter(c => String(c.teacher_id) === String(userObj.id)); 
         // setMyCourses(filtered);
-        const response = await axiosClient.get("/courses"); 
-        
+const resCourses = await axiosClient.get("/courses");        
         // Vì Model Course hiện tại không lưu teacher_id, tạm thời hiển thị tất cả các khóa học
         // Trong tương lai nếu có teacher_id, mở lại filter này
         // const filtered = response.data.filter(c => String(c.teacher_id) === String(userObj.id)); 
-        setMyCourses(response.data);
+        setMyCourses(resCourses.data);
     } catch (error) {
         console.error("Lỗi tải khóa học:", error);
     }

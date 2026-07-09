@@ -66,8 +66,8 @@ export default function HomePage() {
             days
         });
     };
-    useEffect(() => {
-        // ===== SỬA AN TOÀN PHẦN USER =====
+   useEffect(() => {
+        // 1. SỬA AN TOÀN PHẦN USER
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
             try {
@@ -78,21 +78,13 @@ export default function HomePage() {
             }
         }
 
-        // Countdown đếm ngược ngày thi THPT Quốc Gia
-        const examDate = new Date("2026-06-28T00:00:00").getTime();
+        // 2. CẬP NHẬT COUNTDOWN CHUẨN ĐỒNG BỘ 2027 (Gọi hàm updateCountdown mỗi giây)
+        updateCountdown();
         const interval = setInterval(() => {
-            const now = new Date().getTime();
-            const distance = examDate - now;
-            if (distance > 0) {
-                setTimeLeft({
-                    days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-                    hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-                    minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))
-                });
-            }
+            updateCountdown();
         }, 1000);
 
-        // Fetch courses từ API và sửa lỗi lồng ngoặc bị nát do Git Auto-merge
+        // 3. FETCH COURSES VÀ SỬA LỖI HIỂN THỊ ẢNH THUMBNAIL
         axiosClient.get("/courses")
             .then(res => {
                 console.log(">>> DỮ LIỆU KHÓA HỌC CHUẨN:", res.data);
@@ -104,10 +96,23 @@ export default function HomePage() {
                             ? new Intl.NumberFormat("vi-VN").format(c.price) + "đ"
                             : (c.price || "Miễn phí");
 
+                        // Lấy link ảnh gốc
+                        let thumbnail = c.thumbnail_url || c.thumbnailUrl || c.thumbnail;
+
+                        // Nếu là đường dẫn tương đối từ backend -> nối thêm localhost:8080 y chang bên CoursesPage
+                        if (thumbnail && !thumbnail.startsWith("http")) {
+                            thumbnail = `http://localhost:8080${thumbnail}`;
+                        }
+
+                        // Nếu trống hoàn toàn thì lấy ảnh dự phòng từ Unsplash
+                        if (!thumbnail) {
+                            thumbnail = "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=400&q=80";
+                        }
+
                         return {
                             id: c.course_id || c.courseId || c.id,
                             title: c.course_title || c.courseTitle || c.title || "Khóa học chưa tên",
-                            thumbnail: c.thumbnail_url || c.thumbnailUrl || c.thumbnail || "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=400&q=80",
+                            thumbnail: thumbnail, // Chuỗi URL hoàn chỉnh sau khi xử lý
                             teacher: c.teacher_name || c.teacherName || c.teacher || "Giáo viên",
                             subject: c.subject_name || c.subjectName || c.subject || "Chung",
                             price: displayPrice,
@@ -219,37 +224,29 @@ export default function HomePage() {
                         Tư vấn ngành
                     </li>
                 </ul>
+<div className="sidebar-actions">
+    {user ? (
+        <button className="logout-btn" onClick={handleLogout}>
+            🚪 Đăng xuất
+        </button>
+    ) : (
+        <>
+            <button
+                className="login-btn"
+                onClick={() => navigate("/auth", { state: { mode: "login" } })}
+            >
+                🔑 Đăng nhập
+            </button>
 
-                <div className="sidebar-actions">
-                    {user ? (
-                        <button className="logout-btn" onClick={handleLogout}>
-                            🚪 Đăng xuất
-                        </button>
-                    ) : (
-                        <>
-                            <button
-                                className="login-btn"
-                                onClick={() => navigate("/auth", { state: { mode: "login" } })}
-                            >
-                                🔑 Đăng nhập
-                            </button>
-
-                            <button
-                                className="register-btn"
-                                onClick={() => navigate("/auth", { state: { mode: "register" } })}
-                            >
-                                ✨ Đăng ký
-                            </button>
-                        </>
-                    )}
-                    ) : (
-                        <>
-                            <button onClick={() => navigate("/auth", { state: { mode: "login" } })}>Login</button>
-                            <button className="register-btn" onClick={() => navigate("/auth", { state: { mode: "register" } })}>Register</button>
-                        </>
-                    )
-                }
-                </div>
+            <button
+                className="register-btn"
+                onClick={() => navigate("/auth", { state: { mode: "register" } })}
+            >
+                ✨ Đăng ký
+            </button>
+        </>
+    )}
+</div>
             </aside>
 
             {/* MAIN CONTENT */}
