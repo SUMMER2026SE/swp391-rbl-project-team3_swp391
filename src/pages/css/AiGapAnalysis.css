@@ -1,0 +1,114 @@
+/* ===== 🤖 Box AI Đánh giá & Lộ trình (dùng chung mọi trang kết quả) ===== */
+.ai-gap-box {
+    position: relative;
+    background: linear-gradient(135deg, #f5f3ff 0%, #eef2ff 60%, #f0f9ff 100%);
+    border: 1.5px solid #c4b5fd;
+    border-radius: 18px;
+    padding: 24px 28px;
+    margin: 20px 0;
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.12);
+    overflow: hidden;
+}
+.ai-gap-box::before {
+    content: "";
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.18), transparent 70%);
+    pointer-events: none;
+}
+
+/* ---- Header ---- */
+.ai-gap-head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.ai-gap-icon {
+    width: 52px; height: 52px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    border-radius: 15px;
+    box-shadow: 0 8px 18px rgba(139, 92, 246, 0.35);
+}
+.ai-gap-head h2 { margin: 0; font-size: 19px; font-weight: 800; color: #4c1d95; }
+.ai-gap-sub { margin: 2px 0 0; font-size: 12.5px; color: #7c3aed; }
+.ai-gap-accuracy {
+    margin-left: auto;
+    display: flex; flex-direction: column; align-items: center;
+    background: #fff;
+    border: 2px solid #8b5cf6;
+    border-radius: 14px;
+    padding: 8px 16px;
+    font-size: 22px; font-weight: 800; color: #6d28d9;
+    line-height: 1.1;
+}
+.ai-gap-accuracy small { font-size: 10.5px; font-weight: 600; color: #a78bfa; }
+
+.ai-gap-summary {
+    font-size: 14.5px; line-height: 1.7; color: #3b0764;
+    background: rgba(255, 255, 255, 0.65);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin: 0 0 16px;
+}
+
+/* ---- Topic bars ---- */
+.ai-gap-topics h3, .ai-gap-roadmap h3 {
+    font-size: 14px; font-weight: 800; color: #4c1d95; margin: 0 0 10px;
+}
+.ai-gap-topic-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 200px) 1fr auto;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+.ai-gap-topic-name { font-size: 13px; font-weight: 700; color: #1e1b4b; }
+.ai-gap-bar {
+    height: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid #ddd6fe;
+}
+.ai-gap-bar-fill { height: 100%; border-radius: 999px; transition: width 0.6s ease; }
+.ai-gap-bar-fill.bad { background: linear-gradient(90deg, #ef4444, #f87171); }
+.ai-gap-bar-fill.mid { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.ai-gap-bar-fill.ok  { background: linear-gradient(90deg, #22c55e, #4ade80); }
+.ai-gap-topic-stat { font-size: 12px; font-weight: 700; color: #b91c1c; white-space: nowrap; }
+
+.ai-gap-strong {
+    font-size: 13.5px; color: #14532d;
+    background: #f0fdf4; border: 1px solid #bbf7d0;
+    border-radius: 10px; padding: 10px 14px; margin: 14px 0;
+}
+
+/* ---- Roadmap ---- */
+.ai-gap-roadmap { margin-top: 16px; }
+.ai-gap-roadmap ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+.ai-gap-roadmap li { font-size: 13.5px; line-height: 1.65; color: #312e81; }
+
+/* ---- Actions ---- */
+.ai-gap-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+.ai-gap-btn {
+    display: inline-block;
+    border-radius: 11px;
+    padding: 11px 18px;
+    font-size: 13.5px; font-weight: 700;
+    text-decoration: none;
+    color: #6d28d9;
+    background: #fff;
+    border: 1.5px solid #c4b5fd;
+    transition: all 0.18s;
+}
+.ai-gap-btn:hover { border-color: #8b5cf6; box-shadow: 0 6px 16px rgba(139, 92, 246, 0.25); }
+.ai-gap-btn.primary {
+    color: #fff;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    border-color: transparent;
+    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.35);
+}
+.ai-gap-btn.primary:hover { transform: translateY(-2px); }
+
+@media (max-width: 560px) {
+    .ai-gap-topic-row { grid-template-columns: 1fr; gap: 4px; }
+    .ai-gap-accuracy { display: none; }
+}

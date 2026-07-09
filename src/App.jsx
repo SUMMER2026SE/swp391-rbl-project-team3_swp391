@@ -27,8 +27,13 @@ import AdminQuestionBankPage from './pages/jsx/AdminQuestionBankPage';
 import TeacherDashboard from "./pages/jsx/TeacherDashboard";
 import CourseEditPage from "./pages/jsx/CourseEditPage";
 
+//Luyện Đề (Practice Test)
+import PracticeTestPage from './pages/jsx/PracticeTestPage';
+import PracticeResultPage from './pages/jsx/PracticeResultPage';
+
 //Thi Thu
 import TestListPage from './pages/jsx/TestListPage';
+import TestDoingPage from './pages/jsx/TestDoingPage';
 import TestResult from './pages/jsx/TestResult';
 import TestPage from './pages/jsx/TestPage';
 
@@ -71,8 +76,16 @@ function App() {
           <Route path="/calendar" element={<StudyCalendarPage />} />
           <Route path="/instructor/:id" element={<InstructorProfilePage />} />
 
+          {/* Luyện Đề (Practice Test) */}
+          <Route path='/practice' element={<PracticeTestPage />} />
+          <Route path='/practice/result/:attemptId' element={<PracticeResultPage />} />
+
           {/* Thi - Thi Thử */}
           <Route path='/tests' element={<TestListPage />} />
+          {/* Màn làm bài của engine thống nhất (TestListPage điều hướng vào đây).
+              Phải đặt TRƯỚC /tests/:sessionsId nhưng React Router v6 tự ưu tiên
+              path có segment tĩnh "doing" nên không lo bị nuốt route. */}
+          <Route path='/tests/doing/:attemptId' element={<TestDoingPage />} />
           <Route path='/tests/:sessionsId' element={<TestPage />} />
           <Route path='/tests/result/:sessionsId' element={<TestResult />} />
 

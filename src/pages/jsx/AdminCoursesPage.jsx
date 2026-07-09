@@ -56,70 +56,28 @@ export default function AdminCoursesPage() {
             setCourses(prev => prev.map(c => c.id === courseId ? { ...c, status: "PUBLISHED" } : c));
             alert(`[Demo Mode] Đã duyệt khóa học #${courseId}!`);
         }
+    };
 
-        const userObj = JSON.parse(storedUser);
-        if (userObj.role !== "ADMIN") {
-            alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
-            navigate("/home");
-            return;
+    // HÀM XỬ LÝ TỪ CHỐI
+    const handleRejectCourse = async (courseId) => {
+        const reason = prompt("Nhập lý do yêu cầu giảng viên chỉnh sửa lại:");
+        if (!reason) return; 
+
+        try {
+            await axiosClient.patch(`/admin/courses/${courseId}/status`, { status: "REJECTED", note: reason });
+            setCourses(prev => prev.map(c => c.id === courseId ? { ...c, status: "REJECTED" } : c));
+            alert(`Đã gửi yêu cầu chỉnh sửa cho giảng viên.`);
+        } catch (error) {
+            setCourses(prev => prev.map(c => c.id === courseId ? { ...c, status: "REJECTED" } : c));
+            alert(`[Demo Mode] Đã gửi yêu cầu sửa khóa #${courseId}. Lý do: ${reason}`);
         }
+    };
 
-        // 2. NẾU HỢP LỆ THÌ MỚI GỌI API LẤY COURSES
-        const fetchAllCourses = async () => {
-            try {
-                const response = await axiosClient.get("/admin/courses");
-
-                const raw = response.data;
-
-                const data =
-                    Array.isArray(raw)
-                        ? raw
-                        : raw?.data || raw?.content;
-
-                if (Array.isArray(data)) {
-                    setCourses(data);
-                }
-            } catch (error) {
-                console.warn("Backend lỗi:", error);
-                // không xoá state
-            }
-        };
-
-        fetchAllCourses();
-    }, [navigate]); // <--- Nhớ đổi [] thành [navigate]
-
-        // HÀM XỬ LÝ DUYỆT
-        const handleApproveCourse = async (courseId) => {
-            try {
-                await axiosClient.patch(`/admin/courses/${courseId}/status`, { status: "PUBLISHED" });
-                setCourses(prev => prev.map(c => c.id === courseId ? { ...c, status: "PUBLISHED" } : c));
-                alert(`Khóa học #${courseId} đã được duyệt và xuất bản!`);
-            } catch (error) {
-                setCourses(prev => prev.map(c => c.id === courseId ? { ...c, status: "PUBLISHED" } : c));
-                alert(`[Demo Mode] Đã duyệt khóa học #${courseId}!`);
-            }
-        };
-
-        // HÀM XỬ LÝ TỪ CHỐI
-        const handleRejectCourse = async (courseId) => {
-            const reason = prompt("Nhập lý do yêu cầu giảng viên chỉnh sửa lại:");
-            if (!reason) return; 
-
-            try {
-                await axiosClient.patch(`/admin/courses/${courseId}/status`, { status: "REJECTED", note: reason });
-                setCourses(prev => prev.map(c => c.id === courseId ? { ...c, status: "REJECTED" } : c));
-                alert(`Đã gửi yêu cầu chỉnh sửa cho giảng viên.`);
-            } catch (error) {
-                setCourses(prev => prev.map(c => c.id === courseId ? { ...c, status: "REJECTED" } : c));
-                alert(`[Demo Mode] Đã gửi yêu cầu sửa khóa #${courseId}. Lý do: ${reason}`);
-            }
-        };
-
-        const handleLogout = () => {
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
-            navigate("/");
-        };
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/");
+    };
 
     return (
         <div className="admin-layout">

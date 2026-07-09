@@ -242,13 +242,6 @@ export default function HomePage() {
                             </button>
                         </>
                     )}
-                    ) : (
-                        <>
-                            <button onClick={() => navigate("/auth", { state: { mode: "login" } })}>Login</button>
-                            <button className="register-btn" onClick={() => navigate("/auth", { state: { mode: "register" } })}>Register</button>
-                        </>
-                    )
-                }
                 </div>
             </aside>
 

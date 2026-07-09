@@ -39,18 +39,6 @@ export default function TeacherDashboard() {
 
     const fetchCourses = async () => {
     try {
-        // Gọi link có chữ teacher như bạn muốn
-        const response = await axiosClient.get("/teacher/dashboard", {
-            headers: {
-                "X-Teacher-Id": userObj.id
-            }
-        });
-
-        setMyCourses(response.data.courses);
-        
-        // // Dữ liệu vẫn lọc theo ID như cũ
-        // const filtered = response.data.filter(c => String(c.teacher_id) === String(userObj.id)); 
-        // setMyCourses(filtered);
         const response = await axiosClient.get("/courses"); 
         
         // Vì Model Course hiện tại không lưu teacher_id, tạm thời hiển thị tất cả các khóa học
