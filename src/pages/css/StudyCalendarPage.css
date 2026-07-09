@@ -160,23 +160,46 @@
 
 .calendar-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important; /* Đảm bảo 7 cột bằng nhau tuyệt đối */
+    gap: 14px;
+    width: 100%;
 }
 
+/* Thêm mới đoạn này vào file CSS của bạn */
+.weekday-headers {
+    display: grid !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important; /* Cùng tỷ lệ chia với ô ngày */
+    gap: 14px !important;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+/* Sửa lại class weekday-header cho gọn gàng */
 .weekday-header {
-    text-align: center;
-    font-weight: 600;
-    color: #64748b;
-    padding: 15px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 700;
+    color: #475569;
+    font-size: 15px;
+    padding: 5px 0;
 }
-
 .day-cell {
-    min-height: 120px;
+    background: #fff;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
     padding: 10px;
-    transition: 0.2s;
+    
+    /* Thay đổi ở đây: Khóa chiều cao cố định để ô lịch vuông vắn, không bị dài ra */
+    height: 110px; 
+    box-sizing: border-box;
+    
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* Đẩy ngày và sự kiện lên trên, không bị giãn ra 2 đầu */
+    gap: 6px; /* Khoảng cách giữa số ngày và các badge môn học */
+    transition: all 0.2s ease;
+    overflow: hidden; /* Tránh text tràn ra ngoài ô */
 }
 
 .day-cell:not(.empty):hover {
@@ -185,18 +208,19 @@
 }
 
 .day-cell.empty {
-    border: none;
-    background: transparent;
+    background: transparent !important;
+    border: 1px solid transparent !important; /* Thay vì none, dùng transparent để không bị lệch pixel */
+    box-shadow: none !important;
+    pointer-events: none;
+    height: 110px; /* Bằng chiều cao ô thường */
 }
 
 .day-number {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     color: #334155;
     display: inline-block;
-    margin-bottom: 8px;
 }
-
 .day-number.highlight {
     background: #ef4444;
     color: white;
