@@ -246,48 +246,80 @@ export default function HomePage() {
                         Thông báo
                     </li>
                 </ul>
-<div className="sidebar-actions">
-    {user ? (
-        <button className="logout-btn" onClick={handleLogout}>
-            🚪 Đăng xuất
-        </button>
-    ) : (
-        <>
-            <button
-                className="login-btn"
-                onClick={() => navigate("/auth", { state: { mode: "login" } })}
-            >
-                🔑 Đăng nhập
-            </button>
-
-                <div className="sidebar-actions">
-                    {user ? (
+            <div className="sidebar-actions">
+                {user ? (
+                    <button
+                        className="logout-btn"
+                        onClick={() => setShowLogoutModal(true)}
+                    >
+                        🚪 Đăng xuất
+                    </button>
+                ) : (
+                    <>
                         <button
-                            className="logout-btn"
-                            onClick={() => setShowLogoutModal(true)}
+                            className="login-btn"
+                            onClick={() =>
+                                navigate("/auth", {
+                                    state: { mode: "login" }
+                                })
+                            }
                         >
-                            Đăng xuất
+                            🔑 Đăng nhập
                         </button>
-                    ) : (
-                        <>
+
+                        <button
+                            className="register-btn"
+                            onClick={() =>
+                                navigate("/auth", {
+                                    state: { mode: "register" }
+                                })
+                            }
+                        >
+                            ✨ Đăng ký
+                        </button>
+                    </>
+                )}
+            </div>
+
+            </aside>
+                {showLogoutModal && (
+                <div className="modal-overlay">
+                    <div className="logout-modal">
+
+                        <div className="logout-icon">🚪</div>
+
+                        <h2>Đăng xuất</h2>
+
+                        <p>
+                            Bạn có chắc chắn muốn đăng xuất khỏi
+                            <strong> PrepAce</strong>?
+                        </p>
+
+                        <span>
+                            Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng hệ thống.
+                        </span>
+
+                        <div className="modal-actions">
+
                             <button
-                                className="login-btn"
-                                onClick={() => navigate("/auth", { state: { mode: "login" } })}
+                                className="cancel-btn"
+                                onClick={() => setShowLogoutModal(false)}
                             >
-                                🔑 Đăng nhập
+                                Hủy
                             </button>
 
                             <button
-                                className="register-btn"
-                                onClick={() => navigate("/auth", { state: { mode: "register" } })}
+                                className="confirm-btn"
+                                onClick={handleLogout}
                             >
-                                ✨ Đăng ký
+                                Đăng xuất
                             </button>
-                        </>
-                    )}
+
+                        </div>
+
+                    </div>
                 </div>
-            </aside>
-                
+            )}
 
             {/* MAIN CONTENT */}
             <main className="content">

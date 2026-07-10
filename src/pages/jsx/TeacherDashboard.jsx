@@ -16,6 +16,7 @@ export default function TeacherDashboard() {
     const [activeTab, setActiveTab] = useState("COURSES"); // COURSES hoặc QA
     const [qaList, setQaList] = useState([]);
     const [replyModalOpen, setReplyModalOpen] = useState(false);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [selectedQa, setSelectedQa] = useState(null);
     const [replyContent, setReplyContent] = useState("");
 
@@ -199,6 +200,44 @@ const resCourses = await axiosClient.get("/courses");
                     </button>
                 </div>
             </aside>
+            {showLogoutModal && (
+                <div className="modal-overlay">
+                    <div className="logout-modal">
+
+                        <div className="logout-icon">🚪</div>
+
+                        <h2>Đăng xuất</h2>
+
+                        <p>
+                            Bạn có chắc chắn muốn đăng xuất khỏi
+                            <strong> PrepAce</strong>?
+                        </p>
+
+                        <span>
+                            Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng hệ thống.
+                        </span>
+
+                        <div className="modal-actions">
+
+                            <button
+                                className="cancel-btn"
+                                onClick={() => setShowLogoutModal(false)}
+                            >
+                                Hủy
+                            </button>
+
+                            <button
+                                className="confirm-btn"
+                                onClick={handleLogout}
+                            >
+                                Đăng xuất
+                            </button>
+
+                        </div>
+
+                    </div>
+                </div>
+            )}
 
             {/* 2. PHẦN NỘI DUNG CHÍNH (GIỮ NGUYÊN GIAO DIỆN CŨ CỦA BẠN NHƯNG CHO VÀO KHUNG CÓ SẴN) */}
             <main className="content" style={{ maxWidth: "100%", margin: "0" }}>
