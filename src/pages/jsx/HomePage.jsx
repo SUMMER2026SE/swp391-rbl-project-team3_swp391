@@ -68,8 +68,8 @@ export default function HomePage() {
             days
         });
     };
-    useEffect(() => {
-        // ===== SỬA AN TOÀN PHẦN USER =====
+   useEffect(() => {
+        // 1. SỬA AN TOÀN PHẦN USER
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
             try {
@@ -80,65 +80,56 @@ export default function HomePage() {
             }
         }
 
-        // Countdown
+        // 2. CẬP NHẬT COUNTDOWN CHUẨN ĐỒNG BỘ 2027 (Gọi hàm updateCountdown mỗi giây)
         updateCountdown();
-        const interval = setInterval(updateCountdown, 60000);
+        const interval = setInterval(() => {
+            updateCountdown();
+        }, 1000);
 
-        // Fetch courses
-        // Fetch courses
-        // Fetch courses từ API
-        let isMounted = true;
+        // 3. FETCH COURSES VÀ SỬA LỖI HIỂN THỊ ẢNH THUMBNAIL
+        axiosClient.get("/courses")
+            .then(res => {
+                console.log(">>> DỮ LIỆU KHÓA HỌC CHUẨN:", res.data);
+                const rawCourses = Array.isArray(res.data) ? res.data : (res.data.courses || []);
+                
+                if (rawCourses.length > 0) {
+                    const mappedData = rawCourses.map(c => {
+                        const displayPrice = typeof c.price === "number"
+                            ? new Intl.NumberFormat("vi-VN").format(c.price) + "đ"
+                            : (c.price || "Miễn phí");
 
-    axiosClient.get("/courses")
-        .then(res => {
-            if (!isMounted) return;
+                        // Lấy link ảnh gốc
+                        let thumbnail = c.thumbnail_url || c.thumbnailUrl || c.thumbnail;
 
-            console.log(">>> RAW DATA TỪ API:", res.data);
+                        // Nếu là đường dẫn tương đối từ backend -> nối thêm localhost:8080 y chang bên CoursesPage
+                        if (thumbnail && !thumbnail.startsWith("http")) {
+                            thumbnail = `http://localhost:8080${thumbnail}`;
+                        }
 
-            let rawCourses = res.data?.data || res.data || [];
-            if (!Array.isArray(rawCourses)) rawCourses = [];
+                        // Nếu trống hoàn toàn thì lấy ảnh dự phòng từ Unsplash
+                        if (!thumbnail) {
+                            thumbnail = "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=400&q=80";
+                        }
 
-            const mappedData = rawCourses.map(c => {
-                const priceValue = c.price || c.course_price || 0;
-                const displayPrice = priceValue > 0 ? priceValue.toLocaleString() + "đ" : "Miễn phí";
-
-                let thumbnail = c.thumbnail_url || c.thumbnailUrl || c.thumbnail || "";
-
-                if (thumbnail && !thumbnail.startsWith("http")) {
-                    thumbnail = `http://localhost:8080${thumbnail.startsWith('/') ? '' : '/'}${thumbnail}`;
+                        return {
+                            id: c.course_id || c.courseId || c.id,
+                            title: c.course_title || c.courseTitle || c.title || "Khóa học chưa tên",
+                            thumbnail: thumbnail, // Chuỗi URL hoàn chỉnh sau khi xử lý
+                            teacher: c.teacher_name || c.teacherName || c.teacher || "Giáo viên",
+                            subject: c.subject_name || c.subjectName || c.subject || "Chung",
+                            price: displayPrice,
+                            students: c.students || c.student_count || c.studentCount || 0,
+                            userId: c.teacher_id || c.teacherId || c.userId || 2
+                        };
+                    });
+                    setFeaturedCourses(mappedData.slice(0, 3));
                 }
-
-                if (!thumbnail) {
-                    if (c.title?.toLowerCase().includes("toán") || c.title?.toLowerCase().includes("math")) {
-                        thumbnail = "https://images.unsplash.com/photo-1635070041078-e363dbe005cb";
-                    } else if (c.title?.toLowerCase().includes("vật lý")) {
-                        thumbnail = "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa";
-                    } else {
-                        thumbnail = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d";
-                    }
-                }
-
-                return {
-                    id: c.id || c.courseId || c.course_id,
-                    title: c.title || c.courseTitle || c.course_title,
-                    thumbnail: thumbnail + (thumbnail.includes("?") ? "" : "?auto=format&fit=crop&w=400&q=80"),
-                    teacher: c.teacherName || c.teacher_name || "Giáo viên",
-                    subject: c.subject || "Chung",
-                    price: displayPrice,
-                    students: c.students || 0,
-                    userId: c.teacherId || 1
-                };
+            })
+            .catch(err => {
+                console.log("Dùng data khóa học mẫu do chưa kết nối Backend hoặc sập API:", err);
             });
 
-            if (mappedData.length > 0) {
-                setFeaturedCourses(mappedData.slice(0, 3));
-            }
-        })
-        .catch(err => console.error("Fetch courses error:", err));
-        return () => {
-            isMounted = false;
-            clearInterval(interval);
-        };
+        return () => clearInterval(interval);
     }, []);
 
     const handleSearchSubmit = (e) => {
@@ -246,7 +237,28 @@ export default function HomePage() {
                         <span>🎓</span>
                         Tư vấn ngành
                     </li>
+                    <li onClick={() => navigate("/calendar")}>
+                        <span>📅</span>
+                        Lịch học
+                    </li>
+                    <li onClick={() => navigate("/notifications")}>
+                        <span>🔔</span>
+                        Thông báo
+                    </li>
                 </ul>
+<div className="sidebar-actions">
+    {user ? (
+        <button className="logout-btn" onClick={handleLogout}>
+            🚪 Đăng xuất
+        </button>
+    ) : (
+        <>
+            <button
+                className="login-btn"
+                onClick={() => navigate("/auth", { state: { mode: "login" } })}
+            >
+                🔑 Đăng nhập
+            </button>
 
                 <div className="sidebar-actions">
                     {user ? (
@@ -275,44 +287,7 @@ export default function HomePage() {
                     )}
                 </div>
             </aside>
-                {showLogoutModal && (
-                <div className="modal-overlay">
-                    <div className="logout-modal">
-
-                        <div className="logout-icon">🚪</div>
-
-                        <h2>Đăng xuất</h2>
-
-                        <p>
-                            Bạn có chắc chắn muốn đăng xuất khỏi
-                            <strong> PrepAce</strong>?
-                        </p>
-
-                        <span>
-                            Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng hệ thống.
-                        </span>
-
-                        <div className="modal-actions">
-
-                            <button
-                                className="cancel-btn"
-                                onClick={() => setShowLogoutModal(false)}
-                            >
-                                Hủy
-                            </button>
-
-                            <button
-                                className="confirm-btn"
-                                onClick={handleLogout}
-                            >
-                                Đăng xuất
-                            </button>
-
-                        </div>
-
-                    </div>
-                </div>
-            )}
+                
 
             {/* MAIN CONTENT */}
             <main className="content">
