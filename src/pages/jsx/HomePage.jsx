@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axiosClient from "../../api/axiosClient"; 
+import axiosClient from "../../api/axiosClient";
+import { logout } from "../../services/authService";
 import "../css/HomePage.css";
 
 export default function HomePage() {
@@ -8,6 +9,7 @@ export default function HomePage() {
     
     const [user, setUser] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [timeLeft, setTimeLeft] = useState({ years: 0, months: 0, days: 0});
 
     const [featuredCourses, setFeaturedCourses] = useState([
@@ -146,10 +148,22 @@ export default function HomePage() {
         }
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        setUser(null);
+    // const handleLogout = () => {
+    //     localStorage.removeItem("token");
+    //     localStorage.removeItem("user");
+    //     setUser(null);
+    //     navigate("/auth");
+    // };
+
+    const handleLogout = async () => {
+        if (!window.confirm("Bạn có chắc muốn đăng xuất khỏi PrepAce?")) return;
+
+        try {
+            await logout();
+        } catch (err) {
+            console.error(err);
+        }
+
         navigate("/auth");
     };
 
@@ -236,8 +250,11 @@ export default function HomePage() {
 
                 <div className="sidebar-actions">
                     {user ? (
-                        <button className="logout-btn" onClick={handleLogout}>
-                            🚪 Đăng xuất
+                        <button
+                            className="logout-btn"
+                            onClick={() => setShowLogoutModal(true)}
+                        >
+                            Đăng xuất
                         </button>
                     ) : (
                         <>
@@ -258,6 +275,44 @@ export default function HomePage() {
                     )}
                 </div>
             </aside>
+                {showLogoutModal && (
+                <div className="modal-overlay">
+                    <div className="logout-modal">
+
+                        <div className="logout-icon">🚪</div>
+
+                        <h2>Đăng xuất</h2>
+
+                        <p>
+                            Bạn có chắc chắn muốn đăng xuất khỏi
+                            <strong> PrepAce</strong>?
+                        </p>
+
+                        <span>
+                            Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng hệ thống.
+                        </span>
+
+                        <div className="modal-actions">
+
+                            <button
+                                className="cancel-btn"
+                                onClick={() => setShowLogoutModal(false)}
+                            >
+                                Hủy
+                            </button>
+
+                            <button
+                                className="confirm-btn"
+                                onClick={handleLogout}
+                            >
+                                Đăng xuất
+                            </button>
+
+                        </div>
+
+                    </div>
+                </div>
+            )}
 
             {/* MAIN CONTENT */}
             <main className="content">

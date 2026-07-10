@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../css/HomePage.css"; // Dùng chung file CSS layout/sidebar của nhóm cho đồng bộ
-import axiosClient from "../../api/axiosClient"; // <--- BẠN ĐANG THIẾU DÒNG NÀY
+import axiosClient from "../../api/axiosClient";
+import { logout } from "../../services/authService";
+
 export default function TeacherDashboard() {
     const navigate = useNavigate();
     const [myCourses, setMyCourses] = useState([]);
@@ -49,9 +51,15 @@ export default function TeacherDashboard() {
     fetchCourses();
 }, [navigate]);
 
-    const handleLogout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+    const handleLogout = async () => {
+        if (!window.confirm("Bạn có chắc muốn đăng xuất khỏi PrepAce?")) return;
+
+        try {
+            await logout();
+        } catch (err) {
+            console.error(err);
+        }
+
         navigate("/auth");
     };
 
