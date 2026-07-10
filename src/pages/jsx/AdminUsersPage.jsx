@@ -5,6 +5,7 @@ import "../css/AdminUsersPage.css";
 
 export default function AdminUsersPage() {
     const navigate = useNavigate();
+    const [activeMenu, setActiveMenu] = useState("users"); // <--- Khai báo activeMenu cho trang Users
 
     // 1. KHỞI TẠO STATE: Giữ nguyên dữ liệu mẫu ban đầu để phục vụ việc demo giao diện không bị trắng
     const [users, setUsers] = useState([

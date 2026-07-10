@@ -4,6 +4,7 @@ import "../css/AdminUsersPage.css"; // Tái sử dụng CSS layout admin hệ th
 
 export default function AdminViolationsPage() {
     const navigate = useNavigate();
+    const [activeMenu, setActiveMenu] = useState("violations"); // <--- Khai báo activeMenu cho trang Violations
     const [reports, setReports] = useState([
         { id: 1, reporterId: 201, reportedTarget: "Khóa học Casio chuyên sâu", reason: "Nội dung học liệu chứa tài liệu vi phạm bản quyền", status: "PENDING" },
         { id: 2, reporterId: 205, reportedTarget: "Bình luận của User #99", reason: "Sử dụng ngôn từ đả kích, xúc phạm giáo viên", status: "PENDING" }
@@ -60,6 +61,12 @@ export default function AdminViolationsPage() {
             console.error(error);
             alert("❌ Có lỗi xảy ra khi thực hiện xử lý báo cáo vi phạm.");
         }
+    };
+
+    const handleLogout = () => { // <--- Thêm hàm handleLogout bị thiếu ở trang này để tránh lỗi crash nếu nhấn Đăng xuất
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/");
     };
 
     const getStatusBadge = (status) => {

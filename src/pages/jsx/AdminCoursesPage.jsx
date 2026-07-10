@@ -5,6 +5,7 @@ import "../css/AdminUsersPage.css";
 
 export default function AdminCoursesPage() {
     const navigate = useNavigate();
+    const [activeMenu, setActiveMenu] = useState("courses"); // <--- Khai báo activeMenu cho trang Courses
 
     // 1. KHỞI TẠO STATE: Giữ nguyên dữ liệu mẫu để demo
     const [courses, setCourses] = useState([
@@ -46,7 +47,7 @@ export default function AdminCoursesPage() {
     fetchAllCourses();
 }, [navigate]); // <--- Nhớ đổi [] thành [navigate]
 
-   
+    
 
         // HÀM XỬ LÝ DUYỆT
         const handleApproveCourse = async (courseId) => {
