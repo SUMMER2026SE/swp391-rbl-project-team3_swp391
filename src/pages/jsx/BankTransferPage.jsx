@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import paymentService from "../../services/paymentService";
+import axiosClient from "../../api/axiosClient"; // 🔥 ĐÃ THÊM IMPORT ĐỂ GỌI LOG
 
 const formatVnd = (v) => (v == null ? "—" : Number(v).toLocaleString("vi-VN") + "đ");
 
@@ -13,6 +14,19 @@ export default function BankTransferPage() {
     const [paid, setPaid] = useState(false);
     const [confirming, setConfirming] = useState(false);
     const pollRef = useRef(null);
+
+    // 🔥 HÀM HELPER: Lưu log thanh toán khóa học
+    const logPaymentSuccess = async (courseTitle, amount) => {
+        try {
+            const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+            const userId = userObj?.id || userObj?.userId || 0;
+            if (userId > 0) {
+                await axiosClient.post(`/admin/users/${userId}/activity`, {
+                    action: `Thanh toán thành công khóa học: [${courseTitle}], số tiền: ${formatVnd(amount)} qua cổng ngân hàng SePay`
+                });
+            }
+        } catch (logErr) { console.error("Lỗi ghi nhận log thanh toán:", logErr); }
+    };
 
     useEffect(() => {
         if (!localStorage.getItem("token")) {
@@ -27,7 +41,7 @@ export default function BankTransferPage() {
             .finally(() => setLoading(false));
     }, [courseId]);
 
-    // Poll trạng thái mỗi 4s — khi tiền vào (webhook) sẽ tự chuyển vào khóa học
+    // Poll trạng thái mỗi 4s — khi tiền vào (webhook) tự động
     useEffect(() => {
         if (!order?.transactionRef || paid) return;
         pollRef.current = setInterval(async () => {
@@ -35,6 +49,10 @@ export default function BankTransferPage() {
                 const s = await paymentService.bankStatus(order.transactionRef);
                 if (s.status === "PAID") {
                     clearInterval(pollRef.current);
+                    
+                    // 🔥 GHI LOG TỰ ĐỘNG QUA WEBHOOK SEPAY THÀNH CÔNG
+                    await logPaymentSuccess(order.courseTitle, order.amount);
+
                     setPaid(true);
                     setTimeout(() => navigate(`/learn/${order.courseId}`), 1500);
                 }
@@ -43,10 +61,15 @@ export default function BankTransferPage() {
         return () => clearInterval(pollRef.current);
     }, [order, paid]);
 
+    // Xác nhận thủ công bằng tay
     const handleManualConfirm = async () => {
         try {
             setConfirming(true);
             await paymentService.confirmBank(order.transactionRef);
+            
+            // 🔥 GHI LOG KHI XÁC NHẬN THỦ CÔNG THÀNH CÔNG
+            await logPaymentSuccess(order.courseTitle, order.amount);
+
             setPaid(true);
             setTimeout(() => navigate(`/learn/${order.courseId}`), 1200);
         } catch (e) {
@@ -74,7 +97,6 @@ export default function BankTransferPage() {
         <div style={st.page}>
             <span style={st.back} onClick={() => navigate(-1)}>← Quay lại</span>
             <div style={st.card}>
-                
                 <h1 style={st.title}>Chuyển khoản ngân hàng</h1>
                 <p style={st.course}>{order.courseTitle}</p>
                 <div style={st.amount}>{formatVnd(order.amount)}</div>
@@ -86,7 +108,7 @@ export default function BankTransferPage() {
                         style={st.qr} 
                         onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = "/src/assets/myqrcode.jpg"; // fallback QR tĩnh
+                            e.target.src = "/src/assets/myqrcode.jpg"; 
                         }}
                     />
                     <p style={{ marginTop: 12, fontSize: 14, color: "#64748b", fontWeight: 500 }}>

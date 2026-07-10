@@ -5,82 +5,87 @@ import "../css/AdminUsersPage.css";
 
 export default function AdminCoursesPage() {
     const navigate = useNavigate();
-    const [activeMenu, setActiveMenu] = useState("courses"); // <--- Khai báo activeMenu cho trang Courses
-
-    // 1. KHỞI TẠO STATE: Giữ nguyên dữ liệu mẫu để demo
-    const [courses, setCourses] = useState([
-        { id: 1, title: "Mastering Mathematics 12", teacher: "Nguyễn Minh Quân", price: "599,000đ", status: "PUBLISHED" },
-        { id: 2, title: "Physics Problem Solving", teacher: "Trần Bảo Châu", price: "499,000đ", status: "PUBLISHED" },
-        { id: 4, title: "Tuyệt đỉnh Casio", teacher: "Nguyễn Minh Quân", price: "299,000đ", status: "PENDING" }, 
-    ]);
+    const [activeMenu, setActiveMenu] = useState("courses");
+    const [courses, setCourses] = useState([]);
 
     useEffect(() => {
-    // 1. KIỂM TRA QUYỀN ADMIN TRƯỚC
-    const token = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
+        const token = localStorage.getItem("token");
+        const storedUser = localStorage.getItem("user");
 
-    if (!token || !storedUser) {
-        alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
-        navigate("/");
-        return;
-    }
+        if (!token || !storedUser) {
+            alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
+            navigate("/");
+            return;
+        }
 
-    const userObj = JSON.parse(storedUser);
-    if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
-        alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
-        navigate("/home");
-        return;
-    }
+        const userObj = JSON.parse(storedUser);
+        if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
+            alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
+            navigate("/home");
+            return;
+        }
 
-    // 2. NẾU HỢP LỆ THÌ MỚI GỌI API LẤY COURSES
-    const fetchAllCourses = async () => {
-        try {
-            const response = await axiosClient.get("/admin/courses");
-            if (response.data && response.data.length > 0) {
-                setCourses(response.data);
+        const fetchAllCourses = async () => {
+            try {
+                const response = await axiosClient.get("/admin/courses");
+                console.log("📡 DỮ LIỆU THỰC TẾ TỪ BACKEND TRẢ VỀ:", response.data);
+                
+                if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+                    setCourses(response.data);
+                } else {
+                    console.warn("Backend trả về mảng rỗng [] hoặc sai cấu trúc.");
+                    // Nếu mảng rỗng, kích hoạt dữ liệu Mock dự phòng để test giao diện
+                    setCourses([
+                        { courseId: 1, courseTitle: "Mastering Mathematics 12", teacher_id: 2, price: 599000, status: "PUBLISHED" },
+                        { courseId: 2, courseTitle: "Physics Problem Solving", teacher_id: 3, price: 499000, status: "PUBLISHED" },
+                        { courseId: 4, courseTitle: "Tuyệt đỉnh Casio", teacher_id: 2, price: 299000, status: "PENDING" }
+                    ]);
+                }
+            } catch (error) {
+                console.error("❌ LỖI GỌI API BACKEND (Có thể do Token/URL):", error);
+                
+                // 🔥 NẾU API LỖI: Đổ dữ liệu Mock ra ngay lập tức để không bị trắng màn hình
+                setCourses([
+                    { courseId: 1, courseTitle: "Mastering Mathematics 12 (Mock)", teacher_id: 2, price: 599000, status: "PUBLISHED" },
+                    { courseId: 2, courseTitle: "Physics Problem Solving (Mock)", teacher_id: 3, price: 499000, status: "PUBLISHED" },
+                    { courseId: 4, courseTitle: "Tuyệt đỉnh Casio (Mock)", teacher_id: 2, price: 299000, status: "PENDING" }
+                ]);
             }
+        };
+
+        fetchAllCourses();
+    }, [navigate]);
+
+    const handleApproveCourse = async (courseId) => {
+        if (!courseId || !window.confirm(`Bạn có chắc chắn muốn duyệt khóa học #${courseId}?`)) return;
+        try {
+            await axiosClient.patch(`/admin/courses/${courseId}/status`, { status: "PUBLISHED" });
+            setCourses(prev => prev.map(c => (c.courseId === courseId || c.id === courseId) ? { ...c, status: "PUBLISHED" } : c));
+            alert(`✅ Khóa học #${courseId} đã được duyệt và xuất bản!`);
         } catch (error) {
-            console.warn("Hệ thống chưa kết nối Backend. Sử dụng tiếp dữ liệu Mock:", error);
+            alert("Lỗi kết nối hoặc không thể duyệt khóa học này.");
         }
     };
 
-    fetchAllCourses();
-}, [navigate]); // <--- Nhớ đổi [] thành [navigate]
+    const handleRejectCourse = async (courseId) => {
+        if (!courseId) return;
+        const reason = prompt("Nhập lý do yêu cầu giảng viên chỉnh sửa lại:");
+        if (!reason) return; 
 
-    
+        try {
+            await axiosClient.patch(`/admin/courses/${courseId}/status`, { status: "REJECTED", note: reason });
+            setCourses(prev => prev.map(c => (c.courseId === courseId || c.id === courseId) ? { ...c, status: "REJECTED" } : c));
+            alert(`Đã gửi yêu cầu chỉnh sửa cho giảng viên.`);
+        } catch (error) {
+            alert("Lỗi kết nối hoặc không thể từ chối khóa học này.");
+        }
+    };
 
-        // HÀM XỬ LÝ DUYỆT
-        const handleApproveCourse = async (courseId) => {
-            try {
-                await axiosClient.patch(`/admin/courses/${courseId}/status`, { status: "PUBLISHED" });
-                setCourses(prev => prev.map(c => c.id === courseId ? { ...c, status: "PUBLISHED" } : c));
-                alert(`Khóa học #${courseId} đã được duyệt và xuất bản!`);
-            } catch (error) {
-                setCourses(prev => prev.map(c => c.id === courseId ? { ...c, status: "PUBLISHED" } : c));
-                alert(`[Demo Mode] Đã duyệt khóa học #${courseId}!`);
-            }
-        };
-
-        // HÀM XỬ LÝ TỪ CHỐI
-        const handleRejectCourse = async (courseId) => {
-            const reason = prompt("Nhập lý do yêu cầu giảng viên chỉnh sửa lại:");
-            if (!reason) return; 
-
-            try {
-                await axiosClient.patch(`/admin/courses/${courseId}/status`, { status: "REJECTED", note: reason });
-                setCourses(prev => prev.map(c => c.id === courseId ? { ...c, status: "REJECTED" } : c));
-                alert(`Đã gửi yêu cầu chỉnh sửa cho giảng viên.`);
-            } catch (error) {
-                setCourses(prev => prev.map(c => c.id === courseId ? { ...c, status: "REJECTED" } : c));
-                alert(`[Demo Mode] Đã gửi yêu cầu sửa khóa #${courseId}. Lý do: ${reason}`);
-            }
-        };
-
-        const handleLogout = () => {
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
-            navigate("/");
-        };
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/");
+    };
 
     return (
         <div className="admin-layout">
@@ -93,10 +98,7 @@ export default function AdminCoursesPage() {
                     <li className={activeMenu === "courses" ? "active" : ""} onClick={() => navigate("/admin/courses")}>📚 Quản lý khóa học</li>
                     <li className={activeMenu === "users" ? "active" : ""} onClick={() => navigate("/admin/users")}>👥 Quản lý người dùng</li>
                     <li className={activeMenu === "question-bank" ? "active" : ""} onClick={() => navigate("/admin/question-bank")}>📝 Quản lý thư viện đề</li>
-                    
-                    
                     <li className={activeMenu === "violations" ? "active" : ""} onClick={() => navigate("/admin/violations")}>🚨 Quản lý vi phạm</li>
-                    
                     <li className={activeMenu === "ui" ? "active" : ""} onClick={() => navigate("/admin/ui-config")}>🎨 Cấu hình UI</li>
                     <li className={activeMenu === "sepay" ? "active" : ""} onClick={() => navigate("/admin/sepay-guide")}>💳 Cấu hình SePay</li>
                 </ul>
@@ -131,37 +133,58 @@ export default function AdminCoursesPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {Array.isArray(courses) && courses.map((c) => (
-                                        <tr key={c.id}>
-                                            <td>#{c.id}</td>
-<td><strong>{c.title || "Khóa học nháp (Chưa đặt tên)"}</strong></td>
-                                            <td>{c.teacher_name || `ID Giáo viên: ${c.teacher_id}`}</td>
-                                            <td>{c.price}</td>
-                                            <td>
-                                                <span className={`status-badge ${c.status?.toUpperCase() === 'PUBLISHED' ? 'success' : (c.status?.toUpperCase() === 'REJECTED' ? 'banned' : 'pending')}`}>
-    {c.status?.toUpperCase() === 'PUBLISHED' 
-        ? 'Đã xuất bản' 
-        : (c.status?.toUpperCase() === 'REJECTED' ? 'Yêu cầu sửa' : 'Chờ duyệt')}
-</span>
-                                            </td>
-                                            <td>
-                                                {/* NÚT XEM TRƯỚC: Mở thẳng sang trang chi tiết khóa học ở một Tab mới */}
-                                                <button 
-    className="action-btn view" 
-    onClick={() => navigate(`/admin/preview/${c.id}`)}
->
-    👁️ Thẩm định bài giảng
-</button>
+                                    {Array.isArray(courses) && courses.length > 0 ? (
+                                        courses.map((c) => {
+                                            if (!c) return null;
+                                            const currentId = c.courseId || c.id;
+                                            if (!currentId) return null;
 
-                                                {c.status === 'PENDING' && (
-                                                    <>
-                                                        <button className="action-btn approve" onClick={() => handleApproveCourse(c.id)}>✅ Duyệt</button>
-                                                        <button className="action-btn reject" onClick={() => handleRejectCourse(c.id)}>❌ Yêu cầu sửa</button>
-                                                    </>
-                                                )}
+                                            const currentTitle = c.courseTitle || c.title || "Khóa học chưa đặt tên";
+                                            const currentStatus = c.status ? String(c.status).toUpperCase() : "PENDING";
+                                            
+                                            let formattedPrice = "0đ";
+                                            if (c.price !== undefined && c.price !== null) {
+                                                formattedPrice = typeof c.price === "number" 
+                                                    ? c.price.toLocaleString() + "đ" 
+                                                    : String(c.price) + "đ";
+                                            }
+
+                                            return (
+                                                <tr key={currentId}>
+                                                    <td>#{currentId}</td>
+                                                    <td><strong>{currentTitle}</strong></td>
+                                                    <td>{c.teacherName || c.teacher_name || `ID Giáo viên: ${c.teacherId || c.teacher_id || "Chưa rõ"}`}</td>
+                                                    <td>{formattedPrice}</td>
+                                                    <td>
+                                                        <span className={`status-badge ${currentStatus === 'PUBLISHED' || currentStatus === 'APPROVED' ? 'success' : (currentStatus === 'REJECTED' ? 'banned' : 'pending')}`}>
+                                                            {currentStatus === 'PUBLISHED' || currentStatus === 'APPROVED' ? 'Đã xuất bản' : (currentStatus === 'REJECTED' ? 'Yêu cầu sửa' : 'Chờ duyệt')}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <button 
+                                                            className="action-btn view" 
+                                                            onClick={() => navigate(`/admin/preview/${currentId}`)}
+                                                        >
+                                                            👁️ Thẩm định bài giảng
+                                                        </button>
+
+                                                        {currentStatus === 'PENDING' && (
+                                                            <>
+                                                                <button className="action-btn approve" style={{ marginLeft: "6px" }} onClick={() => handleApproveCourse(currentId)}>✅ Duyệt</button>
+                                                                <button className="action-btn reject" style={{ marginLeft: "6px" }} onClick={() => handleRejectCourse(currentId)}>❌ Yêu cầu sửa</button>
+                                                            </>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="6" style={{ textAlign: "center", padding: "20px", color: "#9ca3af" }}>
+                                                Hệ thống đang tải dữ liệu...
                                             </td>
                                         </tr>
-                                    ))}
+                                    )}
                                 </tbody>
                             </table>
                         </div>

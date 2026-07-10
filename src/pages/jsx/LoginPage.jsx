@@ -15,6 +15,22 @@ function LoginPage({ switchToRegister }) {
 
     const navigate = useNavigate();
 
+    // 🔥 HÀM HELPER: Gửi yêu cầu lưu log hoạt động xuống cơ sở dữ liệu
+    const sendActivityLog = async (userId, token, actionText) => {
+        try {
+            await fetch(`http://localhost:8080/api/admin/users/${userId}/activity`, {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ action: actionText })
+            });
+        } catch (err) {
+            console.error("❌ Không thể ghi nhận nhật ký hoạt động:", err);
+        }
+    };
+
     // NORMAL LOGIN - ĐÃ SỬA
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -41,44 +57,6 @@ function LoginPage({ switchToRegister }) {
                 return;
             }
 
-            // Lưu token
-            // if (data.token) {
-            //     localStorage.setItem("token", data.token);
-            // }
-
-            // // Lưu user (xử lý nhiều trường hợp backend trả về)
-            // if (data.user) {
-            //     localStorage.setItem("user", JSON.stringify(data.user));
-            // } else if (data.data && data.data.user) {
-            //     localStorage.setItem("user", JSON.stringify(data.data.user));
-            // } else {
-            //     // Tạo user tạm từ email (vì backend chưa trả user)
-            //     const tempUser = {
-            //         fullName: email.split('@')[0] || "Người dùng",
-            //         email: email,
-            //         role: "STUDENT"
-            //     };
-            //     localStorage.setItem("user", JSON.stringify(tempUser));
-            // }
-
-            // setMessage("✅ Đăng nhập thành công!");
-            // setMessageType("success");
-
-            // // Redirect về trang chủ
-            // setTimeout(() => {
-            //     const user = JSON.parse(localStorage.getItem("user"));
-
-            //     if (user?.role === "ADMIN") {
-            //         navigate("/admin");
-            //     }
-            //     else if (user?.role === "TEACHER") {
-            //         navigate("/teacher/dashboard");
-            //     }
-            //     else {
-            //         navigate("/home");
-            //     }
-
-            // }, 700);
             if (data.token) {
                 localStorage.setItem("token", data.token);
 
@@ -97,8 +75,9 @@ function LoginPage({ switchToRegister }) {
                     role = decoded.authorities[0]?.replace("ROLE_", "") || "STUDENT";
                 }
 
+                const currentUserId = decoded.userId || decoded.id;
                 const user = {
-                    id: decoded.userId || decoded.id,
+                    id: currentUserId,
                     fullName: decoded.fullName || decoded.name || email.split('@')[0] || "Người dùng", 
                     email: decoded.sub || decoded.email || email,
                     role: role
@@ -106,6 +85,11 @@ function LoginPage({ switchToRegister }) {
 
                 localStorage.setItem("user", JSON.stringify(user));
                 console.log("✅ User đã lưu:", user);
+
+                // 🔥 TỰ ĐỘNG GHI LOG: Đăng nhập thường thành công
+                if (currentUserId) {
+                    await sendActivityLog(currentUserId, data.token, "Đăng nhập vào hệ thống PrepAce");
+                }
 
                 // Điều hướng theo role
                 switch (role) {
@@ -175,6 +159,12 @@ function LoginPage({ switchToRegister }) {
 
             setMessage("✅ Google Login Success!");
             setMessageType("success");
+
+            // 🔥 TỰ ĐỘNG GHI LOG: Đăng nhập bằng tài khoản Google thành công
+            const currentUserId = data.user?.id || data.user?.userId;
+            if (currentUserId) {
+                await sendActivityLog(currentUserId, data.token, "Đăng nhập hệ thống thông qua tài khoản Google");
+            }
 
             setTimeout(() => {
                 if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {

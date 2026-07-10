@@ -78,16 +78,31 @@ export default function RegisterPage({ switchToLogin }) {
         }
     };
 
+    // 🔥 XÁC THỰC EMAIL THÀNH CÔNG VÀ LƯU LOG QUA AXIOS
     const handleVerify = async() => {
         try{
             const response = await axiosClient.post("/auth/verify-email", {
                 email: registeredEmail,
                 otp: otp
-            })
+            });
 
             setMessage("Email Verified Successfully !!!");
             setShowVerifyBox(false);
             setOtp("");
+
+            // Ghi nhận log sau khi kích hoạt tài khoản thành công qua OTP
+            try {
+                // Do mới verify xong chưa đăng nhập, ta có thể kéo ID từ data response của API verify nếu có
+                const userId = response.data?.user?.id || response.data?.userId || 0;
+                if (userId > 0) {
+                    await axiosClient.post(`/admin/users/${userId}/activity`, {
+                        action: "Đăng ký tài khoản thành viên mới thành công thông qua kích hoạt OTP Email"
+                    });
+                }
+            } catch (logErr) {
+                console.log("Bỏ qua log nếu API verify không trả kèm thông tin đối tượng user.");
+            }
+
             switchToLogin();
         }catch (error){
             setMessage(
@@ -123,6 +138,21 @@ export default function RegisterPage({ switchToLogin }) {
             localStorage.setItem("user", JSON.stringify(data.user));
 
             setMessage("✅ Google Register Success!");
+
+            // 🔥 TỰ ĐỘNG GHI LOG: Đăng ký nhanh qua Google thành công
+            const currentUserId = data.user?.id || data.user?.userId;
+            if (currentUserId) {
+                try {
+                    await fetch(`http://localhost:8080/api/admin/users/${currentUserId}/activity`, {
+                        method: "POST",
+                        headers: { 
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${data.token}`
+                        },
+                        body: JSON.stringify({ action: "Đăng ký tài khoản thành viên mới bằng liên kết Google" })
+                    });
+                } catch(e) { console.error(e); }
+            }
 
             navigate("/");
 
