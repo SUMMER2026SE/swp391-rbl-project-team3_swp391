@@ -7,6 +7,33 @@ export default function AdminCoursesPage() {
     const navigate = useNavigate();
     const [activeMenu, setActiveMenu] = useState("courses");
     const [courses, setCourses] = useState([]);
+    // 🔥 THÊM STATE ĐỂ LƯU TỪ KHÓA TÌM KIẾM
+    const [searchTerm, setSearchTerm] = useState("");
+
+    const fetchAllCourses = async () => {
+        try {
+            const response = await axiosClient.get("/admin/courses");
+            console.log("📡 DỮ LIỆU THỰC TẾ TỪ BACKEND TRẢ VỀ:", response.data);
+            
+            if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+                setCourses(response.data);
+            } else {
+                console.warn("Backend trả về mảng rỗng [] hoặc sai cấu trúc.");
+                setCourses([
+                    { courseId: 1, courseTitle: "Mastering Mathematics 12", teacher_id: 2, price: 599000, status: "PUBLISHED" },
+                    { courseId: 2, courseTitle: "Physics Problem Solving", teacher_id: 3, price: 499000, status: "PUBLISHED" },
+                    { courseId: 4, courseTitle: "Tuyệt đỉnh Casio", teacher_id: 2, price: 299000, status: "PENDING" }
+                ]);
+            }
+        } catch (error) {
+            console.error("❌ LỖI GỌI API BACKEND (Có thể do Token/URL):", error);
+            setCourses([
+                { courseId: 1, courseTitle: "Mastering Mathematics 12 (Mock)", teacher_id: 2, price: 599000, status: "PUBLISHED" },
+                { courseId: 2, courseTitle: "Physics Problem Solving (Mock)", teacher_id: 3, price: 499000, status: "PUBLISHED" },
+                { courseId: 4, courseTitle: "Tuyệt đỉnh Casio (Mock)", teacher_id: 2, price: 299000, status: "PENDING" }
+            ]);
+        }
+    };
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -24,34 +51,6 @@ export default function AdminCoursesPage() {
             navigate("/home");
             return;
         }
-
-        const fetchAllCourses = async () => {
-            try {
-                const response = await axiosClient.get("/admin/courses");
-                console.log("📡 DỮ LIỆU THỰC TẾ TỪ BACKEND TRẢ VỀ:", response.data);
-                
-                if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-                    setCourses(response.data);
-                } else {
-                    console.warn("Backend trả về mảng rỗng [] hoặc sai cấu trúc.");
-                    // Nếu mảng rỗng, kích hoạt dữ liệu Mock dự phòng để test giao diện
-                    setCourses([
-                        { courseId: 1, courseTitle: "Mastering Mathematics 12", teacher_id: 2, price: 599000, status: "PUBLISHED" },
-                        { courseId: 2, courseTitle: "Physics Problem Solving", teacher_id: 3, price: 499000, status: "PUBLISHED" },
-                        { courseId: 4, courseTitle: "Tuyệt đỉnh Casio", teacher_id: 2, price: 299000, status: "PENDING" }
-                    ]);
-                }
-            } catch (error) {
-                console.error("❌ LỖI GỌI API BACKEND (Có thể do Token/URL):", error);
-                
-                // 🔥 NẾU API LỖI: Đổ dữ liệu Mock ra ngay lập tức để không bị trắng màn hình
-                setCourses([
-                    { courseId: 1, courseTitle: "Mastering Mathematics 12 (Mock)", teacher_id: 2, price: 599000, status: "PUBLISHED" },
-                    { courseId: 2, courseTitle: "Physics Problem Solving (Mock)", teacher_id: 3, price: 499000, status: "PUBLISHED" },
-                    { courseId: 4, courseTitle: "Tuyệt đỉnh Casio (Mock)", teacher_id: 2, price: 299000, status: "PENDING" }
-                ]);
-            }
-        };
 
         fetchAllCourses();
     }, [navigate]);
@@ -81,11 +80,43 @@ export default function AdminCoursesPage() {
         }
     };
 
+    const handleRevokeToPending = async (courseId) => {
+        if (!courseId || !window.confirm(`Hạ khóa học #${courseId} từ "Đã xuất bản" xuống "Chờ duyệt"?`)) return;
+        try {
+            await axiosClient.patch(`/admin/courses/${courseId}/status`, { status: "PENDING" });
+            setCourses(prev => prev.map(c => (c.courseId === courseId || c.id === courseId) ? { ...c, status: "PENDING" } : c));
+            alert(`🔄 Khóa học #${courseId} đã chuyển về trạng thái Chờ kiểm duyệt.`);
+        } catch (error) {
+            alert("Lỗi kết nối hoặc không thể hạ trạng thái khóa học.");
+        }
+    };
+
+    const handleDeleteCourse = async (courseId) => {
+        if (!courseId || !window.confirm(`🚨 CẢNH BÁO: Bạn có chắc chắn muốn XÓA HOÀN TOÀN khóa học #${courseId}? Hành động này không thể hoàn tác!`)) return;
+        try {
+            await axiosClient.delete(`/admin/courses/${courseId}`);
+            alert(`🗑️ Đã xóa hoàn toàn khóa học #${courseId} thành công!`);
+            fetchAllCourses();
+        } catch (error) {
+            alert("Lỗi kết nối hoặc không có quyền xóa khóa học vĩnh viễn.");
+        }
+    };
+
     const handleLogout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         navigate("/");
     };
+
+    // 🔥 BỘ LỌC TÌM KIẾM ĐỘNG: Lọc theo Tên khóa học hoặc mã ID
+    const filteredCourses = courses.filter((c) => {
+        if (!c) return false;
+        const currentId = String(c.courseId || c.id || "");
+        const currentTitle = String(c.courseTitle || c.title || "").toLowerCase();
+        const search = searchTerm.toLowerCase();
+        
+        return currentTitle.includes(search) || currentId.includes(search);
+    });
 
     return (
         <div className="admin-layout">
@@ -118,7 +149,14 @@ export default function AdminCoursesPage() {
                 <div className="admin-content">
                     <div className="manage-card">
                         <div className="manage-header">
-                            <input type="text" placeholder="Tìm kiếm khóa học..." className="manage-search" />
+                            {/* 🔥 ĐÃ GẮN SỰ KIỆN ĐỂ BẮT CHỮ KHI HƯNG GÕ TÌM KIẾM */}
+                            <input 
+                                type="text" 
+                                placeholder="Tìm kiếm theo tên hoặc ID khóa học..." 
+                                className="manage-search" 
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
                         </div>
                         <div className="table-responsive">
                             <table className="admin-table">
@@ -133,8 +171,9 @@ export default function AdminCoursesPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {Array.isArray(courses) && courses.length > 0 ? (
-                                        courses.map((c) => {
+                                    {/* 🔥 ĐÃ ĐỔI: Sử dụng filteredCourses thay vì mảng gốc courses */}
+                                    {Array.isArray(filteredCourses) && filteredCourses.length > 0 ? (
+                                        filteredCourses.map((c) => {
                                             if (!c) return null;
                                             const currentId = c.courseId || c.id;
                                             if (!currentId) return null;
@@ -152,7 +191,17 @@ export default function AdminCoursesPage() {
                                             return (
                                                 <tr key={currentId}>
                                                     <td>#{currentId}</td>
-                                                    <td><strong>{currentTitle}</strong></td>
+                                                    <td>
+                                                        <strong 
+                                                            style={{ cursor: "pointer", color: "#2563eb" }}
+                                                            title="Bấm để xem chi tiết khóa học"
+                                                            onClick={() => navigate(`/course/${currentId}`)}
+                                                            onMouseEnter={(e) => e.target.style.textDecoration = "underline"}
+                                                            onMouseLeave={(e) => e.target.style.textDecoration = "none"}
+                                                        >
+                                                            {currentTitle}
+                                                        </strong>
+                                                    </td>
                                                     <td>{c.teacherName || c.teacher_name || `ID Giáo viên: ${c.teacherId || c.teacher_id || "Chưa rõ"}`}</td>
                                                     <td>{formattedPrice}</td>
                                                     <td>
@@ -165,13 +214,32 @@ export default function AdminCoursesPage() {
                                                             className="action-btn view" 
                                                             onClick={() => navigate(`/admin/preview/${currentId}`)}
                                                         >
-                                                            👁️ Thẩm định bài giảng
+                                                            👁️ Thẩm định
                                                         </button>
 
                                                         {currentStatus === 'PENDING' && (
                                                             <>
                                                                 <button className="action-btn approve" style={{ marginLeft: "6px" }} onClick={() => handleApproveCourse(currentId)}>✅ Duyệt</button>
                                                                 <button className="action-btn reject" style={{ marginLeft: "6px" }} onClick={() => handleRejectCourse(currentId)}>❌ Yêu cầu sửa</button>
+                                                            </>
+                                                        )}
+
+                                                        {(currentStatus === 'PUBLISHED' || currentStatus === 'APPROVED') && (
+                                                            <>
+                                                                <button 
+                                                                    className="action-btn reject" 
+                                                                    style={{ marginLeft: "6px", backgroundColor: "#ea580c", color: "#fff" }} 
+                                                                    onClick={() => handleRevokeToPending(currentId)}
+                                                                >
+                                                                    ↩️ Hạ xuống chờ duyệt
+                                                                </button>
+                                                                <button 
+                                                                    className="action-btn reject" 
+                                                                    style={{ marginLeft: "6px", backgroundColor: "#dc2626", color: "#fff" }} 
+                                                                    onClick={() => handleDeleteCourse(currentId)}
+                                                                >
+                                                                    🗑️ Xóa vĩnh viễn
+                                                                </button>
                                                             </>
                                                         )}
                                                     </td>
@@ -181,7 +249,7 @@ export default function AdminCoursesPage() {
                                     ) : (
                                         <tr>
                                             <td colSpan="6" style={{ textAlign: "center", padding: "20px", color: "#9ca3af" }}>
-                                                Hệ thống đang tải dữ liệu...
+                                                {searchTerm ? "❌ Không tìm thấy khóa học nào khớp từ khóa!" : "Hệ thống đang tải dữ liệu..."}
                                             </td>
                                         </tr>
                                     )}

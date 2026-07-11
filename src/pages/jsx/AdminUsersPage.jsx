@@ -9,11 +9,42 @@ export default function AdminUsersPage() {
 
     // KHỞI TẠO STATE
     const [users, setUsers] = useState([]);
+    
+    // 🔥 THÊM STATE ĐỂ QUẢN LÝ TỪ KHÓA TÌM KIẾM NGƯỜI DÙNG
+    const [searchTerm, setSearchTerm] = useState("");
 
-    // 🔥 STATE ĐỂ QUẢN LÝ POPUP XEM CHI TIẾT & LOG HOẠT ĐỘNG
+    // STATE ĐỂ QUẢN LÝ POPUP XEM CHI TIẾT & LOG HOẠT ĐỘNG
     const [selectedUser, setSelectedUser] = useState(null);
     const [userLog, setUserLog] = useState([]);
     const [loadingLog, setLoadingLog] = useState(false);
+
+    // STATE MỚI: QUẢN LÝ FORM VÀ POPUP THÊM NGƯỜI DÙNG MỚI
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [addFormData, setAddFormData] = useState({
+        fullName: "",
+        email: "",
+        passwordHash: "", 
+        phone: "",
+        roleId: 3 
+    });
+    const [addError, setAddError] = useState("");
+
+    const fetchAllUsers = async () => {
+        try {
+            const response = await axiosClient.get("/admin/users");
+            console.log("📡 DỮ LIỆU USER THỰC TẾ TỪ BACKEND:", response.data);
+            
+            if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+                setUsers(response.data);
+            } else {
+                console.warn("Backend trả về danh sách trống hoặc sai định dạng.");
+                setDefaultMockData();
+            }
+        } catch (error) {
+            console.error("❌ Lỗi kết nối API lấy danh sách User:", error);
+            setDefaultMockData();
+        }
+    };
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -32,23 +63,6 @@ export default function AdminUsersPage() {
             return;
         }
 
-        const fetchAllUsers = async () => {
-            try {
-                const response = await axiosClient.get("/admin/users");
-                console.log("📡 DỮ LIỆU USER THỰC TẾ TỪ BACKEND:", response.data);
-                
-                if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-                    setUsers(response.data);
-                } else {
-                    console.warn("Backend trả về danh sách trống hoặc sai định dạng.");
-                    setDefaultMockData();
-                }
-            } catch (error) {
-                console.error("❌ Lỗi kết nối API lấy danh sách User:", error);
-                setDefaultMockData();
-            }
-        };
-
         fetchAllUsers();
     }, [navigate]);
 
@@ -61,17 +75,43 @@ export default function AdminUsersPage() {
         ]);
     };
 
-    // 🔥 HÀM MỞ XEM CHI TIẾT NGƯỜI DÙNG VÀ GỌI API LOG HOẠT ĐỘNG THỰC TẾ
+    const handleCreateUser = async (e) => {
+        e.preventDefault();
+        setAddError("");
+
+        if (!addFormData.fullName.trim() || !addFormData.email.trim() || !addFormData.passwordHash.trim()) {
+            setAddError("⚠️ Vui lòng điền đầy đủ Họ tên, Email và Mật khẩu khởi tạo!");
+            return;
+        }
+
+        try {
+            const res = await axiosClient.post("/admin/users", {
+                fullName: addFormData.fullName.trim(),
+                email: addFormData.email.trim(),
+                passwordHash: addFormData.passwordHash,
+                phone: addFormData.phone.trim(),
+                roleId: Number(addFormData.roleId)
+            });
+
+            alert(res.data.message || "🎉 Thêm người dùng mới thành công!");
+            
+            setShowAddModal(false);
+            setAddFormData({ fullName: "", email: "", passwordHash: "", phone: "", roleId: 3 });
+            fetchAllUsers(); 
+
+        } catch (err) {
+            setAddError(err.response?.data?.message || "❌ Có lỗi xảy ra trong quá trình tạo tài khoản.");
+        }
+    };
+
     const handleOpenUserDetail = async (user) => {
         setSelectedUser(user);
         setLoadingLog(true);
         const currentUserId = user.userId || user.id;
 
         try {
-            // Gọi endpoint Backend `/api/admin/users/{id}/activity` chúng ta vừa thêm ở AdminController
             const response = await axiosClient.get(`/admin/users/${currentUserId}/activity`);
             
-            // Cập nhật học vấn, kinh nghiệm mới nhất từ DB trả về cho chắc chắn
             setSelectedUser(prev => ({
                 ...prev,
                 education: response.data.education,
@@ -81,7 +121,6 @@ export default function AdminUsersPage() {
             setUserLog(response.data.activities || []);
         } catch (error) {
             console.warn("Chưa đồng bộ được log DB thực tế, đang hiển thị log giả lập...");
-            // Log dự phòng để không làm trống UI khi chưa chạy log thực tế
             setUserLog([
                 { id: 1, action: "Đăng nhập vào hệ thống PrepAce", timestamp: "2026-07-11 20:15:22" },
                 { id: 2, action: `Thao tác đổi/xem quyền thành viên: ${user.roleName || 'STUDENT'}`, timestamp: "2026-07-11 20:30:00" },
@@ -92,7 +131,6 @@ export default function AdminUsersPage() {
         }
     };
 
-    // HÀM XỬ LÝ THAY ĐỔI TRẠNG THÁI NGƯỜI DÙNG
     const handleUpdateUserStatus = async (userId, newStatus) => {
         try {
             await axiosClient.patch(`/admin/users/${userId}/status`, { status: newStatus });
@@ -116,7 +154,6 @@ export default function AdminUsersPage() {
         }
     };
 
-    // THAY ĐỔI VAI TRÒ (ROLE) TRỰC TIẾP QUA SELECT BOX
     const handleRoleChange = async (userId, newRoleId) => {
         const roleMapping = { 1: "ADMIN", 2: "TEACHER", 3: "STUDENT" };
         const targetRoleName = roleMapping[newRoleId];
@@ -140,7 +177,6 @@ export default function AdminUsersPage() {
                     userObj.roleId = newRoleId;
                     userObj.role = targetRoleName;
                     localStorage.setItem("user", JSON.stringify(userObj));
-                    console.log("🔄 Đã đồng bộ vai trò mới vào localStorage của phiên hiện tại.");
                 }
             }
 
@@ -152,7 +188,6 @@ export default function AdminUsersPage() {
         }
     };
 
-    // PHÊ DUYỆT / TỪ CHỐI ĐƠN ỨNG TUYỂN GIÁO VIÊN (Task 44)
     const handleReviewTeacher = async (userId, decision) => {
         const actionText = decision === "APPROVE" ? "DUYỆT lên làm Giáo viên" : "TỪ CHỐI đơn ứng tuyển";
         if (!window.confirm(`Bạn có chắc chắn muốn ${actionText} cho thành viên này?`)) return;
@@ -208,6 +243,16 @@ export default function AdminUsersPage() {
         return "Học sinh";
     };
 
+    // 🔥 BỘ LỌC TÌM KIẾM ĐỘNG: Lọc danh sách theo Tên hoặc Email của User[cite: 2]
+    const filteredUsers = users.filter((u) => {
+        if (!u) return false;
+        const currentFullName = String(u.fullName || u.full_name || u.name || "").toLowerCase();
+        const currentEmail = String(u.email || "").toLowerCase();
+        const search = searchTerm.toLowerCase();
+        
+        return currentFullName.includes(search) || currentEmail.includes(search);
+    });
+
     return (
         <div className="admin-layout">
             <aside className="admin-sidebar">
@@ -239,8 +284,15 @@ export default function AdminUsersPage() {
                 <div className="admin-content">
                     <div className="manage-card">
                         <div className="manage-header">
-                            <input type="text" placeholder="Tìm kiếm tên, email..." className="manage-search" />
-                            <button className="primary-btn">+ Thêm người dùng</button>
+                            {/* 🔥 ĐÃ FIX: Gắn value và onChange kích hoạt lọc từ khóa khi gõ[cite: 2] */}
+                            <input 
+                                type="text" 
+                                placeholder="Tìm kiếm theo tên hoặc email..." 
+                                className="manage-search" 
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                            <button className="primary-btn" onClick={() => setShowAddModal(true)}>+ Thêm người dùng</button>
                         </div>
                         <div className="table-responsive">
                             <table className="admin-table">
@@ -255,8 +307,9 @@ export default function AdminUsersPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {Array.isArray(users) && users.length > 0 ? (
-                                        users.map((u) => {
+                                    {/* 🔥 ĐÃ ĐỔI: Chuyển sang map mảng phụ filteredUsers đã lọc[cite: 2] */}
+                                    {Array.isArray(filteredUsers) && filteredUsers.length > 0 ? (
+                                        filteredUsers.map((u) => {
                                             if (!u) return null;
                                             
                                             const currentUserId = u.userId || u.id;
@@ -267,7 +320,6 @@ export default function AdminUsersPage() {
                                             return (
                                                 <tr key={currentUserId}>
                                                     <td>#{currentUserId}</td>
-                                                    {/* 🔥 CHỈNH SỬA: Click vào tên người dùng để mở Modal chi tiết */}
                                                     <td onClick={() => handleOpenUserDetail(u)} style={{ cursor: "pointer", color: "#1d4ed8" }}>
                                                         <strong style={{ textDecoration: "underline" }}>{currentFullName}</strong>
                                                         
@@ -319,7 +371,7 @@ export default function AdminUsersPage() {
                                     ) : (
                                         <tr>
                                             <td colSpan="6" style={{ textAlign: "center", padding: "20px", color: "#9ca3af" }}>
-                                                Hiện tại chưa có người dùng nào hoặc hệ thống đang tải dữ liệu...
+                                                {searchTerm ? "❌ Không tìm thấy thành viên nào khớp từ khóa!" : "Hiện tại chưa có người dùng nào hoặc hệ thống đang tải dữ liệu..."}
                                             </td>
                                         </tr>
                                     )}
@@ -330,20 +382,66 @@ export default function AdminUsersPage() {
                 </div>
             </main>
 
-            {/* ======================================================================== */}
-            {/* 🔥 PHẦN MỚI THÊM: POPUP MODAL XEM HỒ SƠ & LOG HOẠT ĐỘNG CHI TIẾT        */}
-            {/* ======================================================================== */}
+            {/* POPUP MODAL FORM ĐĂNG KÝ THÀNH VIÊN MỚI */}
+            {showAddModal && (
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999 }}>
+                    <div style={{ backgroundColor: "#fff", padding: "30px", borderRadius: "12px", width: "100%", maxWidth: "480px", boxShadow: "0 20px 25px rgba(0,0,0,0.15)", textAlign: "left" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #e5e7eb", paddingBottom: "12px", marginBottom: "15px" }}>
+                            <h3 style={{ margin: 0, fontSize: "18px", color: "#0f172a", fontWeight: "700" }}>👤 Khởi tạo tài khoản mới</h3>
+                            <button onClick={() => setShowAddModal(false)} style={{ border: "none", background: "none", fontSize: "24px", cursor: "pointer", color: "#9ca3af" }}>&times;</button>
+                        </div>
+                        
+                        {addError && <div style={{ padding: "10px", backgroundColor: "#fee2e2", color: "#ef4444", borderRadius: "6px", fontSize: "13px", marginBottom: "15px", fontWeight: "500" }}>{addError}</div>}
+                        
+                        <form onSubmit={handleCreateUser} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                <label style={{ fontSize: "13px", fontWeight: "600", color: "#475569" }}>Họ và tên *</label>
+                                <input type="text" placeholder="Nhập họ và tên đầy đủ..." style={{ padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px" }} value={addFormData.fullName} onChange={(e) => setAddFormData({...addFormData, fullName: e.target.value})} required />
+                            </div>
+
+                            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                <label style={{ fontSize: "13px", fontWeight: "600", color: "#475569" }}>Địa chỉ Email *</label>
+                                <input type="email" placeholder="example@gmail.com" style={{ padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px" }} value={addFormData.email} onChange={(e) => setAddFormData({...addFormData, email: e.target.value})} required />
+                            </div>
+
+                            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                <label style={{ fontSize: "13px", fontWeight: "600", color: "#475569" }}>Mật khẩu gốc *</label>
+                                <input type="password" placeholder="Mật khẩu khởi tạo đăng nhập..." style={{ padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px" }} value={addFormData.passwordHash} onChange={(e) => setAddFormData({...addFormData, passwordHash: e.target.value})} required />
+                            </div>
+
+                            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                <label style={{ fontSize: "13px", fontWeight: "600", color: "#475569" }}>Số điện thoại liên hệ</label>
+                                <input type="text" placeholder="Nhập số điện thoại..." style={{ padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px" }} value={addFormData.phone} onChange={(e) => setAddFormData({...addFormData, phone: e.target.value})} />
+                            </div>
+
+                            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                <label style={{ fontSize: "13px", fontWeight: "600", color: "#475569" }}>Vai trò hệ thống (Role)</label>
+                                <select style={{ padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px", background: "#fff", cursor: "pointer" }} value={addFormData.roleId} onChange={(e) => setAddFormData({...addFormData, roleId: e.target.value})}>
+                                    <option value={3}>🎓 Học sinh (STUDENT)</option>
+                                    <option value={2}>👨‍🏫 Giáo viên (TEACHER)</option>
+                                    <option value={1}>🛡️ Quản trị viên (ADMIN)</option>
+                                </select>
+                            </div>
+
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px", borderTop: "1px solid #e5e7eb", paddingTop: "12px" }}>
+                                <button type="button" onClick={() => setShowAddModal(false)} style={{ padding: "8px 16px", background: "#f1f5f9", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", color: "#475569" }}>Hủy</button>
+                                <button type="submit" style={{ padding: "8px 20px", background: "#2747d9", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", color: "#fff" }}>Lưu dữ liệu</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* POPUP MODAL XEM HỒ SƠ & LOG HOẠT ĐỘNG CHI TIẾT */}
             {selectedUser && (
                 <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999 }}>
-                    <div style={{ backgroundColor: "#fff", borderRadius: "12px", width: "90%", maxWidth: "750px", maxHeight: "85vh", overflowY: "auto", padding: "30px", boxShadow: "0 10px 25px rgba(0,0,0,0.2)" }}>
+                    <div style={{ backgroundColor: "#fff", borderRadius: "12px", width: "90%", maxWidth: "750px", maxHeight: "85vh", overflowY: "auto", padding: "30px", boxShadow: "0 10px 25 rgba(0,0,0,0.2)" }}>
                         
-                        {/* Tiêu đề góc Popup */}
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #e5e7eb", paddingBottom: "15px", marginBottom: "20px" }}>
                             <h2 style={{ fontSize: "20px", color: "#111827", fontWeight: "bold" }}>🔍 Hồ Sơ Thành Viên & Lịch Sử Hoạt Động</h2>
                             <button onClick={() => setSelectedUser(null)} style={{ border: "none", background: "none", fontSize: "28px", cursor: "pointer", color: "#9ca3af", lineHeight: "1" }}>&times;</button>
                         </div>
 
-                        {/* Hồ Sơ Cá Nhân bao gồm Học Vấn & Kinh Nghiệm của Form Giáo Viên mới */}
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "25px", backgroundColor: "#f9fafb", padding: "15px", borderRadius: "8px", border: "1px solid #e5e7eb", textAlign: "left" }}>
                             <div>
                                 <p style={{ margin: "6px 0", fontSize: "14px" }}><strong>Họ và tên:</strong> {selectedUser.fullName || selectedUser.full_name || "Chưa cập nhật"}</p>
@@ -351,7 +449,7 @@ export default function AdminUsersPage() {
                                 <p style={{ margin: "6px 0", fontSize: "14px" }}><strong>Quyền hiện tại:</strong> <span style={{ color: "#2563eb", fontWeight: "bold" }}>{getRoleLabel(selectedUser.roleName || selectedUser.role)}</span></p>
                             </div>
                             <div>
-                                <p style={{ margin: "6px 0", fontSize: "14px" }}><strong>🎓 Trình độ học vấn:</strong></p>
+                                <p style={{ margin: "6px 0", fontSize: "14px" }}><strong>🎓 Trình độ học văn:</strong></p>
                                 <div style={{ color: "#4b5563", fontSize: "13px", paddingLeft: "10px", fontStyle: selectedUser.education ? "normal" : "italic" }}>
                                     {selectedUser.education || "Chưa cung cấp thông tin học vấn"}
                                 </div>
@@ -362,7 +460,6 @@ export default function AdminUsersPage() {
                             </div>
                         </div>
 
-                        {/* Bảng liệt kê Nhật ký hệ thống (Activity Log) */}
                         <div style={{ textAlign: "left" }}>
                             <h3 style={{ fontSize: "16px", fontWeight: "bold", marginBottom: "12px", color: "#374151" }}>📋 Log chi tiết thao tác trên hệ thống PrepAce:</h3>
                             
@@ -394,7 +491,6 @@ export default function AdminUsersPage() {
                             )}
                         </div>
 
-                        {/* Nút đóng chân Popup */}
                         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "25px", borderTop: "1px solid #e5e7eb", paddingTop: "15px" }}>
                             <button onClick={() => setSelectedUser(null)} style={{ backgroundColor: "#4b5563", color: "#fff", border: "none", padding: "8px 22px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>Đóng lại</button>
                         </div>
