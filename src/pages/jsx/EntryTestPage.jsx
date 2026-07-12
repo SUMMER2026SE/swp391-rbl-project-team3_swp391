@@ -71,6 +71,10 @@ export default function EntryTestPage() {
     const handleSubmit = async (auto = false) => {
         if (submitting) return;
         const total = questions.length;
+        if (Object.keys(answers).length === 0) {
+            alert("Vui lòng chọn ít nhất một đáp án trước khi nộp bài.");
+            return;
+        }
         if (!auto && Object.keys(answers).length < total) {
             if (!window.confirm("Bạn còn câu chưa trả lời. Vẫn nộp bài?")) return;
         }
@@ -114,20 +118,26 @@ export default function EntryTestPage() {
                 <div className="entry-quiz">
                     {questions.map((q, idx) => (
                         <div className="etq-card" key={q.questionId}>
-                            <h3 className="etq-title">Câu {idx + 1}. {q.content}</h3>
+                            <h3 className="etq-title">
+                                Câu {idx + 1}. {q.questionContent}
+                            </h3>
+
                             <div className="etq-options">
-                                {q.options && q.options.map((o) => (
+                                {q.options?.map((o) => (
                                     <label
                                         key={o.optionId}
-                                        className={`etq-option ${answers[q.questionId] === o.content ? "selected" : ""}`}
+                                        className={`etq-option ${
+                                            answers[q.questionId] === o.optionContent ? "selected" : ""
+                                        }`}
                                     >
                                         <input
                                             type="radio"
                                             name={`q-${q.questionId}`}
-                                            checked={answers[q.questionId] === o.content}
-                                            onChange={() => choose(q.questionId, o.content)}
+                                            checked={answers[q.questionId] === o.optionContent}
+                                            onChange={() => choose(q.questionId, o.optionContent)}
                                         />
-                                        <span>{o.content}</span>
+
+                                        <span>{o.optionContent}</span>
                                     </label>
                                 ))}
                             </div>

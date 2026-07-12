@@ -149,20 +149,20 @@ function LoginPage({ switchToRegister }) {
             setMessageType("success");
 
             // 🔥 TỰ ĐỘNG GHI LOG: Đăng nhập bằng tài khoản Google thành công
-            const currentUserId = data.user?.id || data.user?.userId;
-            if (currentUserId) {
-                await sendActivityLog(currentUserId, data.token, "Đăng nhập hệ thống thông qua tài khoản Google");
-            }
+            // const currentUserId = data.user?.id || data.user?.userId;
+            // if (currentUserId) {
+            //     await sendActivityLog(currentUserId, data.token, "Đăng nhập hệ thống thông qua tài khoản Google");
+            // }
 
-            setTimeout(() => {
-                if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
-                    navigate("/teacher/dashboard");
-                } else if (data.user?.role === "ADMIN" || data.user?.roleId === 1) {
-                    navigate("/admin/courses");
-                } else {
-                    navigate("/home");
-                }
-            }, 800);
+            // setTimeout(() => {
+            //     if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
+            //         navigate("/teacher/dashboard");
+            //     } else if (data.user?.role === "ADMIN" || data.user?.roleId === 1) {
+            //         navigate("/admin/courses");
+            //     } else {
+            //         navigate("/home");
+            //     }
+            // }, 800);
 
             const role = data.user.roleName || data.user.role || "STUDENT";
                 setTimeout(() => {
