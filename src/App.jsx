@@ -32,6 +32,7 @@ import RequestTeacherPage from "./pages/jsx/RequestTeacherPage";
 import AdminCategoriesPage from "./pages/jsx/AdminCategoriesPage";
 //Thi Thu
 import TestListPage from './pages/jsx/TestListPage';
+import TestDoingPage from './pages/jsx/TestDoingPage';
 import TestResult from './pages/jsx/TestResult';
 import TestPage from './pages/jsx/TestPage';
 

@@ -31,6 +31,7 @@ export default function AdminCoursesPage() {
             navigate("/");
             return;
         }
+    };
 
         const userObj = JSON.parse(storedUser);
         if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
@@ -94,18 +95,6 @@ export default function AdminCoursesPage() {
         localStorage.removeItem("user");
         navigate("/");
     };
-
-    // 🔥 SỬA ĐỒNG BỘ BỘ LỌC TÌM KIẾM ĐỘNG: Chấp nhận mọi biến thể tên cột từ cơ sở dữ liệu thực tế
-    const filteredCourses = courses.filter((c) => {
-        if (!c) return false;
-        const currentId = String(c.id || c.courseId || "");
-        
-        // Quét lấy tên khóa học theo mọi trường cấu trúc có thể có trong DB
-        const currentTitle = String(c.title || c.courseTitle || c.courseDescription || c.course_description || "").toLowerCase();
-        const search = searchTerm.toLowerCase();
-
-        return currentTitle.includes(search) || currentId.includes(search);
-    });
 
     return (
         <div className="admin-layout">

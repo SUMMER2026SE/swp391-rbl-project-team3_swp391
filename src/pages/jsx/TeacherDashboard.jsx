@@ -203,6 +203,24 @@ export default function TeacherDashboard() {
         }
     };
 
+    try {
+        // 2. Gửi request với ID chuẩn đã tìm được ở trên
+        await axiosClient.post(`/questions/${questionIdToUse}/answers`, {
+            content: replyContent
+        });
+        
+        setReplyModalOpen(false);
+        fetchQaList(); // Tải lại danh sách để cập nhật trạng thái
+        alert("🎉 Đã gửi câu trả lời thành công!");
+    } catch (error) {
+        console.error("Lỗi chi tiết từ hệ thống:", error);
+        
+        // 3. Hiển thị trực tiếp nội dung lỗi cụ thể từ Backend trả về lên màn hình
+        const serverErrorMessage = error.response?.data?.message || error.message;
+        alert("❌ Lỗi từ hệ thống: " + serverErrorMessage);
+    }
+};
+    
     return (
         <div className="home-layout">
             
