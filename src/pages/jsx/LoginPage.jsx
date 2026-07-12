@@ -9,9 +9,27 @@ function LoginPage({ switchToRegister }) {
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState("");
+
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
     const navigate = useNavigate();
+
+    // 🔥 HÀM HELPER: Gửi yêu cầu lưu log hoạt động xuống cơ sở dữ liệu
+    const sendActivityLog = async (userId, token, actionText) => {
+        try {
+            await fetch(`http://localhost:8080/api/admin/users/${userId}/activity`, {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ action: actionText })
+            });
+        } catch (err) {
+            console.error("❌ Không thể ghi nhận nhật ký hoạt động:", err);
+        }
+    };
 
     // NORMAL LOGIN - ĐÃ SỬA
     const handleLogin = async (e) => {
@@ -39,66 +57,42 @@ function LoginPage({ switchToRegister }) {
                 return;
             }
 
-            // Lưu token
-            // if (data.token) {
-            //     localStorage.setItem("token", data.token);
-            // }
-
-            // // Lưu user (xử lý nhiều trường hợp backend trả về)
-            // if (data.user) {
-            //     localStorage.setItem("user", JSON.stringify(data.user));
-            // } else if (data.data && data.data.user) {
-            //     localStorage.setItem("user", JSON.stringify(data.data.user));
-            // } else {
-            //     // Tạo user tạm từ email (vì backend chưa trả user)
-            //     const tempUser = {
-            //         fullName: email.split('@')[0] || "Người dùng",
-            //         email: email,
-            //         role: "STUDENT"
-            //     };
-            //     localStorage.setItem("user", JSON.stringify(tempUser));
-            // }
-
-            // setMessage("✅ Đăng nhập thành công!");
-            // setMessageType("success");
-
-            // // Redirect về trang chủ
-            // setTimeout(() => {
-            //     const user = JSON.parse(localStorage.getItem("user"));
-
-            //     if (user?.role === "ADMIN") {
-            //         navigate("/admin");
-            //     }
-            //     else if (user?.role === "TEACHER") {
-            //         navigate("/teacher/dashboard");
-            //     }
-            //     else {
-            //         navigate("/home");
-            //     }
-
-            // }, 700);
             if (data.token) {
-                // Lưu token
                 localStorage.setItem("token", data.token);
 
                 // Giải mã JWT
                 const decoded = jwtDecode(data.token);
+                console.log("🔍 Decoded JWT:", decoded);   // ← Debug quan trọng
 
+                // Xử lý role an toàn (phòng trường hợp backend chưa có role hoặc tên field khác)
+                let role = "STUDENT"; // Mặc định
+
+                if (decoded.role) {
+                    role = decoded.role.replace("ROLE_", "");
+                } else if (decoded.roles) {
+                    role = Array.isArray(decoded.roles) ? decoded.roles[0].replace("ROLE_", "") : "STUDENT";
+                } else if (decoded.authorities) {
+                    role = decoded.authorities[0]?.replace("ROLE_", "") || "STUDENT";
+                }
+
+                const currentUserId = decoded.userId || decoded.id;
                 const user = {
-                    id: decoded.userId,
-                    fullName: decoded.fullName,
-                    email: decoded.sub,
-                    role: decoded.role.replace("ROLE_", "")
+                    id: currentUserId,
+                    fullName: decoded.fullName || decoded.name || email.split('@')[0] || "Người dùng", 
+                    email: decoded.sub || decoded.email || email,
+                    role: role
                 };
-                // Lưu user
-                localStorage.setItem(
-                    "user",
-                    JSON.stringify(user)
-                );
-                console.log("User:", user);
+
+                localStorage.setItem("user", JSON.stringify(user));
+                console.log("✅ User đã lưu:", user);
+
+                // 🔥 TỰ ĐỘNG GHI LOG: Đăng nhập thường thành công
+                if (currentUserId) {
+                    await sendActivityLog(currentUserId, data.token, "Đăng nhập vào hệ thống PrepAce");
+                }
 
                 // Điều hướng theo role
-                switch (user.role) {
+                switch (role) {
                     case "ADMIN":
                         navigate("/admin");
                         break;
@@ -109,8 +103,23 @@ function LoginPage({ switchToRegister }) {
                         navigate("/home");
                 }
             } else {
-                setError("Đăng nhập thất bại!");
+                setMessage("Đăng nhập thất bại! (Không nhận được token)");
+                setMessageType("error");
             }
+
+            setMessage("✅ Đăng nhập thành công!");
+            setMessageType("success");
+
+            // Redirect về trang chủ
+            setTimeout(() => {
+                if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
+                    navigate("/teacher/dashboard");
+                } else if (data.user?.role === "ADMIN" || data.user?.roleId === 1) {
+                    navigate("/admin/courses");
+                } else {
+                    navigate("/home");
+                }
+            }, 800);
 
         } catch (error) {
             console.error("Login error:", error);
@@ -150,17 +159,22 @@ function LoginPage({ switchToRegister }) {
 
             setMessage("✅ Google Login Success!");
             setMessageType("success");
-                    navigate("/home");
 
-            // setTimeout(() => {
-            //     if (data.user?.role === "TEACHER") {
-            //         navigate("/teacher/dashboard");
-            //     } else if (data.user?.role === "ADMIN") {
-            //         navigate("/admin/courses");
-            //     } else {
-            //         navigate("/home");
-            //     }
-            // }, 800);
+            // 🔥 TỰ ĐỘNG GHI LOG: Đăng nhập bằng tài khoản Google thành công
+            const currentUserId = data.user?.id || data.user?.userId;
+            if (currentUserId) {
+                await sendActivityLog(currentUserId, data.token, "Đăng nhập hệ thống thông qua tài khoản Google");
+            }
+
+            setTimeout(() => {
+                if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
+                    navigate("/teacher/dashboard");
+                } else if (data.user?.role === "ADMIN" || data.user?.roleId === 1) {
+                    navigate("/admin/courses");
+                } else {
+                    navigate("/home");
+                }
+            }, 800);
 
         } catch (error) {
             console.error(error);

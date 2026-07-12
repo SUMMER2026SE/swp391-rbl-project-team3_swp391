@@ -23,3 +23,14 @@ export const login = async(userData) => {
 
     return response.json();
 }
+
+export const logout = async () => {
+    try {
+        const response = await axiosClient.post("/auth/logout");
+        return response.data;
+    } finally {
+        // Dù API có lỗi vẫn xóa dữ liệu local
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+    }
+};

@@ -1,13 +1,14 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
+
     baseURL: "http://localhost:8080/api",
     headers: {
         "Content-Type": "application/json"
     }
 });
 
-// Tự động gắn token + X-Student-Id (cho các API của Hải: entry-test, payment, AI)
+// Tự động gắn token + X-Student-Id
 axiosClient.interceptors.request.use((config) => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -25,23 +26,34 @@ axiosClient.interceptors.request.use((config) => {
     }
 
     return config;
+}, (error) => {
+    return Promise.reject(error);
 });
 
-// auto logout nếu token hết hạn / invalid — KHÔNG tự điều hướng để tránh trang trắng.
-// Chỉ xóa token; để từng trang tự xử lý việc yêu cầu đăng nhập.
+// auto logout nếu token hết hạn / invalid
 axiosClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
-            // Chỉ chuyển sang trang đăng nhập nếu đang ở trang cần đăng nhập
-            const path = window.location.pathname;
-            const publicPaths = ["/", "/home", "/auth", "/courses", "/entry-test"];
-            if (!publicPaths.some((p) => path === p || path.startsWith("/course/"))) {
-                window.location.href = "/auth";
+        // 🔥 PHÒNG VỆ AN TOÀN: Kiểm tra xem error và error.config có tồn tại hay không
+        const urlStr = error?.config?.url || "";
+        const isUrlTarget = urlStr.includes("/admin/");
+
+        if (error?.response?.status === 401) {
+            console.warn("⚠️ Phát hiện lỗi 401 Unauthorized tại URL:", urlStr);
+            
+            if (isUrlTarget) {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                
+                const path = window.location.pathname;
+                const publicPaths = ["/", "/home", "/auth", "/courses", "/entry-test"];
+                if (!publicPaths.some((p) => path === p || path.startsWith("/course/"))) {
+                    window.location.href = "/auth";
+                }
             }
         }
+        
+        // 🔥 BẮT BUỘC: Đảm bảo luôn ném lỗi ra ngoài để khối catch bên Form có thể bắt được và hủy trạng thái Loading!
         return Promise.reject(error);
     }
 );
