@@ -142,7 +142,7 @@ export default function TeacherDashboard() {
     const handleSendReply = async () => {
         if (!replyContent.trim()) return alert("Vui lòng nhập nội dung trả lời");
         try {
-            await axiosClient.post(`/questions/${selectedQa.id}/answers`, {
+            await axiosClient.post(`/questions/${selectedQa.questionId}/answers`, {
                 content: replyContent
             });
             setReplyModalOpen(false);
@@ -295,7 +295,7 @@ export default function TeacherDashboard() {
                                     {qaList.length > 0 ? qaList.map(qa => {
                                         const isAnswered = qa.answers && qa.answers.length > 0;
                                         return (
-                                            <tr key={qa.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                                            <tr key={qa.questionId} style={{ borderBottom: "1px solid #f1f5f9" }}>
                                                 <td style={{ padding: "16px", verticalAlign: "top" }}>
                                                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                                         <img src={qa.userAvatarUrl || "https://ui-avatars.com/api/?name=" + qa.userFullName} alt="" style={{ width: "32px", height: "32px", borderRadius: "50%" }} />
