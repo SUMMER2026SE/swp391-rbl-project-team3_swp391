@@ -7,6 +7,7 @@ const MOCK_COURSE_FALLBACK = {
     title: "Mastering Mathematics 12 kk",
     description: "Khóa học toàn diện bao phủ toàn bộ kiến thức Toán 12. Cung cấp kỹ năng giải nhanh trắc nghiệm, bứt phá điểm 8+ kỳ thi THPT Quốc gia 2026.",
     teacher: "Nguyen Minh Quan",
+    subjectName: "Toán học",
     price: "599,000đ",
     originalPrice: "900,000đ",
     rating: 4.8,
@@ -90,6 +91,10 @@ export default function CourseDetailPage() {
                         title: data.course_title || data.title || "Khóa học không tên",
                         description: data.description || data.course_desc || "",
                         teacher: data.teacher_name || data.teacher || "Giáo viên",
+                        
+                        // 🔥 ĐÃ CẬP NHẬT: Lấy tên môn học liên kết từ thực thể Backend trả ra
+                        subjectName: data.subject?.subjectName || data.subjectName || "Chung",
+
                         price: cleanPrice > 0 ? `${cleanPrice.toLocaleString('vi-VN')}đ` : "Miễn phí",
                         originalPrice: cleanOriginal > 0 ? `${cleanOriginal.toLocaleString('vi-VN')}đ` : "",
                         rating: data.rating || 5.0,
@@ -188,7 +193,11 @@ export default function CourseDetailPage() {
                     <h1 className="course-title">{course.title}</h1>
                     <p className="course-description">{course.description}</p>
                     
-                    <div className="course-meta-top">
+                    <div className="course-meta-top" style={{ display: "flex", gap: "15px", alignItems: "center", flexWrap: "wrap" }}>
+                        {/* 🔥 HIỂN THỊ BADGE MÔN HỌC ĐỘNG TỪ BACKEND */}
+                        <span style={{ backgroundColor: "#e0e7ff", color: "#4f46e5", padding: "4px 10px", borderRadius: "6px", fontSize: "13px", fontWeight: "600" }}>
+                            📚 {course.subjectName}
+                        </span>
                         <span className="rating">⭐ {evaluation.averageRating || course.rating} ({evaluation.totalReviews || course.reviews} đánh giá)</span>
                         <span className="students">👥 {course.students} học viên</span>
                         <span className="teacher">👨‍🏫 Giảng viên: <strong>{course.teacher}</strong></span>
@@ -372,7 +381,6 @@ export default function CourseDetailPage() {
                             Mua khóa học ngay
                         </button>
                         
-                        {/* 🔥 ĐÃ CẬP NHẬT: Gọi qua hàm xử lý log ngầm trước khi chuyển trang */}
                         <button
                             className="enroll-btn"
                             style={{ background: "transparent", color: "#3b82f6", border: "1px solid #3b82f6", marginTop: "10px" }}
