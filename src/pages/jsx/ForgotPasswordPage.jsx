@@ -24,7 +24,6 @@ export default function ForgotPasswordPage() {
             await axiosClient.post("/auth/forgot-password", {
                 email,
             });
-
             setMessage("📩 Check email để sắp đặt lại mật khẩu nhé!");
             setEmail("");
         } catch (err) {
@@ -57,8 +56,8 @@ export default function ForgotPasswordPage() {
                         {loading ? "Sending..." : "Send Reset Link"}
                     </button>
                     <p style={{marginTop: '15px', color: '#6366f1', cursor: 'pointer', fontWeight: 'bold'}} onClick={() => navigate("/")}>
-    ← Quay lại Đăng nhập
-</p>
+                        ← Quay lại Đăng nhập
+                    </p>
                 </form>
             </div>
         </div>

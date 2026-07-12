@@ -1,0 +1,171 @@
+/* ===== Luyện Đề - màn hình kết quả & phân tích lỗi sai ===== */
+.pr-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 16px 64px;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: #1f2937;
+}
+
+.pr-status { text-align: center; color: #6b7280; padding: 32px 0; }
+.pr-status-error { color: #dc2626; }
+
+/* ---- Tổng quan điểm ---- */
+.pr-summary {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.pr-score-circle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 6px solid;
+}
+.pr-score-good { border-color: #16a34a; background: #f0fdf4; color: #15803d; }
+.pr-score-mid  { border-color: #f59e0b; background: #fffbeb; color: #b45309; }
+.pr-score-bad  { border-color: #dc2626; background: #fef2f2; color: #b91c1c; }
+.pr-score-value { font-size: 36px; font-weight: 800; line-height: 1; }
+.pr-score-label { font-size: 13px; margin-top: 4px; opacity: 0.8; }
+
+.pr-summary-info { flex: 1; min-width: 0; }
+.pr-summary-info h1 { font-size: 22px; margin: 0 0 14px; }
+
+.pr-stats { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+.pr-stat {
+    display: flex; flex-direction: column; align-items: center;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 10px 18px;
+    min-width: 86px;
+}
+.pr-stat strong { font-size: 22px; }
+.pr-stat span { font-size: 12px; color: #6b7280; }
+.pr-stat-correct strong { color: #16a34a; }
+.pr-stat-wrong strong { color: #dc2626; }
+.pr-stat-skip strong { color: #f59e0b; }
+
+.pr-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.pr-btn {
+    display: inline-block;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 9px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    color: #374151;
+    background: #fff;
+    transition: background 0.15s;
+}
+.pr-btn:hover { background: #f3f4f6; }
+.pr-btn-primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+.pr-btn-primary:hover { background: #1d4ed8; }
+
+/* ---- Bộ lọc ---- */
+.pr-filter { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.pr-filter button {
+    border: 1px solid #d1d5db;
+    background: #fff;
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #374151;
+    transition: background 0.15s;
+}
+.pr-filter button:hover { background: #f3f4f6; }
+.pr-filter-active { background: #1f2937 !important; border-color: #1f2937 !important; color: #fff !important; }
+
+/* ---- Card từng câu ---- */
+.pr-review-list { display: flex; flex-direction: column; gap: 16px; }
+
+.pr-question-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-left: 5px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 20px 24px;
+}
+.pr-card-correct { border-left-color: #16a34a; }
+.pr-card-wrong { border-left-color: #dc2626; }
+
+.pr-question-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.pr-question-no { font-weight: 700; color: #2563eb; }
+.pr-topic-chip { background: #f3f4f6; color: #6b7280; border-radius: 999px; padding: 2px 10px; font-size: 12px; }
+
+.pr-badge { border-radius: 999px; padding: 3px 12px; font-size: 12px; font-weight: 700; margin-left: auto; }
+.pr-badge-correct { background: #dcfce7; color: #15803d; }
+.pr-badge-wrong { background: #fee2e2; color: #b91c1c; }
+.pr-badge-skip { background: #fef3c7; color: #b45309; }
+
+.pr-question-content { font-size: 16px; line-height: 1.6; margin: 0 0 14px; }
+
+/* ---- Options: xanh = đáp án đúng, đỏ = chọn sai ---- */
+.pr-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.pr-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px 14px;
+}
+.pr-option-label {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; flex-shrink: 0;
+    border-radius: 50%;
+    background: #f3f4f6; color: #374151;
+    font-weight: 700; font-size: 14px;
+}
+.pr-option-content { line-height: 1.5; }
+
+.pr-option-correct { border-color: #16a34a; background: #f0fdf4; }
+.pr-option-correct .pr-option-label { background: #16a34a; color: #fff; }
+
+.pr-option-wrong { border-color: #dc2626; background: #fef2f2; }
+.pr-option-wrong .pr-option-label { background: #dc2626; color: #fff; }
+
+.pr-option-tag {
+    margin-left: auto;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.pr-tag-you { background: #fee2e2; color: #b91c1c; }
+.pr-option-correct .pr-tag-you { background: #dcfce7; color: #15803d; }
+.pr-tag-key { background: #16a34a; color: #fff; }
+
+/* ---- Box giải thích ---- */
+.pr-explanation {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px 18px;
+}
+.pr-explanation-wrong { background: #fffbeb; border-color: #fcd34d; }
+.pr-explanation-title { font-weight: 700; margin-bottom: 6px; font-size: 14px; }
+.pr-explanation p { margin: 0; line-height: 1.7; font-size: 14.5px; color: #374151; }
+
+/* ---- Mobile ---- */
+@media (max-width: 640px) {
+    .pr-summary { flex-direction: column; text-align: center; }
+    .pr-stats { justify-content: center; }
+    .pr-actions { justify-content: center; }
+}

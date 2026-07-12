@@ -2,53 +2,70 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../css/LoginPage.css";
 import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
 
 function LoginPage({ switchToRegister }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState("");
+
+    const [rememberMe, setRememberMe] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
     const navigate = useNavigate();
 
-    // NORMAL LOGIN
+    // 🔥 HÀM HELPER: Gửi yêu cầu lưu log hoạt động xuống cơ sở dữ liệu
+    const sendActivityLog = async (userId, token, actionText) => {
+        try {
+            await fetch(`http://localhost:8080/api/admin/users/${userId}/activity`, {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ action: actionText })
+            });
+        } catch (err) {
+            console.error("❌ Không thể ghi nhận nhật ký hoạt động:", err);
+        }
+    };
+
+    // NORMAL LOGIN - ĐÃ SỬA
     const handleLogin = async (e) => {
         e.preventDefault();
 
         try {
             setLoading(true);
+            setMessage("");
 
-            const response = await fetch(
-                "http://localhost:8080/api/auth/login",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        email: email.trim(),
-                        password
-                    })
-                }
-            );
+            const response = await fetch("http://localhost:8080/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    email: email.trim(), 
+                    password,
+                    rememberMe 
+                }),
+                credentials: "include" // 🔥 Gửi cookie httpOnly
+            });
 
-            let data = {};
-            try {
-                data = await response.json();
-            } catch {
-                data = {};
-            }
+            const data = await response.json();
+            console.log("🔍 Full Response từ backend:", data);
 
             if (!response.ok) {
-                setMessage(data.message || "Login Failed");
+                setMessage(data.message || "Đăng nhập thất bại");
+                setMessageType("error");
                 return;
             }
 
-            localStorage.setItem("token", data.token);
-localStorage.setItem("user", JSON.stringify(data.user)); // <--- THÊM DÒNG NÀY VÀO
-            setMessage("✅ Login Successfully!");
-            setMessageType("success");
+            if (data.token) {
+                localStorage.setItem("token", data.token);
+
+                // Giải mã JWT
+                const decoded = jwtDecode(data.token);
+                console.log("🔍 Decoded JWT:", decoded);   // ← Debug quan trọng
 
             setTimeout(() => {
                 if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
@@ -58,11 +75,40 @@ localStorage.setItem("user", JSON.stringify(data.user)); // <--- THÊM DÒNG NÀ
                 } else {
                     navigate("/home");
                 }
-            }, 800);
 
+                const currentUserId = decoded.userId || decoded.id;
+                const user = {
+                    id: currentUserId,
+                    fullName: decoded.fullName || decoded.name || email.split('@')[0] || "Người dùng", 
+                    email: decoded.sub || decoded.email || email,
+                    role: role
+                };
+
+                localStorage.setItem("user", JSON.stringify(user));
+                console.log("✅ User đã lưu:", user);
+
+                // 🔥 TỰ ĐỘNG GHI LOG: Đăng nhập thường thành công
+                if (currentUserId) {
+                    await sendActivityLog(currentUserId, data.token, "Đăng nhập vào hệ thống PrepAce");
+                }
+
+                // Điều hướng theo role
+                setTimeout(() => {
+                    if (role === "ADMIN") {
+                        navigate("/admin");
+                    } else if (role === "TEACHER") {
+                        navigate("/teacher/dashboard");
+                    } else {
+                        navigate("/home");
+                    }
+                }, 800);
+            } else {
+                setMessage("Đăng nhập thất bại! (Không nhận được thông tin User)");
+                setMessageType("error");
+            }
         } catch (error) {
-            console.error(error);
-            setMessage("❌ Server Error");
+            console.error("Login error:", error);
+            setMessage("❌ Lỗi kết nối với server hoặc tài khoản bị khóa");
             setMessageType("error");
         } finally {
             setLoading(false);
@@ -81,7 +127,8 @@ localStorage.setItem("user", JSON.stringify(data.user)); // <--- THÊM DÒNG NÀ
                     },
                     body: JSON.stringify({
                         credential: credentialResponse.credential
-                    })
+                    }),
+                    credentials: "include" // 🔥
                 }
             );
 
@@ -109,6 +156,16 @@ localStorage.setItem("user", JSON.stringify(data.user)); // <--- THÊM DÒNG NÀ
                 }
             }, 800);
 
+            const role = data.user.roleName || data.user.role || "STUDENT";
+                setTimeout(() => {
+                    if (role === "ADMIN") {
+                        navigate("/admin");
+                    } else if (role === "TEACHER") {
+                        navigate("/teacher/dashboard");
+                    } else {
+                        navigate("/home");
+                    }
+                }, 800);
         } catch (error) {
             console.error(error);
             setMessage("❌ Google Login Error");
@@ -195,10 +252,20 @@ localStorage.setItem("user", JSON.stringify(data.user)); // <--- THÊM DÒNG NÀ
                                 required
                             />
                         </div>
-                        <div className="forgot-password">
-                            <span onClick={() => navigate("/forgot-password")}>
-                                Forgot Password?
-                            </span>
+                        <div className="login-options" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
+                            <label style={{display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', color: '#4b5563', fontSize: '14px'}}>
+                                <input
+                                    type="checkbox"
+                                    checked={rememberMe}
+                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                />
+                                Ghi nhớ đăng nhập
+                            </label>
+                            <div className="forgot-password" style={{margin: 0}}>
+                                <span onClick={() => navigate("/forgot-password")} style={{fontSize: '14px'}}>
+                                    Forgot Password?
+                                </span>
+                            </div>
                         </div>
 
                         {/* LOGIN BUTTON */}

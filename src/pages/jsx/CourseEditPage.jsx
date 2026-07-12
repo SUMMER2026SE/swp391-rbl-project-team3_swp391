@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
 import "../css/CourseEditPage.css"; 
-// GỌI FILE CON Ở ĐÂY CHO PHẦN BÀI GIẢNG ĐÃ HOẠT ĐỘNG TỐT
 import LessonEditForm from "./LessonEditForm"; 
 
 export default function CourseEditPage() {
@@ -12,7 +11,6 @@ export default function CourseEditPage() {
     const [courseTitle, setCourseTitle] = useState("");
     const [chapters, setChapters] = useState([]);
     
-    // UI Toggles (Chỉ dùng để bật/tắt giao diện, không dính dáng đến bộ gõ chữ)
     const [activeChapterId, setActiveChapterId] = useState(null); 
     const [editingChapterId, setEditingChapterId] = useState(null);
     const [editingChapterTitle, setEditingChapterTitle] = useState("");
@@ -64,19 +62,17 @@ export default function CourseEditPage() {
 
     useEffect(() => { loadCourseOutline(); }, [id]);
 
-    // 🔥 FIX 1: THÊM CHƯƠNG (Dùng Uncontrolled input để Unikey không bị lag)
     const handleCreateChapter = async (e) => {
         e.preventDefault();
         const inputEl = document.getElementById("input-new-chapter");
         if (!inputEl.value.trim()) return;
         try {
             await axiosClient.post(`/outlines/courses/${id}/chapters`, { title: inputEl.value });
-            inputEl.value = ""; // Xóa trắng ô sau khi thêm xong
+            inputEl.value = ""; 
             loadCourseOutline(); 
         } catch (error) { alert("Lỗi!"); }
     };
 
-    // 🔥 FIX 2: SỬA CHƯƠNG (Lấy dữ liệu trực tiếp khi bấm nút Lưu)
     const handleUpdateChapter = async (chapterId) => {
         const newTitle = document.getElementById(`edit-chapter-${chapterId}`).value;
         if (!newTitle.trim()) return;
@@ -90,7 +86,7 @@ export default function CourseEditPage() {
         }
     };
 
-    // 🔥 FIX 3: THÊM BÀI HỌC
+    // 🔥 XỬ LÝ LƯU LOG KHI TẠO BÀI HỌC MỚI THÀNH CÔNG
     const handleCreateLesson = async (chapterId) => {
         const title = document.getElementById(`new-lesson-title-${chapterId}`).value;
         const desc = document.getElementById(`new-lesson-desc-${chapterId}`).value;
@@ -310,7 +306,6 @@ export default function CourseEditPage() {
                         <div className="chapter-edit-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
                             {editingChapterId === chapter.id ? (
                                 <div style={{ display: "flex", gap: "10px", flex: 1 }}>
-                                    {/* SỬA CHƯƠNG: ÉP FONT SẠCH VÀ UNCONTROLLED */}
                                     <input 
                                         type="text" 
                                         id={`edit-chapter-${chapter.id}`}

@@ -1,0 +1,66 @@
+.etr-page {
+    min-height: 100vh;
+    background: #f5f5fb;
+    font-family: "Poppins", Arial, sans-serif;
+    padding: 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+.etr-page .back-btn { color: #64748b; cursor: pointer; font-weight: 500; font-size: 15px; }
+.etr-page .back-btn:hover { color: #2563eb; }
+.etr-title { font-size: 30px; color: #0f172a; margin: 16px 0 4px; }
+.etr-quiz { color: #64748b; margin: 0 0 28px; }
+
+.etr-status {
+    min-height: 60vh; display: flex; align-items: center; justify-content: center;
+    font-family: "Poppins", Arial, sans-serif; font-size: 18px; color: #475569;
+}
+.etr-status.error { color: #ef4444; }
+
+.etr-grid { display: grid; grid-template-columns: 320px 1fr; gap: 28px; }
+
+.etr-score-card {
+    background: white; border-radius: 22px; padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center;
+    border-top: 6px solid #3b82f6; height: fit-content;
+}
+.etr-level { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.etr-score { font-size: 56px; font-weight: 800; color: #0f172a; line-height: 1; }
+.etr-score span { font-size: 22px; color: #94a3b8; font-weight: 600; }
+.etr-stats { display: flex; flex-direction: column; gap: 6px; margin: 18px 0; color: #475569; font-size: 14px; }
+.etr-accuracy-bar { height: 10px; background: #e2e8f0; border-radius: 8px; overflow: hidden; }
+.etr-accuracy-fill { height: 100%; border-radius: 8px; transition: width 1s ease; }
+
+.etr-detail-card {
+    background: white; border-radius: 22px; padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+.etr-detail-card h3 { font-size: 17px; color: #1e293b; margin: 22px 0 10px; }
+.etr-detail-card h3:first-child { margin-top: 0; }
+.etr-summary { color: #334155; line-height: 1.6; font-size: 15px; margin: 0; }
+
+.etr-start-level {
+    display: flex; align-items: center; justify-content: space-between;
+    background: linear-gradient(to right, #eff6ff, #e0e7ff);
+    border-radius: 14px; padding: 16px 20px; margin: 22px 0;
+}
+.etr-start-label { color: #1e3a8a; font-weight: 500; }
+.etr-start-value { color: #1d4ed8; font-weight: 700; }
+
+.etr-recs { padding-left: 20px; color: #475569; line-height: 1.8; }
+
+.etr-actions { display: flex; gap: 14px; margin-top: 24px; flex-wrap: wrap; }
+.etr-primary {
+    background: #3b82f6; color: white; border: none; padding: 12px 20px;
+    border-radius: 10px; font-weight: 600; cursor: pointer;
+}
+.etr-primary:hover { background: #2563eb; }
+.etr-secondary {
+    background: white; color: #3b82f6; border: 1px solid #3b82f6; padding: 12px 20px;
+    border-radius: 10px; font-weight: 600; cursor: pointer;
+}
+.etr-secondary:hover { background: #eff6ff; }
+
+@media (max-width: 860px) {
+    .etr-grid { grid-template-columns: 1fr; }
+}

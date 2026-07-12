@@ -3,31 +3,48 @@ import axios from "axios";
 const axiosClient = axios.create({
     baseURL: "http://localhost:8080/api",
     headers: {
-        "Content-Type": "application/json"
-    }
+        "Content-Type": "application/json",
+    },
+    withCredentials: true
 });
 
-// Tự động gắn token nếu có
-axiosClient.interceptors.request.use((config) => {
-    const token = localStorage.getItem("token");
+// Tự động gắn JWT vào mọi request
+axiosClient.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem("token");
 
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
 
-    return config;
-});
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
 
-// auto logout nếu token hết hạn / invalid
+// Xử lý khi token hết hạn
 axiosClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        if (error?.response?.status === 401) {
+            console.warn("Token hết hạn hoặc không hợp lệ.");
+
             localStorage.removeItem("token");
             localStorage.removeItem("user");
 
-            window.location.href = "/login";
+            const publicPaths = [
+                "/",
+                "/home",
+                "/auth"
+            ];
+
+            const currentPath = window.location.pathname;
+
+            if (!publicPaths.includes(currentPath)) {
+                window.location.href = "/auth";
+            }
         }
+
         return Promise.reject(error);
     }
 );

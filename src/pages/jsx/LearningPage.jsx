@@ -137,6 +137,10 @@ export default function LearningPage() {
                     console.error("Lỗi tải danh sách ghi chú:", error);
                 }
             }
+        }
+        
+        return () => {
+            if (timeoutId) clearTimeout(timeoutId);
         };
         fetchQuestionsAndNotes();
     }, [currentLesson]);
@@ -333,6 +337,9 @@ export default function LearningPage() {
             // Fallback an toàn: Nếu fetch lỗi (do CORS hoặc lỗi mạng), mở tab mới cho phép học sinh xem/tải
             window.open(pathUrl, "_blank");
         }
+
+        // Mở URL trực tiếp để tải xuống
+        window.open(finalUrl, "_blank");
     };
 
     const handlePostQuestion = async () => {
@@ -532,6 +539,42 @@ export default function LearningPage() {
                             </div>
                         )}
                     </div>
+                    <div style={{ marginTop: "25px", display: "flex", justifyContent: "flex-end" }}>
+                        <button 
+                            onClick={() => {
+                                if (!quizSelectedOption) return alert("Vui lòng chọn 1 đáp án!");
+                                if (quizSelectedOption === currentQuiz.correctOption) {
+                                    alert("Chính xác! Mời bạn tiếp tục xem bài giảng.");
+                                    
+                                    setAnsweredQuizzes(prev => {
+                                        const newSet = new Set(prev);
+                                        newSet.add(currentQuiz.id);
+                                        return newSet;
+                                    });
+                                    
+                                    setCurrentQuiz(null);
+                                    
+                                    if (isYouTube(currentLesson.videoUrl)) {
+                                        const iframe = document.getElementById('youtube-player-container');
+                                        if (iframe && iframe.contentWindow) {
+                                            iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+                                        }
+                                    } else {
+                                        if (videoRef.current) videoRef.current.play();
+                                    }
+                                } else {
+                                    alert("Sai rồi! Hãy suy nghĩ lại và chọn đáp án chính xác để được học tiếp nhé.");
+                                }
+                            }}
+                            style={{ padding: "12px 25px", background: "#f59e0b", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "15px", boxShadow: "0 4px 6px rgba(245, 158, 11, 0.2)" }}
+                        >
+                            Trả lời & Xem tiếp
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+    </div>
 
                     <div className="learning-content">
                         <h1 className="current-lesson-title">{currentLesson.title}</h1>

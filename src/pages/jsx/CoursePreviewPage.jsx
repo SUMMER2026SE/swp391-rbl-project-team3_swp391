@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
-import "../css/CoursePreviewPage.css"; // Dùng chung file CSS preview hiện tại của bạn
+import "../css/CoursePreviewPage.css"; 
 
 export default function CoursePreviewPage() {
     const { id } = useParams();

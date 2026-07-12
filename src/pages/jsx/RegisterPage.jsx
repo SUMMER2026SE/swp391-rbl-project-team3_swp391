@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import "../css/RegisterPage.css";
+import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import axiosClient from "../../api/axiosClient";
+import { login, register, resendOtp } from "../../services/authService";
 
 export default function RegisterPage({ switchToLogin }) {
     const [formData, setFormData] = useState({
@@ -10,12 +12,16 @@ export default function RegisterPage({ switchToLogin }) {
         password: "",
         phone: "",
     });
+    const [role, setRole] = useState("STUDENT");
+    const [agreeToTerms, setAgreeToTerms] = useState(false);
     const [message, setMessage] = useState("");
     const [otp, setOtp] = useState("");
     const [registeredEmail, setRegisteredEmail] = useState("");
     const [loading, setLoading] = useState(false);
     const [showVerifyBox, setShowVerifyBox] = useState(false);
-    
+    const [otpResendCount, setOtpResendCount] = useState(0);
+
+    const navigate = useNavigate();
 
     // HANDLE INPUT
     const handleChange = (e) => {
@@ -25,12 +31,34 @@ export default function RegisterPage({ switchToLogin }) {
         });
     };
 
+    const handleResendOtp = async () => {
+        try {
+            await resendOtp(formData.email);
+
+            alert("Đã gửi lại mã OTP.");
+        } catch (err) {
+            alert(err.response?.data?.message || "Không gửi được OTP.");
+        }
+    };
+
     // NORMAL REGISTER
     const handleRegister = async (e) => {
         e.preventDefault();
 
+        if (!agreeToTerms) {
+            setMessage("⚠️ Bạn phải đồng ý với Điều khoản dịch vụ để đăng ký.");
+            return;
+        }
+
+        // Kiểm tra độ mạnh mật khẩu tại Client (BR-UC03-03)
+        if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(formData.password)) {
+            setMessage("❌ Mật khẩu tối thiểu 8 ký tự, phải bao gồm cả chữ hoa, chữ thường và chữ số.");
+            return;
+        }
+
         try {
             setLoading(true);
+            setMessage("");
 
             const response = await fetch(
                 "http://localhost:8080/api/auth/register",
@@ -39,7 +67,11 @@ export default function RegisterPage({ switchToLogin }) {
                     headers: {
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify({
+                        ...formData,
+                        role,
+                        agreeToTerms
+                    })
                 }
             );
 
@@ -51,48 +83,56 @@ export default function RegisterPage({ switchToLogin }) {
             }
 
             if (!response.ok) {
-                setMessage(data.message || "Register Failed");
+                setMessage("❌ " + (data.message || "Đăng ký thất bại"));
                 return;
             }
 
             setRegisteredEmail(formData.email);
-
-            setMessage("Verification Mail Has Send To Your Gmail");
-
+            setMessage("📩 Mã xác thực OTP đã được gửi về Gmail của bạn!");
             setShowVerifyBox(true);
-
-            setFormData({
-                fullName: "",
-                email: "",
-                password: "",
-                phone: ""
-            });
+            setOtpResendCount(0); // Reset số lần gửi lại OTP
 
         } catch (error) {
             console.error(error);
-            setMessage("❌ Server Error");
+            setMessage("❌ Lỗi kết nối server");
         } finally {
             setLoading(false);
         }
     };
 
+    // 🔥 XÁC THỰC EMAIL THÀNH CÔNG VÀ LƯU LOG QUA AXIOS
     const handleVerify = async() => {
         try{
             const response = await axiosClient.post("/auth/verify-email", {
                 email: registeredEmail,
                 otp: otp
-            })
+            });
 
-            setMessage("Email Verified Successfully !!!");
+            const data = response.data;
+            setMessage("✅ Xác thực thành công! Đang tự động đăng nhập...");
             setShowVerifyBox(false);
             setOtp("");
+
+            // Ghi nhận log sau khi kích hoạt tài khoản thành công qua OTP
+            try {
+                // Do mới verify xong chưa đăng nhập, ta có thể kéo ID từ data response của API verify nếu có
+                const userId = response.data?.user?.id || response.data?.userId || 0;
+                if (userId > 0) {
+                    await axiosClient.post(`/admin/users/${userId}/activity`, {
+                        action: "Đăng ký tài khoản thành viên mới thành công thông qua kích hoạt OTP Email"
+                    });
+                }
+            } catch (logErr) {
+                console.log("Bỏ qua log nếu API verify không trả kèm thông tin đối tượng user.");
+            }
+
             switchToLogin();
         }catch (error){
             setMessage(
-                error.response?.data?.message || "Verify Failed !!!"
-            )
+                "❌ " + (error.response?.data?.message || "Xác thực thất bại !!!")
+            );
         }
-    }
+    };
 
     // GOOGLE REGISTER
     const handleGoogleRegister = async (credentialResponse) => {
@@ -121,6 +161,23 @@ export default function RegisterPage({ switchToLogin }) {
             localStorage.setItem("user", JSON.stringify(data.user));
 
             setMessage("✅ Google Register Success!");
+
+            // 🔥 TỰ ĐỘNG GHI LOG: Đăng ký nhanh qua Google thành công
+            const currentUserId = data.user?.id || data.user?.userId;
+            if (currentUserId) {
+                try {
+                    await fetch(`http://localhost:8080/api/admin/users/${currentUserId}/activity`, {
+                        method: "POST",
+                        headers: { 
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${data.token}`
+                        },
+                        body: JSON.stringify({ action: "Đăng ký tài khoản thành viên mới bằng liên kết Google" })
+                    });
+                } catch(e) { console.error(e); }
+            }
+
+            navigate("/");
 
             console.log(data);
 
@@ -235,6 +292,39 @@ export default function RegisterPage({ switchToLogin }) {
                             />
                         </div>
 
+                        <div className="input-group" style={{marginBottom: '15px'}}>
+                            <label style={{display: 'block', marginBottom: '8px', fontWeight: '500'}}>Bạn đăng ký với tư cách</label>
+                            <select 
+                                value={role} 
+                                onChange={(e) => setRole(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '12px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #d1d5db',
+                                    fontSize: '15px',
+                                    outline: 'none',
+                                    backgroundColor: '#fff'
+                                }}
+                            >
+                                <option value="STUDENT">Học sinh (Chuẩn bị ôn thi)</option>
+                                <option value="TEACHER">Giáo viên (Chờ phê duyệt)</option>
+                            </select>
+                        </div>
+
+                        <div className="input-group checkbox-group" style={{display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', marginBottom: '15px'}}>
+                            <input
+                                type="checkbox"
+                                id="agreeToTerms"
+                                checked={agreeToTerms}
+                                onChange={(e) => setAgreeToTerms(e.target.checked)}
+                                style={{cursor: 'pointer', width: '16px', height: '16px'}}
+                            />
+                            <label htmlFor="agreeToTerms" style={{cursor: 'pointer', fontSize: '14px', color: '#4b5563'}}>
+                                Tôi đồng ý với Điều khoản dịch vụ và Chính sách bảo mật.
+                            </label>
+                        </div>
+
                         <button
                             type="submit"
                             className="register-btn"
@@ -245,14 +335,33 @@ export default function RegisterPage({ switchToLogin }) {
                     </form>
                     {
                         showVerifyBox && (
-                            <div className="verify-box">
+                            <div className="verify-box" style={{marginTop: '20px', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '8px'}}>
                                 <h3>Email Verification</h3>
 
-                                <input type="text" placeholder="Enter OTP Code" value={otp} onChange={(e) => setOtp(e.target.value)}/>
+                                <input type="text" placeholder="Enter OTP Code" value={otp} onChange={(e) => setOtp(e.target.value)} style={{width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '6px', border: '1px solid #d1d5db'}}/>
 
-                                <button onClick={handleVerify} className="verify-btn">
-                                    Verify Email
-                                </button>
+                                <div style={{display: 'flex', gap: '10px'}}>
+                                    <button onClick={handleVerify} className="verify-btn" style={{flex: 1}}>
+                                        Verify Email
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        onClick={handleResendOtp} 
+                                        className="resend-btn" 
+                                        disabled={otpResendCount >= 3}
+                                        style={{
+                                            flex: 1, 
+                                            backgroundColor: '#f3f4f6', 
+                                            color: '#374151',
+                                            border: '1px solid #d1d5db',
+                                            borderRadius: '8px',
+                                            cursor: otpResendCount >= 3 ? 'not-allowed' : 'pointer',
+                                            fontSize: '14px'
+                                        }}
+                                    >
+                                        Gửi lại OTP ({3 - otpResendCount} lần)
+                                    </button>
+                                </div>
                             </div>
                         )
                     }
