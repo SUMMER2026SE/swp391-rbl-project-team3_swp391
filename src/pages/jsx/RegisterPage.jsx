@@ -3,6 +3,7 @@ import "../css/RegisterPage.css";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import axiosClient from "../../api/axiosClient";
+import { login, register, resendOtp } from "../../services/authService";
 
 export default function RegisterPage({ switchToLogin }) {
     const [formData, setFormData] = useState({
@@ -28,6 +29,16 @@ export default function RegisterPage({ switchToLogin }) {
             ...formData,
             [e.target.name]: e.target.value
         });
+    };
+
+    const handleResendOtp = async () => {
+        try {
+            await resendOtp(formData.email);
+
+            alert("Đã gửi lại mã OTP.");
+        } catch (err) {
+            alert(err.response?.data?.message || "Không gửi được OTP.");
+        }
     };
 
     // NORMAL REGISTER

@@ -10,6 +10,13 @@ export const login = async (userData) => {
     return response.data;
 };
 
+export const resendOtp = async (email) => {
+    const response = await axiosClient.post("/auth/resend-otp", {
+        email,
+    });
+    return response.data;
+};
+
 export const logout = async () => {
     try {
         const response = await axiosClient.post("/auth/logout");
