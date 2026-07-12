@@ -10,6 +10,7 @@ function LoginPage({ switchToRegister }) {
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState("");
 
+    const [rememberMe, setRememberMe] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -28,12 +29,14 @@ function LoginPage({ switchToRegister }) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
                     email: email.trim(), 
-                    password 
-                })
+                    password,
+                    rememberMe 
+                }),
+                credentials: "include" // 🔥 Gửi cookie httpOnly
             });
 
             const data = await response.json();
-            console.log("🔍 Full Response từ backend:", data);   // Debug
+            console.log("🔍 Full Response từ backend:", data);
 
             if (!response.ok) {
                 setMessage(data.message || "Đăng nhập thất bại");
@@ -41,105 +44,32 @@ function LoginPage({ switchToRegister }) {
                 return;
             }
 
-            // Lưu token
-            // if (data.token) {
-            //     localStorage.setItem("token", data.token);
-            // }
+            if (data.user) {
+                localStorage.setItem("user", JSON.stringify(data.user));
+                console.log("✅ User đã lưu:", data.user);
 
-            // // Lưu user (xử lý nhiều trường hợp backend trả về)
-            // if (data.user) {
-            //     localStorage.setItem("user", JSON.stringify(data.user));
-            // } else if (data.data && data.data.user) {
-            //     localStorage.setItem("user", JSON.stringify(data.data.user));
-            // } else {
-            //     // Tạo user tạm từ email (vì backend chưa trả user)
-            //     const tempUser = {
-            //         fullName: email.split('@')[0] || "Người dùng",
-            //         email: email,
-            //         role: "STUDENT"
-            //     };
-            //     localStorage.setItem("user", JSON.stringify(tempUser));
-            // }
-
-            // setMessage("✅ Đăng nhập thành công!");
-            // setMessageType("success");
-
-            // // Redirect về trang chủ
-            // setTimeout(() => {
-            //     const user = JSON.parse(localStorage.getItem("user"));
-
-            //     if (user?.role === "ADMIN") {
-            //         navigate("/admin");
-            //     }
-            //     else if (user?.role === "TEACHER") {
-            //         navigate("/teacher/dashboard");
-            //     }
-            //     else {
-            //         navigate("/home");
-            //     }
-
-            // }, 700);
-            if (data.token) {
-                localStorage.setItem("token", data.token);
-
-                // Giải mã JWT
-                const decoded = jwtDecode(data.token);
-                console.log("🔍 Decoded JWT:", decoded);   // ← Debug quan trọng
-
-                // Xử lý role an toàn (phòng trường hợp backend chưa có role hoặc tên field khác)
-                let role = "STUDENT"; // Mặc định
-
-                if (decoded.role) {
-                    role = decoded.role.replace("ROLE_", "");
-                } else if (decoded.roles) {
-                    role = Array.isArray(decoded.roles) ? decoded.roles[0].replace("ROLE_", "") : "STUDENT";
-                } else if (decoded.authorities) {
-                    role = decoded.authorities[0]?.replace("ROLE_", "") || "STUDENT";
-                }
-
-                const user = {
-                    id: decoded.userId || decoded.id,
-                    fullName: decoded.fullName || decoded.name || email.split('@')[0] || "Người dùng", 
-                    email: decoded.sub || decoded.email || email,
-                    role: role
-                };
-
-                localStorage.setItem("user", JSON.stringify(user));
-                console.log("✅ User đã lưu:", user);
+                const role = data.user.roleName || data.user.role || "STUDENT";
+                
+                setMessage("✅ Đăng nhập thành công!");
+                setMessageType("success");
 
                 // Điều hướng theo role
-                switch (role) {
-                    case "ADMIN":
+                setTimeout(() => {
+                    if (role === "ADMIN") {
                         navigate("/admin");
-                        break;
-                    case "TEACHER":
+                    } else if (role === "TEACHER") {
                         navigate("/teacher/dashboard");
-                        break;
-                    default:
+                    } else {
                         navigate("/home");
-                }
+                    }
+                }, 800);
             } else {
-                setMessage("Đăng nhập thất bại! (Không nhận được token)");
+                setMessage("Đăng nhập thất bại! (Không nhận được thông tin User)");
                 setMessageType("error");
             }
-
-            setMessage("✅ Đăng nhập thành công!");
-            setMessageType("success");
-
-            // Redirect về trang chủ
-            setTimeout(() => {
-                if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
-                    navigate("/teacher/dashboard");
-                } else if (data.user?.role === "ADMIN" || data.user?.roleId === 1) {
-                    navigate("/admin/courses");
-                } else {
-                    navigate("/home");
-                }
-            }, 800);
-
         } catch (error) {
             console.error("Login error:", error);
-            setMessage("❌ Lỗi kết nối với server");
+            setMessage("❌ Lỗi kết nối với server hoặc tài khoản bị khóa");
             setMessageType("error");
         } finally {
             setLoading(false);
@@ -158,7 +88,8 @@ function LoginPage({ switchToRegister }) {
                     },
                     body: JSON.stringify({
                         credential: credentialResponse.credential
-                    })
+                    }),
+                    credentials: "include" // 🔥
                 }
             );
 
@@ -170,22 +101,22 @@ function LoginPage({ switchToRegister }) {
                 return;
             }
 
-            localStorage.setItem("token", data.token);
-            localStorage.setItem("user", JSON.stringify(data.user));
+            if (data.user) {
+                localStorage.setItem("user", JSON.stringify(data.user));
+                setMessage("✅ Google Login Success!");
+                setMessageType("success");
 
-            setMessage("✅ Google Login Success!");
-            setMessageType("success");
-
-            setTimeout(() => {
-                if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
-                    navigate("/teacher/dashboard");
-                } else if (data.user?.role === "ADMIN" || data.user?.roleId === 1) {
-                    navigate("/admin/courses");
-                } else {
-                    navigate("/home");
-                }
-            }, 800);
-
+                const role = data.user.roleName || data.user.role || "STUDENT";
+                setTimeout(() => {
+                    if (role === "ADMIN") {
+                        navigate("/admin");
+                    } else if (role === "TEACHER") {
+                        navigate("/teacher/dashboard");
+                    } else {
+                        navigate("/home");
+                    }
+                }, 800);
+            }
         } catch (error) {
             console.error(error);
             setMessage("❌ Google Login Error");
@@ -272,10 +203,20 @@ function LoginPage({ switchToRegister }) {
                                 required
                             />
                         </div>
-                        <div className="forgot-password">
-                            <span onClick={() => navigate("/forgot-password")}>
-                                Forgot Password?
-                            </span>
+                        <div className="login-options" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
+                            <label style={{display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', color: '#4b5563', fontSize: '14px'}}>
+                                <input
+                                    type="checkbox"
+                                    checked={rememberMe}
+                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                />
+                                Ghi nhớ đăng nhập
+                            </label>
+                            <div className="forgot-password" style={{margin: 0}}>
+                                <span onClick={() => navigate("/forgot-password")} style={{fontSize: '14px'}}>
+                                    Forgot Password?
+                                </span>
+                            </div>
                         </div>
 
                         {/* LOGIN BUTTON */}

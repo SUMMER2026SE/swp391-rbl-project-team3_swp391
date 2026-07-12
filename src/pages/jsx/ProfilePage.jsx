@@ -7,6 +7,7 @@ import "../css/ProfilePage.css";
 function ProfilePage() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
+    const [baselineUser, setBaselineUser] = useState(null); // Lưu thông tin gốc để so sánh thay đổi
     const [enrolledCourses, setEnrolledCourses] = useState([]); // Khóa học đã mua
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -17,14 +18,19 @@ function ProfilePage() {
                 // Lấy thông tin profile
                 const profileRes = await axiosClient.get("/auth/profile");
                 setUser(profileRes.data);
+                setBaselineUser(profileRes.data);
 
                 // Lấy danh sách khóa học đã đăng ký
-                const enrollRes = await axiosClient.get("/api/enrollments/me"); // hoặc endpoint phù hợp
+                const enrollRes = await axiosClient.get("/api/enrollments/me");
                 setEnrolledCourses(enrollRes.data || []);
             } catch (err) {
                 console.error("Lỗi tải thông tin:", err);
                 const storedUser = localStorage.getItem("user");
-                if (storedUser) setUser(JSON.parse(storedUser));
+                if (storedUser) {
+                    const parsed = JSON.parse(storedUser);
+                    setUser(parsed);
+                    setBaselineUser(parsed);
+                }
             } finally {
                 setLoading(false);
             }
@@ -32,6 +38,37 @@ function ProfilePage() {
 
         fetchData();
     }, []);
+
+    // So sánh xem form có thay đổi không
+    const hasChanges = user && baselineUser && (
+        (user.fullName || "") !== (baselineUser.fullName || "") ||
+        (user.phone || "") !== (baselineUser.phone || "") ||
+        (user.school || "") !== (baselineUser.school || "") ||
+        (user.bio || "") !== (baselineUser.bio || "") ||
+        (user.avatarUrl || user.avatar_url || "") !== (baselineUser.avatarUrl || baselineUser.avatar_url || "")
+    );
+
+    // Lắng nghe sự kiện F5 / Đóng Tab khi có thay đổi chưa lưu
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            if (hasChanges) {
+                e.preventDefault();
+                e.returnValue = "Bạn có thay đổi chưa lưu. Bạn có chắc muốn rời đi không?";
+            }
+        };
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    }, [hasChanges]);
+
+    // Hàm điều hướng tùy biến để kiểm tra thay đổi chưa lưu
+    const handleNavigate = (path) => {
+        if (hasChanges) {
+            if (!window.confirm("Bạn có thay đổi chưa lưu. Bạn có chắc muốn rời đi không?")) {
+                return;
+            }
+        }
+        navigate(path);
+    };
 
     const handleSave = async () => {
         if (!user) return;
@@ -45,9 +82,10 @@ function ProfilePage() {
             });
 
             localStorage.setItem("user", JSON.stringify(user));
+            setBaselineUser(user); // Cập nhật lại dữ liệu gốc
             alert("✅ Cập nhật thông tin thành công!");
         } catch (err) {
-            alert("❌ Cập nhật thất bại. Vui lòng thử lại!");
+            alert("❌ Cập nhật thất bại: " + (err.response?.data?.message || "Vui lòng thử lại!"));
         } finally {
             setSaving(false);
         }
