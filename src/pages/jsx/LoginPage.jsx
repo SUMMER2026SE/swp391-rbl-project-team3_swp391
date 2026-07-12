@@ -67,15 +67,13 @@ function LoginPage({ switchToRegister }) {
                 const decoded = jwtDecode(data.token);
                 console.log("🔍 Decoded JWT:", decoded);   // ← Debug quan trọng
 
-                // Xử lý role an toàn (phòng trường hợp backend chưa có role hoặc tên field khác)
-                let role = "STUDENT"; // Mặc định
-
-                if (decoded.role) {
-                    role = decoded.role.replace("ROLE_", "");
-                } else if (decoded.roles) {
-                    role = Array.isArray(decoded.roles) ? decoded.roles[0].replace("ROLE_", "") : "STUDENT";
-                } else if (decoded.authorities) {
-                    role = decoded.authorities[0]?.replace("ROLE_", "") || "STUDENT";
+            setTimeout(() => {
+                if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
+                    navigate("/teacher/dashboard");
+                } else if (data.user?.role === "ADMIN" || data.user?.roleId === 1) {
+                    navigate("/admin/courses");
+                } else {
+                    navigate("/home");
                 }
 
                 const currentUserId = decoded.userId || decoded.id;
@@ -148,21 +146,15 @@ function LoginPage({ switchToRegister }) {
             setMessage("✅ Google Login Success!");
             setMessageType("success");
 
-            // 🔥 TỰ ĐỘNG GHI LOG: Đăng nhập bằng tài khoản Google thành công
-            // const currentUserId = data.user?.id || data.user?.userId;
-            // if (currentUserId) {
-            //     await sendActivityLog(currentUserId, data.token, "Đăng nhập hệ thống thông qua tài khoản Google");
-            // }
-
-            // setTimeout(() => {
-            //     if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
-            //         navigate("/teacher/dashboard");
-            //     } else if (data.user?.role === "ADMIN" || data.user?.roleId === 1) {
-            //         navigate("/admin/courses");
-            //     } else {
-            //         navigate("/home");
-            //     }
-            // }, 800);
+            setTimeout(() => {
+                if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
+                    navigate("/teacher/dashboard");
+                } else if (data.user?.role === "ADMIN" || data.user?.roleId === 1) {
+                    navigate("/admin/courses");
+                } else {
+                    navigate("/home");
+                }
+            }, 800);
 
             const role = data.user.roleName || data.user.role || "STUDENT";
                 setTimeout(() => {

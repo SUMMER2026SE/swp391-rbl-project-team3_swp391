@@ -8,6 +8,14 @@ export default function AdminUIConfigPage() {
     const [activeMenu] = useState("ui");
     const [loading, setLoading] = useState(false);
 
+    const userObj = JSON.parse(storedUser);
+    if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
+        alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
+        navigate("/home");
+        return;
+    }
+}, [navigate]);
+    
     // State cho Cấu hình Banner
     const [bannerConfig, setBannerConfig] = useState({
         title: "",

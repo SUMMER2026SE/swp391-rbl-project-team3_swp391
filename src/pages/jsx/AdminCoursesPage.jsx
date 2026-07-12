@@ -9,6 +9,32 @@ export default function AdminCoursesPage() {
     const [courses, setCourses] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
 
+    // 1. KHỞI TẠO STATE: Giữ nguyên dữ liệu mẫu để demo
+    const [courses, setCourses] = useState([
+        { id: 1, title: "Mastering Mathematics 12", teacher: "Nguyễn Minh Quân", price: "599,000đ", status: "PUBLISHED" },
+        { id: 2, title: "Physics Problem Solving", teacher: "Trần Bảo Châu", price: "499,000đ", status: "PUBLISHED" },
+        { id: 4, title: "Tuyệt đỉnh Casio", teacher: "Nguyễn Minh Quân", price: "299,000đ", status: "PENDING" }, 
+    ]);
+
+    useEffect(() => {
+    // 1. KIỂM TRA QUYỀN ADMIN TRƯỚC
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+
+    if (!token || !storedUser) {
+        alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
+        navigate("/");
+        return;
+    }
+
+    const userObj = JSON.parse(storedUser);
+    if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
+        alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
+        navigate("/home");
+        return;
+    }
+
+    // 2. NẾU HỢP LỆ THÌ MỚI GỌI API LẤY COURSES
     const fetchAllCourses = async () => {
         try {
             const response = await axiosClient.get("/admin/courses");
