@@ -89,36 +89,9 @@ export default function RegisterPage({ switchToLogin }) {
         }
     };
 
-    // Gửi lại mã OTP (BR-UC03-02)
-    const handleResendOtp = async () => {
-        if (otpResendCount >= 3) {
-            setMessage("❌ Bạn đã vượt quá giới hạn gửi lại mã OTP (tối đa 3 lần).");
-            return;
-        }
-
-        try {
-            const response = await fetch("http://localhost:8080/api/auth/resend-otp", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: registeredEmail })
-            });
-            const data = await response.json();
-
-            if (!response.ok) {
-                setMessage("❌ " + (data.message || "Gửi lại OTP thất bại"));
-                return;
-            }
-
-            setOtpResendCount(prev => prev + 1);
-            setMessage("✅ Đã gửi lại mã OTP mới. Vui lòng kiểm tra hòm thư.");
-        } catch (err) {
-            setMessage("❌ Không thể kết nối tới server.");
-        }
-    };
-
-    // Xác thực OTP và tự động đăng nhập (UC-03)
-    const handleVerify = async () => {
-        try {
+    // 🔥 XÁC THỰC EMAIL THÀNH CÔNG VÀ LƯU LOG QUA AXIOS
+    const handleVerify = async() => {
+        try{
             const response = await axiosClient.post("/auth/verify-email", {
                 email: registeredEmail,
                 otp: otp
@@ -129,26 +102,21 @@ export default function RegisterPage({ switchToLogin }) {
             setShowVerifyBox(false);
             setOtp("");
 
-            // Lưu user vào local storage để hiển thị UI
-            if (data.user) {
-                localStorage.setItem("user", JSON.stringify(data.user));
+            // Ghi nhận log sau khi kích hoạt tài khoản thành công qua OTP
+            try {
+                // Do mới verify xong chưa đăng nhập, ta có thể kéo ID từ data response của API verify nếu có
+                const userId = response.data?.user?.id || response.data?.userId || 0;
+                if (userId > 0) {
+                    await axiosClient.post(`/admin/users/${userId}/activity`, {
+                        action: "Đăng ký tài khoản thành viên mới thành công thông qua kích hoạt OTP Email"
+                    });
+                }
+            } catch (logErr) {
+                console.log("Bỏ qua log nếu API verify không trả kèm thông tin đối tượng user.");
             }
 
-            // Gợi ý làm bài kiểm tra đầu vào (UC-03 / UC-13)
-            setTimeout(() => {
-                const userRole = data.user?.roleName || data.user?.role || "STUDENT";
-                if (userRole === "STUDENT") {
-                    if (window.confirm("Chúc mừng bạn đăng ký thành công! Bạn có muốn làm bài Kiểm tra đầu vào (Entry Test) để hệ thống thiết lập lộ trình học tập cá nhân hóa luôn không?")) {
-                        navigate("/entry-test");
-                    } else {
-                        navigate("/home");
-                    }
-                } else {
-                    navigate("/home");
-                }
-            }, 1200);
-
-        } catch (error) {
+            switchToLogin();
+        }catch (error){
             setMessage(
                 "❌ " + (error.response?.data?.message || "Xác thực thất bại !!!")
             );
@@ -182,6 +150,21 @@ export default function RegisterPage({ switchToLogin }) {
             localStorage.setItem("user", JSON.stringify(data.user));
 
             setMessage("✅ Google Register Success!");
+
+            // 🔥 TỰ ĐỘNG GHI LOG: Đăng ký nhanh qua Google thành công
+            const currentUserId = data.user?.id || data.user?.userId;
+            if (currentUserId) {
+                try {
+                    await fetch(`http://localhost:8080/api/admin/users/${currentUserId}/activity`, {
+                        method: "POST",
+                        headers: { 
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${data.token}`
+                        },
+                        body: JSON.stringify({ action: "Đăng ký tài khoản thành viên mới bằng liên kết Google" })
+                    });
+                } catch(e) { console.error(e); }
+            }
 
             navigate("/");
 

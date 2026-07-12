@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
+
     baseURL: "http://localhost:8080/api",
     headers: {
         "Content-Type": "application/json"
@@ -8,7 +9,7 @@ const axiosClient = axios.create({
     withCredentials: true // 🔥 Quan trọng để gửi/nhận cookie httpOnly tự động
 });
 
-// Tự động gắn X-Student-Id (cho các API: entry-test, payment, AI)
+// Tự động gắn token + X-Student-Id
 axiosClient.interceptors.request.use((config) => {
     try {
         const user = JSON.parse(localStorage.getItem("user") || "null");
@@ -20,70 +21,34 @@ axiosClient.interceptors.request.use((config) => {
         // bỏ qua nếu user không hợp lệ
     }
     return config;
+}, (error) => {
+    return Promise.reject(error);
 });
 
-// Cơ chế xếp hàng đợi (Queue) các request bị lỗi 401 chờ Refresh Token làm mới thành công
-let isRefreshing = false;
-let failedQueue = [];
-
-const processQueue = (error) => {
-    failedQueue.forEach((prom) => {
-        if (error) {
-            prom.reject(error);
-        } else {
-            prom.resolve();
-        }
-    });
-    failedQueue = [];
-};
-
+// auto logout nếu token hết hạn / invalid
 axiosClient.interceptors.response.use(
     (response) => response,
-    async (error) => {
-        const originalRequest = error.config;
+    (error) => {
+        // 🔥 PHÒNG VỆ AN TOÀN: Kiểm tra xem error và error.config có tồn tại hay không
+        const urlStr = error?.config?.url || "";
+        const isUrlTarget = urlStr.includes("/admin/");
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            // Chặn lặp vô hạn ở api login hoặc refresh-token
-            if (originalRequest.url.includes("/auth/login") || originalRequest.url.includes("/auth/refresh-token")) {
+        if (error?.response?.status === 401) {
+            console.warn("⚠️ Phát hiện lỗi 401 Unauthorized tại URL:", urlStr);
+            
+            if (isUrlTarget) {
+                localStorage.removeItem("token");
                 localStorage.removeItem("user");
-                return Promise.reject(error);
-            }
-
-            if (isRefreshing) {
-                return new Promise(function (resolve, reject) {
-                    failedQueue.push({ resolve, reject });
-                })
-                    .then(() => {
-                        return axiosClient(originalRequest);
-                    })
-                    .catch((err) => {
-                        return Promise.reject(err);
-                    });
-            }
-
-            originalRequest._retry = true;
-            isRefreshing = true;
-
-            try {
-                // Gọi API refresh token, backend sẽ tự động đọc Cookie refreshToken và cấp accessToken mới vào Cookie
-                await axios.post("http://localhost:8080/api/auth/refresh-token", {}, { withCredentials: true });
-                isRefreshing = false;
-                processQueue(null);
-                return axiosClient(originalRequest);
-            } catch (refreshError) {
-                isRefreshing = false;
-                processQueue(refreshError);
                 
-                // Nếu refresh token cũng hết hạn -> Buộc đăng xuất
-                localStorage.removeItem("user");
                 const path = window.location.pathname;
                 const publicPaths = ["/", "/home", "/auth", "/courses", "/entry-test"];
                 if (!publicPaths.some((p) => path === p || path.startsWith("/course/"))) {
                     window.location.href = "/auth";
                 }
-                return Promise.reject(refreshError);
             }
         }
+        
+        // 🔥 BẮT BUỘC: Đảm bảo luôn ném lỗi ra ngoài để khối catch bên Form có thể bắt được và hủy trạng thái Loading!
         return Promise.reject(error);
     }
 );

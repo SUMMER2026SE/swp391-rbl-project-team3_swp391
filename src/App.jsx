@@ -26,10 +26,10 @@ import AdminSePayGuide from './pages/jsx/AdminSePayGuide';
 import AdminQuestionBankPage from './pages/jsx/AdminQuestionBankPage';
 import TeacherDashboard from "./pages/jsx/TeacherDashboard";
 import CourseEditPage from "./pages/jsx/CourseEditPage";
-
-// 🔥 Đã tích hợp trang xử lý vi phạm của Admin
+import ReportViolationPage from "./pages/jsx/ReportViolationPage";
+// Tuyến đường xử lý báo cáo vi phạm của Admin (Task 43)
 import AdminViolationsPage from './pages/jsx/AdminViolationsPage';
-
+import RequestTeacherPage from "./pages/jsx/RequestTeacherPage";
 //Thi Thu
 import TestListPage from './pages/jsx/TestListPage';
 import TestResult from './pages/jsx/TestResult';
@@ -52,113 +52,144 @@ import AdminRoute from './routes/adminRoute';
 import TeacherGrading from "./pages/jsx/TeacherGrading";
 
 function App() {
-  const [count, setCount] = useState(0)
+    const [count, setCount] = useState(0)
 
-  return (
-    <Routes>
-      <Route path='/' element={<HomePage />} />
-      <Route path='/auth' element={<AuthPage />}/>
-      <Route path='/profile' element={<ProfilePage />}/>
+    return (
+        <Routes>
+            <Route path='/' element={<HomePage />} />
+            <Route path='/auth' element={<AuthPage />} />
+            <Route path='/profile' element={<ProfilePage />} />
 
-      {/* Login - Register */}
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route path="/change-password" element={<ChangePasswordPage />} />
+            {/* Login - Register */}
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/change-password" element={<ChangePasswordPage />} />
 
-      {/* Main Pages */}
-      <Route path='/home' element={<HomePage />} />
-      <Route path="/course/:id" element={<CourseDetailPage />} />
-      <Route path="/learn/:courseId" element={<LearningPage />} />
-      <Route path="/adaptive-path" element={<AdaptivePathPage />} />
-      <Route path="/calendar" element={<StudyCalendarPage />} />
-      <Route path="/instructor/:id" element={<InstructorProfilePage />} />
+            {/* Main Pages */}
+            <Route path='/home' element={<HomePage />} />
+            <Route path="/course/:id" element={<CourseDetailPage />} />
+            <Route path="/learn/:courseId" element={<LearningPage />} />
+            <Route path="/adaptive-path" element={<AdaptivePathPage />} />
+            <Route path="/calendar" element={<StudyCalendarPage />} />
+            <Route path="/instructor/:id" element={<InstructorProfilePage />} />
 
-      {/* Thi - Thi Thử */}
-      <Route path='/tests' element={<TestListPage />} />
-      <Route path='/tests/:sessionsId' element={<TestPage />} />
-      <Route path='/tests/result/:sessionsId' element={<TestResult />} />
+            {/* Thi - Thi Thử */}
+            <Route path='/tests' element={<TestListPage />} />
+            <Route path='/tests/:sessionsId' element={<TestPage />} />
+            <Route path='/tests/result/:sessionsId' element={<TestResult />} />
 
-      {/* #13 Kiểm tra đầu vào */}
-      <Route path='/entry-test' element={<EntryTestPage />} />
-      <Route path='/entry-test/result/:sessionsId' element={<EntryTestResultPage />} />
+            {/* #13 Kiểm tra đầu vào */}
+            <Route path='/entry-test' element={<EntryTestPage />} />
+            <Route path='/entry-test/result/:sessionsId' element={<EntryTestResultPage />} />
 
-      {/* #14 Thanh toán / Mua khóa học */}
-      <Route path='/checkout/:courseId' element={<CheckoutPage />} />
-      <Route path='/payment/bank/:courseId' element={<BankTransferPage />} />
-      <Route path='/payment/return' element={<PaymentReturnPage />} />
+            {/* #14 Thanh toán / Mua khóa học */}
+            <Route path='/checkout/:courseId' element={<CheckoutPage />} />
+            <Route path='/payment/bank/:courseId' element={<BankTransferPage />} />
+            <Route path='/payment/return' element={<PaymentReturnPage />} />
 
-      {/* #26/28/29/30 AI Interface */}
-      <Route path='/ai/chat' element={<AiChatbotPage />} />
-      <Route path='/ai/gap-diagnosis' element={<GapDiagnosisPage />} />
-      <Route path='/ai/score-forecast' element={<ScoreForecastPage />} />
-      <Route path='/ai/university-advising' element={<UniversityAdvisingPage />} />
+            {/* #26/28/29/30 AI Interface */}
+            <Route path='/ai/chat' element={<AiChatbotPage />} />
+            <Route path='/ai/gap-diagnosis' element={<GapDiagnosisPage />} />
+            <Route path='/ai/score-forecast' element={<ScoreForecastPage />} />
+            <Route path='/ai/university-advising' element={<UniversityAdvisingPage />} />
 
-      {/* ========================================================= */}
-      // 🔒 CỤM PROTECTED ROUTES DÀNH CHO QUẢN TRỊ VIÊN (ADMIN)
-      {/* ========================================================= */}
-      
-      <Route
-          path="/admin"
-          element={
-              <AdminRoute>
-                  <AdminDashboardPage />
-              </AdminRoute>
-          }
-      />
+            <Route path="/report-violation" element={<ReportViolationPage />} />
+            
+            {/* ========================================================= */}
+            {/* 🔒 CỤM PROTECTED ROUTES DÀNH CHO QUẢN TRỊ VIÊN (ADMIN)   */}
+            {/* ========================================================= */}
 
-      <Route
-          path="/admin/users"
-          element={
-              <AdminRoute>
-                  <AdminUsersPage />
-              </AdminRoute>
-          }
-      />
+            <Route
+                path="/admin"
+                element={
+                    <AdminRoute>
+                        <AdminDashboardPage />
+                    </AdminRoute>
+                }
+            />
 
-      <Route
-          path="/admin/courses"
-          element={
-              <AdminRoute>
-                  <AdminCoursesPage />
-              </AdminRoute>
-          }
-      />
+            <Route
+                path="/admin/users"
+                element={
+                    <AdminRoute>
+                        <AdminUsersPage />
+                    </AdminRoute>
+                }
+            />
 
-      <Route
-          path="/admin/ui-config"
-          element={
-              <AdminRoute>
-                  <AdminUIConfigPage />
-              </AdminRoute>
-          }
-      />
+            <Route
+                path="/admin/courses"
+                element={
+                    <AdminRoute>
+                        <AdminCoursesPage />
+                    </AdminRoute>
+                }
+            />
 
-      {/* 🛠️ ĐÃ TÍCH HỢP: Tuyến đường xử lý báo cáo vi phạm được bảo vệ nghiêm ngặt */}
-      <Route
-          path="/admin/violations"
-          element={
-              <AdminRoute>
-                  <AdminViolationsPage />
-              </AdminRoute>
-          }
-      />
+            <Route
+                path="/admin/ui-config"
+                element={
+                    <AdminRoute>
+                        <AdminUIConfigPage />
+                    </AdminRoute>
+                }
+            />
 
-      {/* General Admin & Teacher Routes */}
-      <Route path="/notifications" element={<NotificationsPage />} />
-      <Route path="/courses" element={<CoursesPage />} />
-      <Route path="/teacher/preview/:id" element={<CoursePreviewPage />} />
-      <Route path="/admin/preview/:id" element={<CoursePreviewPage />} />
+            <Route
+                path="/admin/violations"
+                element={
+                    <AdminRoute>
+                        <AdminViolationsPage />
+                    </AdminRoute>
+                }
+            />
 
-      <Route path="/admin/question-bank" element={<AdminQuestionBankPage />} />
-      <Route path="/admin/sepay-guide" element={<AdminSePayGuide />} />
-      <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-      <Route path="/teacher/course/:id/edit" element={<CourseEditPage />} />
-      <Route path="/teacher/grading" element={<TeacherGrading />} />
+            <Route
+                path="/admin/preview/:id"
+                element={
+                    <AdminRoute>
+                        <CoursePreviewPage />
+                    </AdminRoute>
+                }
+            />
 
-      {/* Fallback: route lạ -> về trang chủ (tránh trang trắng) */}
-      <Route path="*" element={<HomePage />} />
-    </Routes>
-  );
+            <Route
+                path="/admin/question-bank"
+                element={
+                    <AdminRoute>
+                        <AdminQuestionBankPage />
+                    </AdminRoute>
+                }
+            />
+
+            <Route
+                path="/admin/sepay-guide"
+                element={
+                    <AdminRoute>
+                        <AdminSePayGuide />
+                    </AdminRoute>
+                }
+            />
+
+            {/* ========================================================= */}
+            {/* 🔒 TUYẾN ĐƯỜNG DÀNH CHO GIẢNG VIÊN / CHUNG                 */}
+            {/* ========================================================= */}
+            <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/courses" element={<CoursesPage />} />
+            <Route path="/teacher/preview/:id" element={<CoursePreviewPage />} />
+            <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+            <Route path="/teacher/course/:id/edit" element={<CourseEditPage />} />
+            <Route path="/teacher/grading" element={<TeacherGrading />} />
+            
+            {/* ========================================================= */}
+            {/* 👨‍🏫 TRANG ĐĂNG KÝ GIÁO VIÊN                                */}
+            {/* ========================================================= */}
+            <Route path="/request-teacher" element={<RequestTeacherPage />} />
+
+            {/* Fallback: route lạ -> về trang chủ */}
+            <Route path="*" element={<HomePage />} />
+        </Routes>
+    );
 }
 
 export default App;

@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient"; 
 import "../css/CourseDetailPage.css";
 
-// Dữ liệu Mock dự phòng
 const MOCK_COURSE_FALLBACK = {
     title: "Mastering Mathematics 12 kk",
     description: "Khóa học toàn diện bao phủ toàn bộ kiến thức Toán 12. Cung cấp kỹ năng giải nhanh trắc nghiệm, bứt phá điểm 8+ kỳ thi THPT Quốc gia 2026.",
@@ -41,14 +40,8 @@ export default function CourseDetailPage() {
         reviews: []
     });
 
-    // 🔥 STATE MỚI: Quản lý số sao người dùng bấm chọn để đánh giá (mặc định cho 5 sao)
     const [userRating, setUserRating] = useState(5);
 
-    // ==============================================================
-    // 🛠️ HÀM HỖ TRỢ CHỐNG LỖI CÚ PHÁP JSX (PARSE ERROR FIX)
-    // ==============================================================
-    
-    // 1. Hàm vẽ số ngôi sao an toàn tuyệt đối
     const renderStars = (rating) => {
         const safeRating = Math.round(Number(rating) || 0);
         if (safeRating <= 0) return "☆☆☆☆☆";
@@ -56,20 +49,30 @@ export default function CourseDetailPage() {
         return "★".repeat(safeRating) + "☆".repeat(5 - safeRating);
     };
 
-    // 2. Hàm xử lý link Avatar mượt mà không dùng toán tử 3 ngôi rườm rà
     const getSafeAvatarUrl = (url) => {
         if (!url) return "https://via.placeholder.com/40";
         if (url.startsWith("http")) return url;
         return `http://localhost:8080${url}`;
     };
 
-    // 3. Hàm tính phần trăm cho thanh Progress Bar an toàn không chia cho số 0
     const calculatePercent = (count, total) => {
         if (!total || total <= 0) return 0;
         return Math.round((count / total) * 100);
     };
 
-    // ==============================================================
+    // 🔥 HÀM XỬ LÝ GHI LOG KHI HỌC SINH ẤN NÚT HỌC THỬ
+    const handleFreeTrialLog = async () => {
+        try {
+            const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+            const userId = userObj?.id || userObj?.userId || 0;
+            if (userId > 0 && course) {
+                await axiosClient.post(`/admin/users/${userId}/activity`, {
+                    action: `Đăng ký học thử miễn phí khóa học: [${course.title}]`
+                });
+            }
+        } catch (logErr) { console.error("Lỗi lưu log học thử:", logErr); }
+        navigate(`/learn/${course.id}`);
+    };
 
     useEffect(() => {
         const fetchCourseDetail = async () => {
@@ -130,7 +133,6 @@ export default function CourseDetailPage() {
         fetchCourseDetail();
     }, [id]);
 
-    // 🔥 HÀM XỬ LÝ GỬI ĐÁNH GIÁ LÊN BACKEND XỊN CỦA TOÀN
     const handleSendReview = async () => {
         const commentInput = document.getElementById("student-review-comment");
         const commentValue = commentInput ? commentInput.value.trim() : "";
@@ -141,17 +143,15 @@ export default function CourseDetailPage() {
         }
 
         try {
-            // Gọi API POST lưu đánh giá của Toàn (Backend tự bốc User đăng nhập qua token)
             await axiosClient.post(`/courses/${id}/reviews`, {
                 rating: userRating,
                 comment: commentValue
             });
 
             alert("Gửi đánh giá khóa học thành công! Cảm ơn nhận xét từ bạn.");
-            if (commentInput) commentInput.value = ""; // Xóa sạch chữ sau khi gửi
-            setUserRating(5); // Trả số sao về mặc định là 5 sao
+            if (commentInput) commentInput.value = ""; 
+            setUserRating(5); 
 
-            // Đồng bộ lại biểu đồ sao theo thời gian thực
             const reviewRes = await axiosClient.get(`/courses/${id}/reviews/summary`);
             if (reviewRes.data) {
                 setEvaluation(reviewRes.data);
@@ -245,7 +245,6 @@ export default function CourseDetailPage() {
                         </h2>
 
                         <div className="evaluation-layout" style={{ display: "flex", gap: "30px", flexWrap: "wrap" }}>
-                            
                             <div className="evaluation-summary-left" style={{ flex: "1 1 300px" }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "20px" }}>
                                     <div style={{ fontSize: "44px", fontWeight: "800", color: "#0f172a", lineHeight: "1" }}>
@@ -286,14 +285,9 @@ export default function CourseDetailPage() {
                             </div>
 
                             <div className="evaluation-comments-right" style={{ flex: "1 1 400px", maxHeight: "450px", overflowY: "auto", paddingLeft: "20px", borderLeft: "1px solid #f1f5f9" }}>
-                                
-                                {/* ============================================================== */}
-                                {/* 🔥 FORM CHỌN SAO & VIẾT COMMENT MỚI TINH ĐÃ KHỚP NỐI BACKEND */}
-                                {/* ============================================================== */}
                                 <div style={{ backgroundColor: "#f8fafc", padding: "15px", borderRadius: "10px", border: "1px solid #e2e8f0", marginBottom: "25px" }}>
                                     <h4 style={{ margin: "0 0 8px 0", fontSize: "14px", color: "#1e293b", fontWeight: "700" }}>Đánh giá khóa học của bạn</h4>
                                     
-                                    {/* Khu vực bấm click chọn sao linh hoạt */}
                                     <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "12px" }}>
                                         <span style={{ fontSize: "13px", color: "#475569", fontWeight: "500" }}>Mức độ hài lòng:</span>
                                         <div style={{ display: "flex", gap: "4px" }}>
@@ -310,7 +304,6 @@ export default function CourseDetailPage() {
                                         <span style={{ fontSize: "13px", color: "#64748b", fontWeight: "600", marginLeft: "4px" }}>({userRating} sao)</span>
                                     </div>
 
-                                    {/* Ô Textarea nhập chữ độc lập ID để trị dứt điểm lag gõ dấu Unikey */}
                                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                                         <textarea 
                                             id="student-review-comment"
@@ -326,7 +319,6 @@ export default function CourseDetailPage() {
                                         </button>
                                     </div>
                                 </div>
-                                {/* ============================================================== */}
 
                                 <h4 style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#334155", fontWeight: "600" }}>Nhận xét gần đây</h4>
                                 
@@ -379,10 +371,12 @@ export default function CourseDetailPage() {
                         <button className="enroll-btn" onClick={() => navigate(`/checkout/${course.id}`)}>
                             Mua khóa học ngay
                         </button>
+                        
+                        {/* 🔥 ĐÃ CẬP NHẬT: Gọi qua hàm xử lý log ngầm trước khi chuyển trang */}
                         <button
                             className="enroll-btn"
                             style={{ background: "transparent", color: "#3b82f6", border: "1px solid #3b82f6", marginTop: "10px" }}
-                            onClick={() => navigate(`/learn/${course.id}`)}
+                            onClick={handleFreeTrialLog}
                         >
                             Học thử miễn phí
                         </button>

@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react"; // <--- Thêm useEffect vào
 
 export default function AdminUIConfigPage() {
     const navigate = useNavigate();
+    const [activeMenu, setActiveMenu] = useState("ui"); // <--- Khai báo activeMenu cho trang UI Config
+
     useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");

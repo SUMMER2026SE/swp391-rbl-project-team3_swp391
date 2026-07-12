@@ -16,6 +16,22 @@ function LoginPage({ switchToRegister }) {
 
     const navigate = useNavigate();
 
+    // 🔥 HÀM HELPER: Gửi yêu cầu lưu log hoạt động xuống cơ sở dữ liệu
+    const sendActivityLog = async (userId, token, actionText) => {
+        try {
+            await fetch(`http://localhost:8080/api/admin/users/${userId}/activity`, {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ action: actionText })
+            });
+        } catch (err) {
+            console.error("❌ Không thể ghi nhận nhật ký hoạt động:", err);
+        }
+    };
+
     // NORMAL LOGIN - ĐÃ SỬA
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -44,14 +60,39 @@ function LoginPage({ switchToRegister }) {
                 return;
             }
 
-            if (data.user) {
-                localStorage.setItem("user", JSON.stringify(data.user));
-                console.log("✅ User đã lưu:", data.user);
+            if (data.token) {
+                localStorage.setItem("token", data.token);
 
-                const role = data.user.roleName || data.user.role || "STUDENT";
-                
-                setMessage("✅ Đăng nhập thành công!");
-                setMessageType("success");
+                // Giải mã JWT
+                const decoded = jwtDecode(data.token);
+                console.log("🔍 Decoded JWT:", decoded);   // ← Debug quan trọng
+
+                // Xử lý role an toàn (phòng trường hợp backend chưa có role hoặc tên field khác)
+                let role = "STUDENT"; // Mặc định
+
+                if (decoded.role) {
+                    role = decoded.role.replace("ROLE_", "");
+                } else if (decoded.roles) {
+                    role = Array.isArray(decoded.roles) ? decoded.roles[0].replace("ROLE_", "") : "STUDENT";
+                } else if (decoded.authorities) {
+                    role = decoded.authorities[0]?.replace("ROLE_", "") || "STUDENT";
+                }
+
+                const currentUserId = decoded.userId || decoded.id;
+                const user = {
+                    id: currentUserId,
+                    fullName: decoded.fullName || decoded.name || email.split('@')[0] || "Người dùng", 
+                    email: decoded.sub || decoded.email || email,
+                    role: role
+                };
+
+                localStorage.setItem("user", JSON.stringify(user));
+                console.log("✅ User đã lưu:", user);
+
+                // 🔥 TỰ ĐỘNG GHI LOG: Đăng nhập thường thành công
+                if (currentUserId) {
+                    await sendActivityLog(currentUserId, data.token, "Đăng nhập vào hệ thống PrepAce");
+                }
 
                 // Điều hướng theo role
                 setTimeout(() => {
@@ -101,12 +142,29 @@ function LoginPage({ switchToRegister }) {
                 return;
             }
 
-            if (data.user) {
-                localStorage.setItem("user", JSON.stringify(data.user));
-                setMessage("✅ Google Login Success!");
-                setMessageType("success");
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("user", JSON.stringify(data.user));
 
-                const role = data.user.roleName || data.user.role || "STUDENT";
+            setMessage("✅ Google Login Success!");
+            setMessageType("success");
+
+            // 🔥 TỰ ĐỘNG GHI LOG: Đăng nhập bằng tài khoản Google thành công
+            const currentUserId = data.user?.id || data.user?.userId;
+            if (currentUserId) {
+                await sendActivityLog(currentUserId, data.token, "Đăng nhập hệ thống thông qua tài khoản Google");
+            }
+
+            setTimeout(() => {
+                if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
+                    navigate("/teacher/dashboard");
+                } else if (data.user?.role === "ADMIN" || data.user?.roleId === 1) {
+                    navigate("/admin/courses");
+                } else {
+                    navigate("/home");
+                }
+            }, 800);
+
+            const role = data.user.roleName || data.user.role || "STUDENT";
                 setTimeout(() => {
                     if (role === "ADMIN") {
                         navigate("/admin");
@@ -116,7 +174,6 @@ function LoginPage({ switchToRegister }) {
                         navigate("/home");
                     }
                 }, 800);
-            }
         } catch (error) {
             console.error(error);
             setMessage("❌ Google Login Error");
