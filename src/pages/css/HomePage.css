@@ -191,6 +191,91 @@
     transition:.3s;
 }
 
+/* LOGOUT UPDATED*/
+.modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.45);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+}
+
+.logout-modal{
+    width:420px;
+    background:#fff;
+    border-radius:18px;
+    padding:30px;
+    text-align:center;
+    animation:popup .25s ease;
+}
+
+.logout-icon{
+    font-size:50px;
+    margin-bottom:15px;
+}
+
+.logout-modal h2{
+    margin-bottom:12px;
+}
+
+.logout-modal p{
+    font-size:16px;
+}
+
+.logout-modal span{
+    display:block;
+    margin-top:10px;
+    color:#666;
+    font-size:14px;
+}
+
+.modal-actions{
+    margin-top:28px;
+    display:flex;
+    justify-content:center;
+    gap:15px;
+}
+
+.cancel-btn{
+    padding:10px 22px;
+    border:none;
+    border-radius:10px;
+    background:#e5e7eb;
+    cursor:pointer;
+}
+
+.confirm-btn{
+    padding:10px 22px;
+    border:none;
+    border-radius:10px;
+    background:#ef4444;
+    color:white;
+    cursor:pointer;
+}
+
+.confirm-btn:hover{
+    background:#dc2626;
+}
+
+@keyframes popup{
+
+    from{
+
+        opacity:0;
+
+        transform:scale(.9);
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:scale(1);
+    }
+}
+
 .profile-btn{
     background:#2563eb;
     color:white;

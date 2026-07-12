@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
 import "../css/CourseEditPage.css"; 
-// GỌI FILE CON Ở ĐÂY CHO PHẦN BÀI GIẢNG ĐÃ HOẠT ĐỘNG TỐT
 import LessonEditForm from "./LessonEditForm"; 
 
 export default function CourseEditPage() {
@@ -12,7 +11,6 @@ export default function CourseEditPage() {
     const [courseTitle, setCourseTitle] = useState("");
     const [chapters, setChapters] = useState([]);
     
-    // UI Toggles (Chỉ dùng để bật/tắt giao diện, không dính dáng đến bộ gõ chữ)
     const [activeChapterId, setActiveChapterId] = useState(null); 
     const [editingChapterId, setEditingChapterId] = useState(null);
     const [editingChapterTitle, setEditingChapterTitle] = useState("");
@@ -34,7 +32,6 @@ export default function CourseEditPage() {
         }
     };
 
-    // Hàm xử lý định dạng video
     const isYouTube = (url) => url && typeof url === "string" && (url.includes("youtube.com") || url.includes("youtu.be"));
     const extractYouTubeVideoId = (url) => {
         if (!url || typeof url !== "string") return null;
@@ -56,19 +53,17 @@ export default function CourseEditPage() {
 
     useEffect(() => { loadCourseOutline(); }, [id]);
 
-    // 🔥 FIX 1: THÊM CHƯƠNG (Dùng Uncontrolled input để Unikey không bị lag)
     const handleCreateChapter = async (e) => {
         e.preventDefault();
         const inputEl = document.getElementById("input-new-chapter");
         if (!inputEl.value.trim()) return;
         try {
             await axiosClient.post(`/outlines/courses/${id}/chapters`, { title: inputEl.value });
-            inputEl.value = ""; // Xóa trắng ô sau khi thêm xong
+            inputEl.value = ""; 
             loadCourseOutline(); 
         } catch (error) { alert("Lỗi!"); }
     };
 
-    // 🔥 FIX 2: SỬA CHƯƠNG (Lấy dữ liệu trực tiếp khi bấm nút Lưu)
     const handleUpdateChapter = async (chapterId) => {
         const newTitle = document.getElementById(`edit-chapter-${chapterId}`).value;
         if (!newTitle.trim()) return;
@@ -82,7 +77,7 @@ export default function CourseEditPage() {
         }
     };
 
-    // 🔥 FIX 3: THÊM BÀI HỌC
+    // 🔥 XỬ LÝ LƯU LOG KHI TẠO BÀI HỌC MỚI THÀNH CÔNG
     const handleCreateLesson = async (chapterId) => {
         const title = document.getElementById(`new-lesson-title-${chapterId}`).value;
         const desc = document.getElementById(`new-lesson-desc-${chapterId}`).value;
@@ -92,7 +87,6 @@ export default function CourseEditPage() {
         
         if (!title.trim()) return alert("Vui lòng nhập tiêu đề!");
         
-        // Ưu tiên YouTube URL nếu có nhập, nếu không thì lấy file tải lên
         let videoUrl = ytInput && ytInput.value.trim() ? ytInput.value.trim() : "";
         if (!videoUrl && fileInput.files && fileInput.files[0]) {
             setIsUploading(true);
@@ -116,7 +110,6 @@ export default function CourseEditPage() {
             });
             const newLessonId = lessonRes.data.id;
 
-            // Xử lý upload tài liệu (nếu có chọn)
             const matInput = document.getElementById(`new-lesson-mats-${chapterId}`);
             if (matInput && matInput.files && matInput.files.length > 0) {
                 for (let i = 0; i < matInput.files.length; i++) {
@@ -128,7 +121,6 @@ export default function CourseEditPage() {
                             headers: { "Content-Type": "multipart/form-data" }
                         });
                         const matUrl = matUploadRes.data.url;
-                        // Lưu thông tin tài liệu vào db
                         await axiosClient.post(`/outlines/lessons/${newLessonId}/materials`, {
                             title: matFile.name,
                             fileUrl: matUrl
@@ -138,6 +130,17 @@ export default function CourseEditPage() {
                     }
                 }
             }
+
+            // 🔥 TỰ ĐỘNG LƯU LOG: Ghi nhận Giáo viên/Admin tạo bài giảng thành công
+            try {
+                const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+                const userId = userObj?.id || userObj?.userId || 0;
+                if (userId > 0) {
+                    await axiosClient.post(`/admin/users/${userId}/activity`, {
+                        action: `Tạo bài giảng mới: "${title}" thuộc khóa học [${courseTitle}]`
+                    });
+                }
+            } catch (logErr) { console.error("Lỗi ghi log bài giảng:", logErr); }
 
             setActiveChapterId(null);
             loadCourseOutline(); 
@@ -270,7 +273,6 @@ export default function CourseEditPage() {
 
             <div className="edit-general-info" style={{ display: "flex", alignItems: "center", gap: "20px", padding: "20px", borderRadius: "12px", marginBottom: "30px" }}>
                 <form onSubmit={handleCreateChapter} style={{ display: "flex", gap: "12px", flex: 1 }}>
-                    {/* KHÔNG DÙNG value/onChange nữa -> Dùng id để trị dứt điểm Unikey */}
                     <input 
                         type="text" 
                         id="input-new-chapter" 
@@ -287,7 +289,6 @@ export default function CourseEditPage() {
                         <div className="chapter-edit-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
                             {editingChapterId === chapter.id ? (
                                 <div style={{ display: "flex", gap: "10px", flex: 1 }}>
-                                    {/* SỬA CHƯƠNG: ÉP FONT SẠCH VÀ UNCONTROLLED */}
                                     <input 
                                         type="text" 
                                         id={`edit-chapter-${chapter.id}`}
@@ -358,99 +359,93 @@ export default function CourseEditPage() {
                                 </div>
                             ))}
                         </div>
-{/* PHẦN FORM ĐỘNG ĐỂ THÊM BÀI HỌC VÀO CHƯƠNG NÀY (ĐÃ BUNG ĐẦY ĐỦ Ô NHẬP VIDEO) */}
-{activeChapterId === chapter.id ? (
-    <div style={{ marginTop: "15px", padding: "20px", border: "1px dashed #2747d9", borderRadius: "8px", display: "flex", flexDirection: "column", gap: "12px", backgroundColor: "#f8fafc" }}>
-        <h4 style={{ margin: 0, fontSize: "14px", color: "#1e293b", fontWeight: 600 }}>Tạo bài giảng mới:</h4>
-        
-        {/* 1. Ô nhập Tiêu đề */}
-        <input 
-            type="text" 
-            id={`new-lesson-title-${chapter.id}`} 
-            placeholder="Nhập tiêu đề bài học (Ví dụ: Bài 1: Khái niệm về Khối Đa Diện)..." 
-            style={{ padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
-        />
-        
-        {/* 2. Ô nhập Mô tả */}
-        <input 
-            type="text" 
-            id={`new-lesson-desc-${chapter.id}`} 
-            placeholder="Nhập mô tả tóm tắt nội dung bài học..." 
-            style={{ padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
-        />
-        
-        <div style={{ display: "flex", gap: "10px" }}>
-            {/* 3. Ô NHẬP VIDEO */}
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
-                <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>Tải lên Video (Máy tính):</span>
-                <input 
-                    type="file" 
-                    accept="video/*"
-                    id={`new-lesson-vid-${chapter.id}`} 
-                    onChange={(e) => {
-                        handleVideoSelect(e, chapter.id);
-                        const ytInput = document.getElementById(`new-lesson-yt-${chapter.id}`);
-                        if (ytInput) ytInput.value = ""; // Xóa link YT nếu chọn file
-                    }}
-                    style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
-                />
-            </div>
-            
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
-                <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>Hoặc gắn link YouTube:</span>
-                <input 
-                    type="text" 
-                    id={`new-lesson-yt-${chapter.id}`} 
-                    placeholder="https://youtube.com/watch?v=..."
-                    onChange={(e) => {
-                        const fileInput = document.getElementById(`new-lesson-vid-${chapter.id}`);
-                        if (fileInput) fileInput.value = ""; // Bỏ chọn file nếu nhập link
-                        handleYouTubeLinkChange(e, chapter.id);
-                    }}
-                    style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
-                />
-            </div>
-            
-            {/* 4. Ô NHẬP TÀI LIỆU ĐÍNH KÈM (Nhiều file) */}
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
-                <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>Tài liệu đính kèm (Có thể chọn nhiều file):</span>
-                <input 
-                    type="file" 
-                    multiple
-                    accept=".pdf,.doc,.docx,.ppt,.pptx"
-                    id={`new-lesson-mats-${chapter.id}`} 
-                    style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
-                />
-            </div>
 
-            {/* 5. Ô nhập Thời lượng */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>Thời lượng:</span>
-                <input 
-                    type="text" 
-                    id={`new-lesson-dur-${chapter.id}`} 
-                    placeholder="25:15" 
-                    defaultValue="15:00" 
-                    style={{ width: "100px", padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", textAlign: "center", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
-                />
-            </div>
-        </div>
+                        {activeChapterId === chapter.id ? (
+                            <div style={{ marginTop: "15px", padding: "20px", border: "1px dashed #2747d9", borderRadius: "8px", display: "flex", flexDirection: "column", gap: "12px", backgroundColor: "#f8fafc" }}>
+                                <h4 style={{ margin: 0, fontSize: "14px", color: "#1e293b", fontWeight: 600 }}>Tạo bài giảng mới:</h4>
+                                
+                                <input 
+                                    type="text" 
+                                    id={`new-lesson-title-${chapter.id}`} 
+                                    placeholder="Nhập tiêu đề bài học (Ví dụ: Bài 1: Khái niệm về Khối Đa Diện)..." 
+                                    style={{ padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
+                                />
+                                
+                                <input 
+                                    type="text" 
+                                    id={`new-lesson-desc-${chapter.id}`} 
+                                    placeholder="Nhập mô tả tóm tắt nội dung bài học..." 
+                                    style={{ padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
+                                />
+                                
+                                <div style={{ display: "flex", gap: "10px" }}>
+                                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
+                                        <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>Tải lên Video (Máy tính):</span>
+                                        <input 
+                                            type="file" 
+                                            accept="video/*"
+                                            id={`new-lesson-vid-${chapter.id}`} 
+                                            onChange={(e) => {
+                                                handleVideoSelect(e, chapter.id);
+                                                const ytInput = document.getElementById(`new-lesson-yt-${chapter.id}`);
+                                                if (ytInput) ytInput.value = ""; 
+                                            }}
+                                            style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
+                                        />
+                                    </div>
+                                    
+                                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
+                                        <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>Hoặc gắn link YouTube:</span>
+                                        <input 
+                                            type="text" 
+                                            id={`new-lesson-yt-${chapter.id}`} 
+                                            placeholder="https://youtube.com/watch?v=..."
+                                            onChange={(e) => {
+                                                const fileInput = document.getElementById(`new-lesson-vid-${chapter.id}`);
+                                                if (fileInput) fileInput.value = ""; 
+                                                handleYouTubeLinkChange(e, chapter.id);
+                                            }}
+                                            style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
+                                        />
+                                    </div>
+                                    
+                                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
+                                        <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>Tài liệu đính kèm (Có thể chọn nhiều file):</span>
+                                        <input 
+                                            type="file" 
+                                            multiple
+                                            accept=".pdf,.doc,.docx,.ppt,.pptx"
+                                            id={`new-lesson-mats-${chapter.id}`} 
+                                            style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
+                                        />
+                                    </div>
 
-        {/* Cặp nút điều hướng thao tác */}
-        <div style={{ display: "flex", gap: "10px", marginTop: "5px" }}>
-            <button disabled={isUploading} onClick={() => handleCreateLesson(chapter.id)} className="btn-primary" style={{ padding: "8px 18px", borderRadius: "6px", fontFamily: "'Segoe UI', sans-serif", cursor: isUploading ? "wait" : "pointer", opacity: isUploading ? 0.7 : 1 }}>
-                {isUploading ? "Đang tải lên..." : "Lưu bài học"}
-            </button>
-            <button onClick={() => setActiveChapterId(null)} className="btn-secondary" style={{ padding: "8px 18px", borderRadius: "6px", fontFamily: "'Segoe UI', sans-serif", cursor: "pointer" }}>
-                Hủy bỏ
-            </button>
-        </div>
-    </div>
-) : (
-    <button onClick={() => setActiveChapterId(chapter.id)} className="add-lesson-btn" style={{ padding: "10px", width: "100%", fontFamily: "'Segoe UI', sans-serif" }}>
-        + Thêm bài giảng vào chương này
-    </button>
-)}
+                                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                        <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>Thời lượng:</span>
+                                        <input 
+                                            type="text" 
+                                            id={`new-lesson-dur-${chapter.id}`} 
+                                            placeholder="25:15" 
+                                            defaultValue="15:00" 
+                                            style={{ width: "100px", padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", textAlign: "center", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
+                                        />
+                                    </div>
+                                </div>
+
+                                <div style={{ display: "flex", gap: "10px", marginTop: "5px" }}>
+                                    <button disabled={isUploading} onClick={() => handleCreateLesson(chapter.id)} className="btn-primary" style={{ padding: "8px 18px", borderRadius: "6px", fontFamily: "'Segoe UI', sans-serif", cursor: isUploading ? "wait" : "pointer", opacity: isUploading ? 0.7 : 1 }}>
+                                        {isUploading ? "Đang tải lên..." : "Lưu bài học"}
+                                    </button>
+                                    <button onClick={() => setActiveChapterId(null)} className="btn-secondary" style={{ padding: "8px 18px", borderRadius: "6px", fontFamily: "'Segoe UI', sans-serif", cursor: "pointer" }}>
+                                        Hủy bỏ
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <button onClick={() => setActiveChapterId(chapter.id)} className="add-lesson-btn" style={{ padding: "10px", width: "100%", fontFamily: "'Segoe UI', sans-serif" }}>
+                                + Thêm bài giảng vào chương này
+                            </button>
+                        )}
                     </div>
                 ))}
             </div>

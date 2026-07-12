@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
-import "../css/CoursePreviewPage.css"; // Dùng chung file CSS preview hiện tại của bạn
+import "../css/CoursePreviewPage.css"; 
 
 export default function CoursePreviewPage() {
     const { id } = useParams();
@@ -46,7 +46,6 @@ export default function CoursePreviewPage() {
 
         const fetchPreviewData = async () => {
             try {
-                // Thử lấy dữ liệu thực tế từ API để render y chang CourseDetailPage
                 const response = await axiosClient.get(`/courses/${id}`);
                 if (response.data) {
                     const data = response.data;
@@ -58,6 +57,10 @@ export default function CoursePreviewPage() {
                         title: data.course_title || data.title || "Khóa học không tên",
                         description: data.description || data.course_desc || "",
                         teacher: data.teacher_name || data.teacher || "Giáo viên",
+                        
+                        // 🔥 ĐÃ CẬP NHẬT: Lấy tên môn học liên kết hiển thị cho luồng preview kiểm duyệt
+                        subjectName: data.subject?.subjectName || data.subjectName || "Chung",
+
                         price: cleanPrice > 0 ? `${cleanPrice.toLocaleString('vi-VN')}đ` : "Miễn phí",
                         originalPrice: cleanOriginal > 0 ? `${cleanOriginal.toLocaleString('vi-VN')}đ` : "",
                         rating: data.rating || 5.0,
@@ -79,13 +82,11 @@ export default function CoursePreviewPage() {
                     if (mappedData.chapters.length > 0) setExpandedChapterId(mappedData.chapters[0].id);
                 }
 
-                // Lấy review (nếu có)
                 const reviewRes = await axiosClient.get(`/courses/${id}/reviews/summary`);
                 if (reviewRes.data) setEvaluation(reviewRes.data);
 
             } catch (error) {
-                console.warn(`[Preview Mode] Lỗi API, fallback sang mock data.`);
-                if (course && course.chapters && course.chapters.length > 0) setExpandedChapterId(course.chapters[0].id);
+                console.warn(`[Preview Mode] Lỗi API, fallback sang dữ liệu trống.`);
             } finally {
                 setLoading(false);
             }
@@ -138,9 +139,7 @@ export default function CoursePreviewPage() {
             setUserRating(5);
 
             const reviewRes = await axiosClient.get(`/courses/${id}/reviews/summary`);
-            if (reviewRes.data) {
-                setEvaluation(reviewRes.data);
-            }
+            if (reviewRes.data) setEvaluation(reviewRes.data);
         } catch (error) {
             console.error("Lỗi gửi review:", error);
             alert("Gửi đánh giá thất bại. Vui lòng thử lại!");
@@ -205,15 +204,16 @@ export default function CoursePreviewPage() {
                 </div>
             )}
 
-            {/* ========================================================= */}
-            {/* SAO CHÉP Y CHANG GIAO DIỆN CỦA COURSEDETAILPAGE */}
-            {/* ========================================================= */}
             <div className="course-detail-container" style={{ marginTop: "30px" }}>
                 <div className="course-left">
                     <h1 className="course-title">{course.title}</h1>
                     <p className="course-description">{course.description}</p>
                     
-                    <div className="course-meta-top">
+                    <div className="course-meta-top" style={{ display: "flex", gap: "15px", alignItems: "center", flexWrap: "wrap" }}>
+                        {/* 🔥 HIỂN THỊ BADGE MÔN HỌC ĐỘNG TỪ BACKEND TẠI MÀN HÌNH PREVIEW */}
+                        <span style={{ backgroundColor: "#e0e7ff", color: "#4f46e5", padding: "4px 10px", borderRadius: "6px", fontSize: "13px", fontWeight: "600" }}>
+                            📚 {course.subjectName}
+                        </span>
                         <span className="rating">⭐ {evaluation.averageRating || course.rating} ({evaluation.totalReviews || course.reviews} đánh giá)</span>
                         <span className="students">👥 {course.students} học viên</span>
                         <span className="teacher">👨‍🏫 Giảng viên: <strong>{course.teacher}</strong></span>
