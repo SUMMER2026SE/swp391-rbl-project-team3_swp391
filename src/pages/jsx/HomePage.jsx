@@ -12,6 +12,13 @@ export default function HomePage() {
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [timeLeft, setTimeLeft] = useState({ years: 0, months: 0, days: 0 });
 
+    // State cấu hình Banner động nhận dữ liệu từ DB
+    const [bannerData, setBannerData] = useState({
+        title: "Bứt phá điểm số cùng PrepAce AI",
+        subtitle: "Hệ thống học tập thông minh sử dụng AI để phân tích năng lực, xây dựng lộ trình cá nhân và tối ưu kết quả kỳ thi THPT Quốc Gia.",
+        btnText: "Bắt đầu ngay"
+    });
+
     const [featuredCourses, setFeaturedCourses] = useState([
         {
             id: 1, title: "Mastering Mathematics 12 kk", teacher: "Nguyen Minh Quan", userId: 2, subject: "Toán học",
@@ -27,7 +34,6 @@ export default function HomePage() {
         }
     ]);
 
-    // AVATAR
     const currentAvatar = user?.avatarUrl || user?.avatar_url || null;
 
     const updateCountdown = () => {
@@ -35,42 +41,27 @@ export default function HomePage() {
         const target = new Date(2027, 5, 28); // 28/06/2027
 
         if (now >= target) {
-            setTimeLeft({
-                years: 0,
-                months: 0,
-                days: 0
-            });
+            setTimeLeft({ years: 0, months: 0, days: 0 });
             return;
         }
         let years = target.getFullYear() - now.getFullYear();
         let months = target.getMonth() - now.getMonth();
         let days = target.getDate() - now.getDate();
 
-        // Nếu ngày âm
         if (days < 0) {
             months--;
-            const previousMonth = new Date(
-                target.getFullYear(),
-                target.getMonth(),
-                0
-            );
+            const previousMonth = new Date(target.getFullYear(), target.getMonth(), 0);
             days += previousMonth.getDate();
         }
 
-        // Nếu tháng âm
         if (months < 0) {
             years--;
             months += 12;
         }
-        setTimeLeft({
-            years,
-            months,
-            days
-        });
+        setTimeLeft({ years, months, days });
     };
 
     useEffect(() => {
-        // 1. SỬA AN TOÀN PHẦN USER
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
             try {
@@ -81,13 +72,25 @@ export default function HomePage() {
             }
         }
 
-        // 2. CẬP NHẬT COUNTDOWN CHUẨN ĐỒNG BỘ 2027
         updateCountdown();
         const interval = setInterval(() => {
             updateCountdown();
         }, 1000);
 
-        // 3. FETCH COURSES VÀ SỬA LỖI HIỂN THỊ ẢNH THUMBNAIL
+        // Kéo dữ liệu Banner UI động từ API công khai về
+        axiosClient.get("/admin/public/ui-config/banner")
+            .then(res => {
+                if (res.data) {
+                    setBannerData({
+                        title: res.data.title,
+                        subtitle: res.data.subtitle,
+                        btnText: res.data.btnText
+                    });
+                }
+            })
+            .catch(err => console.log("Sử dụng banner mặc định do chưa kết nối API:", err));
+
+        // Fetch danh sách khóa học
         axiosClient.get("/courses")
             .then(res => {
                 console.log(">>> DỮ LIỆU KHÓA HỌC CHUẨN:", res.data);
@@ -143,7 +146,7 @@ export default function HomePage() {
         } catch (err) {
             console.error(err);
         }
-        setShowLogoutModal(false); // Đóng modal sau khi hoàn tất
+        setShowLogoutModal(false);
         navigate("/auth");
     };
 
@@ -151,11 +154,7 @@ export default function HomePage() {
         <div className="home-layout">
             {/* SIDEBAR */}
             <aside className="sidebar">
-                <div
-                    className="logo"
-                    onClick={() => navigate("/home")}
-                    style={{ cursor: "pointer" }}
-                >
+                <div className="logo" onClick={() => navigate("/home")} style={{ cursor: "pointer" }}>
                     <div className="logo-icon">🎓</div>
                     <div className="logo-text">
                         <h2>PrepAce</h2>
@@ -163,16 +162,10 @@ export default function HomePage() {
                     </div>
                 </div>
                 {user && (
-                    <div
-                        className="user-card clickable"
-                        onClick={() => navigate("/profile")}
-                    >
+                    <div className="user-card clickable" onClick={() => navigate("/profile")}>
                         <div className="avatar">
                             {currentAvatar ? (
-                                <img
-                                    src={currentAvatar}
-                                    alt={user.fullName}
-                                />
+                                <img src={currentAvatar} alt={user.fullName} />
                             ) : (
                                 user.fullName?.charAt(0).toUpperCase()
                             )}
@@ -185,69 +178,27 @@ export default function HomePage() {
                 )}
 
                 <ul className="menu">
-                    <li onClick={() => navigate("/home")}>
-                        <span>🏠</span> Trang chủ
-                    </li>
-                    <li onClick={() => navigate("/courses")}>
-                        <span>📚</span> Khóa học
-                    </li>
-                    <li onClick={() => navigate("/entry-test")}>
-                        <span>📝</span> Kiểm tra đầu vào
-                    </li>
-                    <li onClick={() => navigate("/tests")}>
-                        <span>📄</span> Luyện đề
-                    </li>
-                    <li onClick={() => navigate("/adaptive-path")}>
-                        <span>🧠</span> Lộ trình AI
-                    </li>
-                    <li onClick={() => navigate("/ai/gap-diagnosis")}>
-                        <span>📈</span> Lỗ hổng kiến thức
-                    </li>
-                    <li onClick={() => navigate("/ai/score-forecast")}>
-                        <span>🎯</span> Dự đoán điểm
-                    </li>
-                    <li onClick={() => navigate("/ai/university-advising")}>
-                        <span>🎓</span> Tư vấn ngành
-                    </li>
-                    <li onClick={() => navigate("/calendar")}>
-                        <span>📅</span> Lịch học
-                    </li>
-                    <li onClick={() => navigate("/notifications")}>
-                        <span>🔔</span> Thông báo
-                    </li>
-                    <li onClick={() => navigate("/report-violation")}>
-                        <span>🚨</span> Báo cáo vi phạm
-                    </li>
-                    <li onClick={() => navigate("/request-teacher")}>
-                        <span>👨‍🏫</span>
-                        Đăng ký làm Giáo viên
-                    </li>
+                    <li onClick={() => navigate("/home")}><span>🏠</span> Trang chủ</li>
+                    <li onClick={() => navigate("/courses")}><span>📚</span> Khóa học</li>
+                    <li onClick={() => navigate("/entry-test")}><span>📝</span> Kiểm tra đầu vào</li>
+                    <li onClick={() => navigate("/tests")}><span>📄</span> Luyện đề</li>
+                    <li onClick={() => navigate("/adaptive-path")}><span>🧠</span> Lộ trình AI</li>
+                    <li onClick={() => navigate("/ai/gap-diagnosis")}><span>📈</span> Lỗ hổng kiến thức</li>
+                    <li onClick={() => navigate("/ai/score-forecast")}><span>🎯</span> Dự đoán điểm</li>
+                    <li onClick={() => navigate("/ai/university-advising")}><span>🎓</span> Tư vấn ngành</li>
+                    <li onClick={() => navigate("/calendar")}><span>📅</span> Lịch học</li>
+                    <li onClick={() => navigate("/notifications")}><span>🔔</span> Thông báo</li>
+                    <li onClick={() => navigate("/report-violation")}><span>🚨</span> Báo cáo vi phạm</li>
+                    <li onClick={() => navigate("/request-teacher")}><span>👨‍🏫</span> Đăng ký làm Giáo viên</li>
                 </ul>
 
                 <div className="sidebar-actions">
                     {user ? (
-                        <button
-                            className="logout-btn"
-                            onClick={() => setShowLogoutModal(true)}
-                        >
-                            🚪 Đăng xuất
-                        </button>
+                        <button className="logout-btn" onClick={() => setShowLogoutModal(true)}>🚪 Đăng xuất</button>
                     ) : (
                         <>
-                            <button
-                                className="login-btn"
-                                onClick={() => navigate("/auth", { state: { mode: "login" } })}
-                            >
-                                🔑 Đăng nhập
-                            </button>
-                            <button
-                                className="register-btn"
-                                onClick={() => navigate("/auth", { state: { mode: "register" } })}
-                            >
-                                ✨ Đăng ký
-                            </button>
-
-
+                            <button className="login-btn" onClick={() => navigate("/auth", { state: { mode: "login" } })}>🔑 Đăng nhập</button>
+                            <button className="register-btn" onClick={() => navigate("/auth", { state: { mode: "register" } })}>✨ Đăng ký</button>
                         </>
                     )}
                 </div>
@@ -262,18 +213,8 @@ export default function HomePage() {
                         <p>Bạn có chắc chắn muốn đăng xuất khỏi <strong>PrepAce</strong>?</p>
                         <span>Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng hệ thống.</span>
                         <div className="modal-actions">
-                            <button
-                                className="cancel-btn"
-                                onClick={() => setShowLogoutModal(false)}
-                            >
-                                Hủy
-                            </button>
-                            <button
-                                className="confirm-btn"
-                                onClick={handleLogout}
-                            >
-                                Đăng xuất
-                            </button>
+                            <button className="cancel-btn" onClick={() => setShowLogoutModal(false)}>Hủy</button>
+                            <button className="confirm-btn" onClick={handleLogout}>Đăng xuất</button>
                         </div>
                     </div>
                 </div>
@@ -281,7 +222,6 @@ export default function HomePage() {
 
             {/* MAIN CONTENT */}
             <main className="content">
-                {/* HEADER */}
                 <div className="content-header">
                     <form className="search-bar" onSubmit={handleSearchSubmit}>
                         <div className="search-icon">🔍</div>
@@ -297,52 +237,31 @@ export default function HomePage() {
                     <div className="countdown-wrapper">
                         <div className="countdown-title">🔥 THPT Quốc gia 2027</div>
                         <div className="countdown-box">
-                            <div className="time-card">
-                                <h2>{timeLeft.years}</h2>
-                                <span>Năm</span>
-                            </div>
-                            <div className="time-card">
-                                <h2>{timeLeft.months}</h2>
-                                <span>Tháng</span>
-                            </div>
-                            <div className="time-card">
-                                <h2>{timeLeft.days}</h2>
-                                <span>Ngày</span>
-                            </div>
+                            <div className="time-card"><h2>{timeLeft.years}</h2><span>Năm</span></div>
+                            <div className="time-card"><h2>{timeLeft.months}</h2><span>Tháng</span></div>
+                            <div className="time-card"><h2>{timeLeft.days}</h2><span>Ngày</span></div>
                         </div>
                     </div>
                 </div>
 
-                {/* HERO */}
+                {/* HERO BLOCK CẬP NHẬT ĐỘNG BANNER */}
                 <section className="hero">
                     <div className="hero-left">
                         <span className="hero-badge">🚀 AI Powered Learning</span>
-                        <h1>Bứt phá điểm số<br />cùng PrepAce AI</h1>
-                        <p>
-                            Hệ thống học tập thông minh sử dụng AI để phân tích năng lực,
-                            xây dựng lộ trình cá nhân và tối ưu kết quả kỳ thi THPT Quốc Gia.
-                        </p>
+                        <h1>{bannerData.title}</h1>
+                        <p>{bannerData.subtitle}</p>
                         <div className="hero-buttons">
                             <button className="start-btn" onClick={() => navigate("/tests")}>
-                                🚀 Bắt đầu ngay
+                                🚀 {bannerData.btnText}
                             </button>
                             <button className="secondary-btn" onClick={() => navigate("/courses")}>
                                 📚 Khóa học
                             </button>
                         </div>
                         <div className="hero-stats">
-                            <div className="stat-item">
-                                <h2>12K+</h2>
-                                <p>Học viên</p>
-                            </div>
-                            <div className="stat-item">
-                                <h2>98%</h2>
-                                <p>Tỷ lệ đỗ</p>
-                            </div>
-                            <div className="stat-item">
-                                <h2>500+</h2>
-                                <p>Bài học</p>
-                            </div>
+                            <div className="stat-item"><h2>12K+</h2><p>Học viên</p></div>
+                            <div className="stat-item"><h2>98%</h2><p>Tỷ lệ đỗ</p></div>
+                            <div className="stat-item"><h2>500+</h2><p>Bài học</p></div>
                         </div>
                     </div>
                     <div className="hero-right">
@@ -362,37 +281,21 @@ export default function HomePage() {
                         <h2>Khóa học nổi bật</h2>
                         <p>Những khóa học được học viên đánh giá cao nhất trên PrepAce.</p>
                     </div>
-                    <button className="view-all-btn" onClick={() => navigate("/courses")}>
-                        Xem tất cả →
-                    </button>
+                    <button className="view-all-btn" onClick={() => navigate("/courses")}>Xem tất cả →</button>
                 </div>
 
                 <section className="course-grid">
                     {featuredCourses.map(course => (
-                        <div
-                            className="course-card"
-                            key={course.id}
-                            onClick={() => navigate(`/course/${course.id}`)}
-                        >
+                        <div className="course-card" key={course.id} onClick={() => navigate(`/course/${course.id}`)}>
                             <div className="course-thumb">
                                 <img src={course.thumbnail} alt={course.title} />
                                 <span className="subject-badge">{course.subject}</span>
-                                <div className="course-overlay">
-                                    <button>Xem chi tiết →</button>
-                                </div>
+                                <div className="course-overlay"><button>Xem chi tiết →</button></div>
                             </div>
                             <div className="course-info">
-                                <div className="course-rating">
-                                    ⭐⭐⭐⭐⭐ <span>4.9</span>
-                                </div>
+                                <div className="course-rating">⭐⭐⭐⭐⭐ <span>4.9</span></div>
                                 <h3 className="course-title">{course.title}</h3>
-                                <p
-                                    className="course-teacher"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        navigate(`/instructor/${course.userId}`);
-                                    }}
-                                >
+                                <p className="course-teacher" onClick={(e) => { e.stopPropagation(); navigate(`/instructor/${course.userId}`); }}>
                                     👨‍🏫 {course.teacher}
                                 </p>
                                 <div className="course-features">
@@ -416,15 +319,8 @@ export default function HomePage() {
                         <h2>Chinh phục kỳ thi THPT Quốc Gia cùng PrepAce AI</h2>
                         <p>Hơn 12.000 học sinh đang học tập mỗi ngày với hệ thống AI cá nhân hóa.</p>
                         <div className="cta-buttons">
-                            <button
-                                className="register-btn"
-                                onClick={() => navigate("/auth", { state: { mode: "register" } })}
-                            >
-                                Đăng ký miễn phí
-                            </button>
-                            <button className="secondary-btn" onClick={() => navigate("/courses")}>
-                                Khám phá khóa học
-                            </button>
+                            <button className="register-btn" onClick={() => navigate("/auth", { state: { mode: "register" } })}>Đăng ký miễn phí</button>
+                            <button className="secondary-btn" onClick={() => navigate("/courses")}>Khám phá khóa học</button>
                         </div>
                     </div>
                     <div className="cta-decoration">🎓</div>
@@ -432,13 +328,8 @@ export default function HomePage() {
             </main>
 
             {/* AI FLOATING BUTTON */}
-            <button
-                className="ai-fab"
-                title="PrepAce AI"
-                onClick={() => navigate("/ai/chat")}
-            >
-                <span className="pulse"></span>
-                🤖
+            <button className="ai-fab" title="PrepAce AI" onClick={() => navigate("/ai/chat")}>
+                <span className="pulse"></span>🤖
             </button>
         </div>
     );

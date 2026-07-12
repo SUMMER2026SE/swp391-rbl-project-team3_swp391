@@ -27,9 +27,9 @@ import AdminQuestionBankPage from './pages/jsx/AdminQuestionBankPage';
 import TeacherDashboard from "./pages/jsx/TeacherDashboard";
 import CourseEditPage from "./pages/jsx/CourseEditPage";
 import ReportViolationPage from "./pages/jsx/ReportViolationPage";
-// Tuyến đường xử lý báo cáo vi phạm của Admin (Task 43)
 import AdminViolationsPage from './pages/jsx/AdminViolationsPage';
 import RequestTeacherPage from "./pages/jsx/RequestTeacherPage";
+import AdminCategoriesPage from "./pages/jsx/AdminCategoriesPage";
 //Thi Thu
 import TestListPage from './pages/jsx/TestListPage';
 import TestResult from './pages/jsx/TestResult';
@@ -94,7 +94,7 @@ function App() {
             <Route path='/ai/university-advising' element={<UniversityAdvisingPage />} />
 
             <Route path="/report-violation" element={<ReportViolationPage />} />
-            
+
             {/* ========================================================= */}
             {/* 🔒 CỤM PROTECTED ROUTES DÀNH CHO QUẢN TRỊ VIÊN (ADMIN)   */}
             {/* ========================================================= */}
@@ -171,6 +171,16 @@ function App() {
                 }
             />
 
+            <Route
+                path="/admin/categories"
+                element={
+                    <AdminRoute>
+                        <AdminCategoriesPage />
+                    </AdminRoute>
+                }
+            />
+
+
             {/* ========================================================= */}
             {/* 🔒 TUYẾN ĐƯỜNG DÀNH CHO GIẢNG VIÊN / CHUNG                 */}
             {/* ========================================================= */}
@@ -180,7 +190,7 @@ function App() {
             <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
             <Route path="/teacher/course/:id/edit" element={<CourseEditPage />} />
             <Route path="/teacher/grading" element={<TeacherGrading />} />
-            
+
             {/* ========================================================= */}
             {/* 👨‍🏫 TRANG ĐĂNG KÝ GIÁO VIÊN                                */}
             {/* ========================================================= */}

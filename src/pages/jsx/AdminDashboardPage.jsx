@@ -1,12 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import "../css/AdminDashboardPage.css";
-import React, { useState, useEffect } from "react"; 
+import React, { useState, useEffect } from "react";
 import axiosClient from "../../api/axiosClient";
 
 export default function AdminDashboardPage() {
     const navigate = useNavigate();
     const [activeMenu, setActiveMenu] = useState("dashboard");
-    
+
     const [stats, setStats] = useState({
         revenue: "0đ",
         students: "0",
@@ -17,9 +17,9 @@ export default function AdminDashboardPage() {
         courseTrend: "- Không đổi",
         conversionTrend: "— Chưa có chuyển đổi"
     });
-    
-    const [transactions, setTransactions] = useState([]); 
-    const [chartData, setChartData] = useState([]); 
+
+    const [transactions, setTransactions] = useState([]);
+    const [chartData, setChartData] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -45,11 +45,11 @@ export default function AdminDashboardPage() {
             try {
                 setLoading(true);
                 const res = await axiosClient.get('/admin/dashboard/stats');
-                
+
                 if (res.data) {
-                    const formattedRevenue = new Intl.NumberFormat('vi-VN', { 
-                        style: 'currency', 
-                        currency: 'VND' 
+                    const formattedRevenue = new Intl.NumberFormat('vi-VN', {
+                        style: 'currency',
+                        currency: 'VND'
                     }).format(res.data.revenue || 0);
 
                     setStats({
@@ -77,7 +77,7 @@ export default function AdminDashboardPage() {
                 setLoading(false);
             }
         };
-        
+
         fetchDashboardStats();
     }, []);
 
@@ -102,12 +102,13 @@ export default function AdminDashboardPage() {
                     <li className={activeMenu === "violations" ? "active" : ""} onClick={() => navigate("/admin/violations")}>🚨 Quản lý vi phạm</li>
                     <li className={activeMenu === "ui" ? "active" : ""} onClick={() => navigate("/admin/ui-config")}>🎨 Cấu hình UI</li>
                     <li className={activeMenu === "sepay" ? "active" : ""} onClick={() => navigate("/admin/sepay-guide")}>💳 Cấu hình SePay</li>
+                    <li className={activeMenu === "categories" ? "active" : ""} onClick={() => navigate("/admin/categories")}>⚙️ Cấu hình danh mục</li>
                 </ul>
                 <div className="admin-logout">
                     <button onClick={handleLogout}>Đăng xuất</button>
                 </div>
             </aside>
-            
+
             {/* MAIN CONTENT */}
             <main className="admin-main">
                 <header className="admin-header">
