@@ -165,9 +165,10 @@ export default function AdaptivePathPage() {
                                     <p className="step-reason">{step.reason}</p>
                                     <button
                                         className="step-action-btn"
-                                        onClick={() =>
-                                            navigate(step.type === "review" || step.type === "next" ? "/courses" : "/tests")
-                                        }
+                                        onClick={() => {
+                                            const isCourse = step.type === "review" || step.type === "next" || step.type === "video" || step.action?.toLowerCase().includes("video");
+                                            navigate(isCourse ? "/courses" : "/tests");
+                                        }}
                                     >
                                         {step.action}
                                     </button>

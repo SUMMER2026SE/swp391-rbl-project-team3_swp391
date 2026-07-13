@@ -24,42 +24,28 @@ export default function AiGapAnalysis({ items }) {
 
             <p className="ai-gap-summary">{gap.summary}</p>
 
-            {/* Biểu đồ mức độ nắm vững theo chủ đề */}
-            {gap.weakTopics.length > 0 && (
-                <div className="ai-gap-topics">
-                    <h3>📉 Lỗ hổng kiến thức phát hiện được</h3>
-                    {gap.weakTopics.map((t) => (
-                        <div key={t.topic} className="ai-gap-topic-row">
-                            <span className="ai-gap-topic-name">{t.topic}</span>
-                            <div className="ai-gap-bar">
-                                <div
-                                    className={`ai-gap-bar-fill ${
-                                        t.accuracy < 40 ? "bad" : t.accuracy < 70 ? "mid" : "ok"
-                                    }`}
-                                    style={{ width: `${Math.max(t.accuracy, 6)}%` }}
-                                />
-                            </div>
-                            <span className="ai-gap-topic-stat">sai {t.wrong}/{t.total}</span>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {gap.strongTopics.length > 0 && (
-                <p className="ai-gap-strong">
-                    💪 Điểm mạnh: bạn làm đúng 100% các câu thuộc{" "}
-                    {gap.strongTopics.map((t) => `«${t.topic}»`).join(", ")}.
-                </p>
-            )}
-
-            {/* Lộ trình đề xuất */}
-            <div className="ai-gap-roadmap">
-                <h3>🗺️ Lộ trình AI đề xuất</h3>
-                <ol>
-                    {gap.recommendations.map((r, i) => (
-                        <li key={i}>{r}</li>
-                    ))}
-                </ol>
+            {/* Bản Tóm Tắt Nhanh */}
+            <div className="ai-gap-quick-view" style={{ margin: "20px 0" }}>
+                {gap.weakTopics.length > 0 ? (
+                    <div style={{ padding: "15px", background: "#fef2f2", borderRadius: "10px", borderLeft: "5px solid #ef4444" }}>
+                        <h4 style={{ margin: "0 0 8px 0", color: "#b91c1c", display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span>⚠️</span> Lỗ hổng nghiêm trọng nhất
+                        </h4>
+                        <p style={{ margin: 0, color: "#7f1d1d", fontSize: "15px" }}>
+                            Phần <strong>«{gap.weakTopics[0].topic}»</strong> đang yếu (Chỉ đúng {gap.weakTopics[0].accuracy}%). 
+                            {gap.weakTopics.length > 1 ? ` Ngoài ra còn ${gap.weakTopics.length - 1} chủ đề khác cần cải thiện.` : ""}
+                        </p>
+                    </div>
+                ) : (
+                    <div style={{ padding: "15px", background: "#f0fdf4", borderRadius: "10px", borderLeft: "5px solid #22c55e" }}>
+                        <h4 style={{ margin: "0 0 8px 0", color: "#15803d", display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span>🎉</span> Phong độ xuất sắc
+                        </h4>
+                        <p style={{ margin: 0, color: "#14532d", fontSize: "15px" }}>
+                            Không phát hiện lỗ hổng nghiêm trọng nào. Tiếp tục giữ vững phong độ nhé!
+                        </p>
+                    </div>
+                )}
             </div>
 
             <div className="ai-gap-actions">

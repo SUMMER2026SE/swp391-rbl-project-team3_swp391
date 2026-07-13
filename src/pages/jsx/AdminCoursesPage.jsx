@@ -31,7 +31,6 @@ export default function AdminCoursesPage() {
             navigate("/");
             return;
         }
-    };
 
         const userObj = JSON.parse(storedUser);
         if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
@@ -95,6 +94,13 @@ export default function AdminCoursesPage() {
         localStorage.removeItem("user");
         navigate("/");
     };
+
+    const filteredCourses = courses.filter(c => {
+        const title = (c.title || c.courseTitle || c.courseDescription || "").toLowerCase();
+        const idStr = String(c.id || c.courseId || "");
+        const term = searchTerm.toLowerCase();
+        return title.includes(term) || idStr.includes(term);
+    });
 
     return (
         <div className="admin-layout">

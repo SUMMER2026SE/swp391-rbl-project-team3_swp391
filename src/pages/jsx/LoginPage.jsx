@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../css/LoginPage.css";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 
@@ -184,137 +183,85 @@ function LoginPage({ switchToRegister }) {
     };
 
     return (
-        <div className="login-container">
-            <div className="login-card">
-
-                {/* LEFT SIDE */}
-                <div className="login-left">
-                    <div className="overlay-circle top"></div>
-                    <div className="overlay-circle bottom"></div>
-
-                    <div className="left-content">
-                        <h1>
-                            Welcome Back <br />
-                            to PrepAce
-                        </h1>
-
-                        <p>
-                            Continue your learning journey with AI-powered
-                            university preparation, quizzes, assignments,
-                            and smart learning tools.
-                        </p>
-
-                        <div className="feature-list">
-                            <div className="feature-item">
-                                <span className="dot"></span>
-                                <p>AI Learning Assistant</p>
-                            </div>
-                            <div className="feature-item">
-                                <span className="dot"></span>
-                                <p>Track Study Progress</p>
-                            </div>
-                            <div className="feature-item">
-                                <span className="dot"></span>
-                                <p>Practice Exams & Quizzes</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* RIGHT SIDE */}
-                <div className="login-right">
-                    <div className="login-header">
-                        <h2>Login</h2>
-                        <p>Login to continue learning with PrepAce.</p>
-                    </div>
-
-                    {message && (
-                        <div className={`message-box ${messageType}`}>
-                            {message}
-                        </div>
-                    )}
-
-                    {/* FORM */}
-                    <form className="login-form" onSubmit={handleLogin}>
-
-                        {/* EMAIL */}
-                        <div className="input-group">
-                            <label>Email</label>
-                            <input
-                                type="email"
-                                placeholder="Enter your email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        {/* PASSWORD */}
-                        <div className="input-group">
-                            <label>Password</label>
-                            <input
-                                type="password"
-                                placeholder="Enter your password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div className="login-options" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
-                            <label style={{display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', color: '#4b5563', fontSize: '14px'}}>
-                                <input
-                                    type="checkbox"
-                                    checked={rememberMe}
-                                    onChange={(e) => setRememberMe(e.target.checked)}
-                                />
-                                Ghi nhớ đăng nhập
-                            </label>
-                            <div className="forgot-password" style={{margin: 0}}>
-                                <span onClick={() => navigate("/forgot-password")} style={{fontSize: '14px'}}>
-                                    Forgot Password?
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* LOGIN BUTTON */}
-                        <button
-                            type="submit"
-                            className="login-btn"
-                            disabled={loading}
-                        >
-                            {loading ? "Logging In..." : "Login"}
-                        </button>
-
-                        {/* DIVIDER */}
-                        <div className="divider">
-                            <span>OR</span>
-                        </div>
-
-                        {/* GOOGLE LOGIN */}
-                        <div className="google-login">
-                            <GoogleLogin
-                                onSuccess={handleGoogleLogin}
-                                onError={() => {
-                                    setMessage("❌ Google Login Failed");
-                                }}
-                            />
-                        </div>
-
-                    </form>
-
-                    {/* REGISTER LINK */}
-                    <div className="register-link">
-                        <p>
-                            Don't have an account?
-                            <span onClick={switchToRegister}>
-                                Register
-                            </span>
-                        </p>
-                    </div>
-
-                </div>
+        <>
+            <div className="auth-form-header">
+                <h2>Welcome Back</h2>
+                <p>Login to continue learning with PrepAce.</p>
             </div>
-        </div>
+
+            {message && (
+                <div className={`auth-message ${messageType}`}>
+                    {messageType === "success" ? "✅" : "⚠️"} {message}
+                </div>
+            )}
+
+            <form onSubmit={handleLogin}>
+                <div className="auth-form-group">
+                    <label>Email Address</label>
+                    <input
+                        type="email"
+                        className="auth-form-input"
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
+                </div>
+
+                <div className="auth-form-group">
+                    <label>Password</label>
+                    <input
+                        type="password"
+                        className="auth-form-input"
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                    />
+                </div>
+
+                <div className="auth-form-options">
+                    <label className="auth-checkbox-label">
+                        <input
+                            type="checkbox"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                        />
+                        Remember me
+                    </label>
+                    <span onClick={() => navigate("/forgot-password")} className="auth-forgot-link">
+                        Forgot Password?
+                    </span>
+                </div>
+
+                <button type="submit" className="auth-submit-btn" disabled={loading}>
+                    {loading ? "Logging In..." : "Login"}
+                </button>
+
+                <div className="auth-divider">
+                    <span>OR CONTINUE WITH</span>
+                </div>
+
+                <div className="auth-google-btn-wrapper">
+                    <GoogleLogin
+                        onSuccess={handleGoogleLogin}
+                        onError={() => {
+                            setMessage("Google Login Failed");
+                            setMessageType("error");
+                        }}
+                        theme="filled_blue"
+                        shape="pill"
+                    />
+                </div>
+            </form>
+
+            <div className="auth-switch-text">
+                Don't have an account?
+                <span onClick={switchToRegister} className="auth-switch-link">
+                    Create an account
+                </span>
+            </div>
+        </>
     );
 }
 

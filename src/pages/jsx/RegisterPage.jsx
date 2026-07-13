@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import "../css/RegisterPage.css";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import axiosClient from "../../api/axiosClient";
@@ -191,209 +190,156 @@ export default function RegisterPage({ switchToLogin }) {
     };
 
     return (
-        <div className="register-container">
-            <div className="register-card">
-
-                {/* LEFT SIDE */}
-                <div className="register-left">
-                    <div className="overlay-circle top"></div>
-                    <div className="overlay-circle bottom"></div>
-
-                    <div className="left-content">
-                        <h1>
-                            Welcome to <br />
-                            PrepAce
-                        </h1>
-
-                        <p>
-                            Smart learning platform powered by AI to help students
-                            prepare for university entrance exams effectively.
-                        </p>
-
-                        <div className="feature-list">
-                            <div className="feature-item">
-                                <span className="dot"></span>
-                                <p>AI Learning Assistant</p>
-                            </div>
-                            <div className="feature-item">
-                                <span className="dot"></span>
-                                <p>Interactive Quizzes & Assignments</p>
-                            </div>
-                            <div className="feature-item">
-                                <span className="dot"></span>
-                                <p>Track Your Learning Progress</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* RIGHT SIDE */}
-                <div className="register-right">
-
-                    <div className="register-header">
-                        <h2>Create Account</h2>
-                        <p>Join PrepAce and start your learning journey.</p>
-                    </div>
-
-                    {message && (
-                        <div className="message-box">
-                            {message}
-                        </div>
-                    )}
-
-                    {/* FORM */}
-                    <form className="register-form" onSubmit={handleRegister}>
-
-                        <div className="input-group">
-                            <label>Full Name</label>
-                            <input
-                                type="text"
-                                name="fullName"
-                                value={formData.fullName}
-                                onChange={handleChange}
-                                placeholder="Enter your full name"
-                                required
-                            />
-                        </div>
-
-                        <div className="input-group">
-                            <label>Email</label>
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                placeholder="Enter your email"
-                                required
-                            />
-                        </div>
-
-                        <div className="input-group">
-                            <label>Password</label>
-                            <input
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                placeholder="Enter your password"
-                                required
-                            />
-                        </div>
-
-                        <div className="input-group">
-                            <label>Phone Number</label>
-                            <input
-                                type="text"
-                                name="phone"
-                                value={formData.phone}
-                                onChange={handleChange}
-                                placeholder="Enter your phone number"
-                                required
-                            />
-                        </div>
-
-                        <div className="input-group" style={{marginBottom: '15px'}}>
-                            <label style={{display: 'block', marginBottom: '8px', fontWeight: '500'}}>Bạn đăng ký với tư cách</label>
-                            <select 
-                                value={role} 
-                                onChange={(e) => setRole(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '12px',
-                                    borderRadius: '8px',
-                                    border: '1px solid #d1d5db',
-                                    fontSize: '15px',
-                                    outline: 'none',
-                                    backgroundColor: '#fff'
-                                }}
-                            >
-                                <option value="STUDENT">Học sinh (Chuẩn bị ôn thi)</option>
-                                <option value="TEACHER">Giáo viên (Chờ phê duyệt)</option>
-                            </select>
-                        </div>
-
-                        <div className="input-group checkbox-group" style={{display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', marginBottom: '15px'}}>
-                            <input
-                                type="checkbox"
-                                id="agreeToTerms"
-                                checked={agreeToTerms}
-                                onChange={(e) => setAgreeToTerms(e.target.checked)}
-                                style={{cursor: 'pointer', width: '16px', height: '16px'}}
-                            />
-                            <label htmlFor="agreeToTerms" style={{cursor: 'pointer', fontSize: '14px', color: '#4b5563'}}>
-                                Tôi đồng ý với Điều khoản dịch vụ và Chính sách bảo mật.
-                            </label>
-                        </div>
-
-                        <button
-                            type="submit"
-                            className="register-btn"
-                            disabled={loading}
-                        >
-                            {loading ? "Creating Account..." : "Create Account"}
-                        </button>
-                    </form>
-                    {
-                        showVerifyBox && (
-                            <div className="verify-box" style={{marginTop: '20px', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '8px'}}>
-                                <h3>Email Verification</h3>
-
-                                <input type="text" placeholder="Enter OTP Code" value={otp} onChange={(e) => setOtp(e.target.value)} style={{width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '6px', border: '1px solid #d1d5db'}}/>
-
-                                <div style={{display: 'flex', gap: '10px'}}>
-                                    <button onClick={handleVerify} className="verify-btn" style={{flex: 1}}>
-                                        Verify Email
-                                    </button>
-                                    <button 
-                                        type="button" 
-                                        onClick={handleResendOtp} 
-                                        className="resend-btn" 
-                                        disabled={otpResendCount >= 3}
-                                        style={{
-                                            flex: 1, 
-                                            backgroundColor: '#f3f4f6', 
-                                            color: '#374151',
-                                            border: '1px solid #d1d5db',
-                                            borderRadius: '8px',
-                                            cursor: otpResendCount >= 3 ? 'not-allowed' : 'pointer',
-                                            fontSize: '14px'
-                                        }}
-                                    >
-                                        Gửi lại OTP ({3 - otpResendCount} lần)
-                                    </button>
-                                </div>
-                            </div>
-                        )
-                    }
-
-                    {/* DIVIDER */}
-                    <div className="divider">
-                        <div className="line"></div>
-                        <p>OR CONTINUE WITH</p>
-                        <div className="line"></div>
-                    </div>
-
-                    {/* GOOGLE REGISTER */}
-                    <div className="google-login-wrapper">
-                        <GoogleLogin
-                            onSuccess={handleGoogleRegister}
-                            onError={() => {
-                                setMessage("❌ Google Register Failed");
-                            }}
-                        />
-                    </div>
-
-                    {/* LOGIN LINK */}
-                    <div className="login-link">
-                        <p>
-                            Already have an account?
-                            <span onClick={switchToLogin}>
-                                Login
-                            </span>
-                        </p>
-                    </div>
-                </div>
+        <>
+            <div className="auth-form-header">
+                <h2>Create Account</h2>
+                <p>Join PrepAce and start your learning journey.</p>
             </div>
-        </div>
+
+            {message && (
+                <div className={`auth-message ${message.includes("✅") ? "success" : "error"}`}>
+                    {message}
+                </div>
+            )}
+
+            <form onSubmit={handleRegister}>
+                <div className="auth-form-group">
+                    <label>Full Name</label>
+                    <input
+                        type="text"
+                        name="fullName"
+                        className="auth-form-input"
+                        value={formData.fullName}
+                        onChange={handleChange}
+                        placeholder="Enter your full name"
+                        required
+                    />
+                </div>
+
+                <div className="auth-form-group">
+                    <label>Email</label>
+                    <input
+                        type="email"
+                        name="email"
+                        className="auth-form-input"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="Enter your email"
+                        required
+                    />
+                </div>
+
+                <div className="auth-form-group">
+                    <label>Password</label>
+                    <input
+                        type="password"
+                        name="password"
+                        className="auth-form-input"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="Enter your password"
+                        required
+                    />
+                </div>
+
+                <div className="auth-form-group">
+                    <label>Phone Number</label>
+                    <input
+                        type="text"
+                        name="phone"
+                        className="auth-form-input"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        placeholder="Enter your phone number"
+                        required
+                    />
+                </div>
+
+                <div className="auth-form-group">
+                    <label>Register as</label>
+                    <select 
+                        value={role} 
+                        onChange={(e) => setRole(e.target.value)}
+                        className="auth-form-input"
+                    >
+                        <option value="STUDENT">Student (Prepare for exams)</option>
+                        <option value="TEACHER">Teacher (Pending approval)</option>
+                    </select>
+                </div>
+
+                <div className="auth-form-options" style={{marginBottom: "15px"}}>
+                    <label className="auth-checkbox-label" htmlFor="agreeToTerms">
+                        <input
+                            type="checkbox"
+                            id="agreeToTerms"
+                            checked={agreeToTerms}
+                            onChange={(e) => setAgreeToTerms(e.target.checked)}
+                        />
+                        I agree to the Terms of Service and Privacy Policy.
+                    </label>
+                </div>
+
+                <button type="submit" className="auth-submit-btn" disabled={loading}>
+                    {loading ? "Creating Account..." : "Create Account"}
+                </button>
+            </form>
+            
+            {showVerifyBox && (
+                <div style={{marginTop: '20px', padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#f8fafc'}}>
+                    <h3 style={{fontSize: '1.1rem', marginBottom: '10px', color: '#1e293b'}}>Email Verification</h3>
+                    <input 
+                        type="text" 
+                        placeholder="Enter OTP Code" 
+                        className="auth-form-input"
+                        value={otp} 
+                        onChange={(e) => setOtp(e.target.value)} 
+                        style={{marginBottom: '10px'}}
+                    />
+                    <div style={{display: 'flex', gap: '10px'}}>
+                        <button onClick={handleVerify} className="auth-submit-btn" style={{padding: '10px', flex: 1}}>
+                            Verify Email
+                        </button>
+                        <button 
+                            type="button" 
+                            onClick={handleResendOtp} 
+                            disabled={otpResendCount >= 3}
+                            style={{
+                                flex: 1, 
+                                backgroundColor: '#e2e8f0', 
+                                color: '#334155',
+                                border: 'none',
+                                borderRadius: '12px',
+                                cursor: otpResendCount >= 3 ? 'not-allowed' : 'pointer',
+                                fontWeight: '600'
+                            }}
+                        >
+                            Resend OTP ({3 - otpResendCount})
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <div className="auth-divider">
+                <span>OR CONTINUE WITH</span>
+            </div>
+
+            <div className="auth-google-btn-wrapper">
+                <GoogleLogin
+                    onSuccess={handleGoogleRegister}
+                    onError={() => {
+                        setMessage("❌ Google Register Failed");
+                    }}
+                    theme="filled_blue"
+                    shape="pill"
+                />
+            </div>
+
+            <div className="auth-switch-text">
+                Already have an account?
+                <span onClick={switchToLogin} className="auth-switch-link">
+                    Login
+                </span>
+            </div>
+        </>
     );
 }

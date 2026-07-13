@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "../css/HomePage.css"; // Dùng chung file CSS layout/sidebar của nhóm cho đồng bộ
+import "../css/TeacherDashboard.css"; // 🔥 MỚI: CSS cao cấp dành riêng cho Giáo viên
 import axiosClient from "../../api/axiosClient";
 import { logout } from "../../services/authService";
 
@@ -202,24 +202,6 @@ export default function TeacherDashboard() {
             alert("❌ Lỗi từ hệ thống: " + serverErrorMessage);
         }
     };
-
-    try {
-        // 2. Gửi request với ID chuẩn đã tìm được ở trên
-        await axiosClient.post(`/questions/${questionIdToUse}/answers`, {
-            content: replyContent
-        });
-        
-        setReplyModalOpen(false);
-        fetchQaList(); // Tải lại danh sách để cập nhật trạng thái
-        alert("🎉 Đã gửi câu trả lời thành công!");
-    } catch (error) {
-        console.error("Lỗi chi tiết từ hệ thống:", error);
-        
-        // 3. Hiển thị trực tiếp nội dung lỗi cụ thể từ Backend trả về lên màn hình
-        const serverErrorMessage = error.response?.data?.message || error.message;
-        alert("❌ Lỗi từ hệ thống: " + serverErrorMessage);
-    }
-};
     
     return (
         <div className="home-layout">
@@ -245,24 +227,42 @@ export default function TeacherDashboard() {
                         style={activeTab === "QA" ? { background: "#eef3ff", color: "#2747d9", fontWeight: "600", cursor: "pointer" } : { cursor: "pointer" }}
                     >
                         💬 Hỏi đáp Học viên
+        <div className="teacher-dashboard-layout">
+            <aside className="teacher-sidebar">
+                <div className="teacher-brand" onClick={() => navigate("/teacher/dashboard")}>
+                    PrepAce <span>Teacher</span>
+                </div>
+                <ul className="teacher-menu">
+                    <li className={activeTab === "COURSES" ? "active" : ""} onClick={() => setActiveTab("COURSES")}>
+                        📚 Khóa học của tôi
+                    </li>
+                    <li className={activeTab === "QA" ? "active" : ""} onClick={() => setActiveTab("QA")}>
+                        💬 Quản lý Hỏi & Đáp
+                    </li>
+                    <li onClick={() => navigate("/teacher/grading")}>
+                        ✍️ Chấm điểm Tự luận
+                    </li>
+                    <li style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.1)' }} onClick={handleLogout}>
+                        🚪 Đăng xuất
                     </li>
                 </ul>
-
-                <div className="sidebar-actions">
-                    <button className="profile-btn" onClick={() => navigate("/profile")}>
-                        👤 {user?.fullName || "Giáo viên"}
-                    </button>
-                    <button className="logout-btn" onClick={handleLogout}>
-                        Đăng xuất
-                    </button>
-                </div>
             </aside>
 
-            {/* 2. PHẦN NỘI DUNG CHÍNH */}
-            <main className="content" style={{ maxWidth: "100%", margin: "0" }}>
+            <main className="teacher-main">
+                <header className="teacher-header">
+                    <div>
+                        <h1>Xin chào, Giảng viên {user?.fullName || "Khách"}! 🎓</h1>
+                        <p>Quản lý toàn bộ tiến độ, báo cáo học tập và khóa học của bạn tại đây.</p>
+                    </div>
+                    {activeTab === "COURSES" && (
+                        <button className="teacher-create-btn" onClick={() => setCreateCourseModalOpen(true)}>
+                            ✨ + Tạo Khóa Học Mới
+                        </button>
+                    )}
+                </header>
+
                 {activeTab === "COURSES" && (
                     <>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
                             <h2 style={{ fontSize: "24px", fontWeight: "700", color: "#0f172a", margin: 0 }}>
                                 📚 Quản lý khóa học của tôi
                             </h2>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import practiceService from "../../services/practiceService";
+import ConfirmModal from "../../components/ConfirmModal";
 import "../css/PracticeTestPage.css";
 
 const OPTION_LABELS = ["A", "B", "C", "D"];
@@ -60,24 +61,32 @@ export default function PracticeTestPage() {
         }
     };
 
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [confirmMsg, setConfirmMsg] = useState("");
+
+    const doSubmit = async () => {
+        setSubmitting(true);
+        setShowConfirm(false);
+        try {
+            const result = await practiceService.submit(session.attemptId, answers);
+            navigate(`/practice/result/${result.attemptId}`, { state: { result } });
+        } catch (e) {
+            alert("Nộp bài thất bại: " + (e.response?.data?.message || e.message));
+            setSubmitting(false);
+        }
+    };
+
     const handleSubmit = useCallback(
-        async (auto = false) => {
+        (auto = false) => {
             if (!session || submitting) return;
             const total = session.questions.length;
             const answered = Object.keys(answers).length;
             if (!auto && answered < total) {
-                if (!window.confirm(`Bạn còn ${total - answered} câu chưa trả lời. Vẫn nộp bài?`)) return;
+                setConfirmMsg(`Bạn còn ${total - answered} câu chưa trả lời. Vẫn nộp bài?`);
+                setShowConfirm(true);
+                return;
             }
-            setSubmitting(true);
-            try {
-                const result = await practiceService.submit(session.attemptId, answers);
-                // Truyền result qua state để trang kết quả hiển thị ngay không cần gọi lại API;
-                // trang kết quả vẫn tự fetch theo attemptId nếu bị F5.
-                navigate(`/practice/result/${result.attemptId}`, { state: { result } });
-            } catch (e) {
-                alert("Nộp bài thất bại: " + (e.response?.data?.message || e.message));
-                setSubmitting(false);
-            }
+            doSubmit();
         },
         [session, submitting, answers, navigate]
     );
@@ -107,7 +116,18 @@ export default function PracticeTestPage() {
             <div className="pt-page">
                 {/* Thanh trên: tiêu đề + tiến độ + đồng hồ */}
                 <header className="pt-topbar">
-                    <div className="pt-topbar-title">
+                    <div className="pt-topbar-left" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <button 
+                            className="td-btn-back"
+                            onClick={() => {
+                                if (window.confirm("Cảnh báo: Nếu thoát bây giờ, tiến trình làm bài có thể bị gián đoạn. Bạn có chắc chắn muốn trở về Trang chủ không?")) {
+                                    navigate("/home");
+                                }
+                            }}
+                            style={{ background: 'transparent', border: '1px solid #e2e8f0', color: '#64748b', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
+                        >
+                            ← Trang chủ
+                        </button>
                         <h2>{session.quizTitle}</h2>
                         <span className="pt-subject-chip">{session.subject}</span>
                     </div>
@@ -164,7 +184,7 @@ export default function PracticeTestPage() {
                             disabled={submitting}
                             onClick={() => handleSubmit(false)}
                         >
-                            {submitting ? "Đang nộp..." : `Nộp bài (${answered}/${total})`}
+                            {submitting ? "Đang nộp..." : `📤 Nộp bài (${Object.keys(answers).length}/${session.questions.length})`}
                         </button>
                     </main>
 
@@ -188,6 +208,14 @@ export default function PracticeTestPage() {
                         </div>
                     </aside>
                 </div>
+                <ConfirmModal
+                    isOpen={showConfirm}
+                    title="Xác nhận nộp bài"
+                    message={confirmMsg}
+                    onConfirm={doSubmit}
+                    onCancel={() => setShowConfirm(false)}
+                    confirmText="Vẫn nộp bài"
+                />
             </div>
         );
     }

@@ -12,8 +12,31 @@ export default function EntryTestResultPage() {
     
     // We rely on location.state from submit. 
     // Since there's no getAssessment API, if state is null, we tell them to re-take.
-    const [result] = useState(location.state || null);
+    const [result, setResult] = useState(location.state || null);
     const [filter, setFilter] = useState("all");
+    const [loading, setLoading] = useState(!location.state);
+
+    useEffect(() => {
+        if (!result && sessionsId) {
+            import("../../api/axiosClient").then(({ default: axiosClient }) => {
+                axiosClient.get(`/entry-test/assessment/${sessionsId}`)
+                    .then(res => {
+                        setResult(res.data);
+                        setLoading(false);
+                    })
+                    .catch(err => {
+                        console.error("Lỗi lấy dữ liệu bài kiểm tra:", err);
+                        setLoading(false);
+                    });
+            });
+        } else {
+            setLoading(false);
+        }
+    }, [sessionsId, result]);
+
+    if (loading) {
+        return <div className="pr-page"><p className="pr-status">Đang tải dữ liệu bài kiểm tra...</p></div>;
+    }
 
     if (!result) {
         return (
@@ -110,13 +133,15 @@ export default function EntryTestResultPage() {
                         <div className="pr-options">
                             {/* Vì API chỉ trả về selectedAnswer và correctAnswer dạng string, ta render chúng trực tiếp */}
                             <div className={`pr-option ${d.isCorrect ? "pr-option-correct" : "pr-option-wrong"}`}>
-                                <span className="pr-option-label">Bạn chọn</span>
+                                <span className="pr-option-label">➤</span>
                                 <span className="pr-option-content">{d.selectedAnswer || "Không trả lời"}</span>
+                                <span className="pr-option-tag pr-tag-you">Bạn chọn</span>
                             </div>
                             {!d.isCorrect && (
                                 <div className="pr-option pr-option-correct">
-                                    <span className="pr-option-label">Đáp án đúng</span>
+                                    <span className="pr-option-label">✓</span>
                                     <span className="pr-option-content">{d.correctAnswer}</span>
+                                    <span className="pr-option-tag pr-tag-key">Đáp án đúng</span>
                                 </div>
                             )}
                         </div>

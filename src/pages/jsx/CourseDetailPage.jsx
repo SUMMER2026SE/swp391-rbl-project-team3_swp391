@@ -163,7 +163,13 @@ export default function CourseDetailPage() {
             }
         } catch (error) {
             console.error("Lỗi gửi review:", error);
-            alert("Gửi đánh giá thất bại. Vui lòng đăng nhập hệ thống để thực hiện!");
+            if (error.response?.status === 401) {
+                alert("Bạn cần đăng nhập hệ thống để thực hiện gửi đánh giá!");
+            } else if (error.response?.status === 500) {
+                alert("Lỗi máy chủ (500). Xin hãy khởi động lại Backend theo hướng dẫn của AI!");
+            } else {
+                alert("Gửi đánh giá thất bại: " + (error.response?.data?.message || error.message));
+            }
         }
     };
 
