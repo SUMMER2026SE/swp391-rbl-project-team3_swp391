@@ -16,6 +16,7 @@ export default function TeacherDashboard() {
     const [reportModalOpen, setReportModalOpen] = useState(false);
     const [selectedCourseForReport, setSelectedCourseForReport] = useState(null);
     const [courseReports, setCourseReports] = useState([]);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     // Modal Trả lời Q&A
     const [replyModalOpen, setReplyModalOpen] = useState(false);
@@ -170,6 +171,17 @@ export default function TeacherDashboard() {
         setReplyContent("");
         setReplyModalOpen(true);
     };
+
+    const handleLogout = async () => {
+            try {
+                await logout();
+            } catch (err) {
+                console.error(err);
+            }
+            setShowLogoutModal(false);
+            navigate("/auth");
+        };
+    
 
     const handleSendReply = async () => {
         if (!replyContent.trim()) {

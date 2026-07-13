@@ -25,12 +25,12 @@ export default function AdminUsersPage() {
     });
     const [addError, setAddError] = useState("");
 
-    const userObj = JSON.parse(storedUser);
-    if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
-        alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
-        navigate("/home");
-        return;
-    }
+    // const userObj = JSON.parse(storedUser);
+    // if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
+    //     alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
+    //     navigate("/home");
+    //     return;
+    // }
 
     // 2. NẾU HỢP LỆ THÌ MỚI GỌI API LẤY USERS
     const fetchAllUsers = async () => {
@@ -51,20 +51,19 @@ export default function AdminUsersPage() {
         const storedUser = localStorage.getItem("user");
 
         if (!token || !storedUser) {
-            alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
             navigate("/");
             return;
         }
 
         const userObj = JSON.parse(storedUser);
+
         if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
-            alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
             navigate("/home");
             return;
         }
 
         fetchAllUsers();
-    }, [navigate]);
+    }, []);
 
     const setDefaultMockData = () => {
         setUsers([
