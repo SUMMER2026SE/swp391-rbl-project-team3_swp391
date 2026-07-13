@@ -204,29 +204,6 @@ export default function TeacherDashboard() {
     };
     
     return (
-        <div className="home-layout">
-            
-            {/* 1. SIDEBAR CHUẨN CỦA NHÓM */}
-            <aside className="sidebar">
-                <div className="logo" onClick={() => navigate("/home")} style={{cursor: 'pointer'}}>PrepAce</div>
-
-                <ul className="menu">
-                    <li 
-                        className={activeTab === "COURSES" ? "active" : ""} 
-                        onClick={() => setActiveTab("COURSES")}
-                        style={activeTab === "COURSES" ? { background: "#eef3ff", color: "#2747d9", fontWeight: "600", cursor: "pointer" } : { cursor: "pointer" }}
-                    >
-                        👨‍🏫 Quản lý khóa học
-                    </li>
-                    <li onClick={() => navigate("/teacher/grading")} style={{ cursor: "pointer", marginTop: "10px" }}>
-                        📝 Chấm bài tự luận
-                    </li>
-                    <li 
-                        className={activeTab === "QA" ? "active" : ""} 
-                        onClick={() => setActiveTab("QA")}
-                        style={activeTab === "QA" ? { background: "#eef3ff", color: "#2747d9", fontWeight: "600", cursor: "pointer" } : { cursor: "pointer" }}
-                    >
-                        💬 Hỏi đáp Học viên
         <div className="teacher-dashboard-layout">
             <aside className="teacher-sidebar">
                 <div className="teacher-brand" onClick={() => navigate("/teacher/dashboard")}>
@@ -263,18 +240,9 @@ export default function TeacherDashboard() {
 
                 {activeTab === "COURSES" && (
                     <>
-                            <h2 style={{ fontSize: "24px", fontWeight: "700", color: "#0f172a", margin: 0 }}>
-                                📚 Quản lý khóa học của tôi
-                            </h2>
-                            
-                            <button 
-                                className="register-btn" 
-                                style={{ padding: "12px 20px", border: "none", borderRadius: "12px", cursor: "pointer", fontWeight: "700", background: "#2747d9", color: "#fff" }}
-                                onClick={() => setCreateCourseModalOpen(true)}
-                            >
-                                + Tạo khóa học mới
-                            </button>
-                        </div>
+                        <h2 style={{ fontSize: "24px", fontWeight: "700", color: "#0f172a", marginBottom: "20px" }}>
+                            📚 Quản lý khóa học của tôi
+                        </h2>
 
                         {/* DANH SÁCH KHÓA HỌC */}
                         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
