@@ -262,6 +262,7 @@ export default function AdminUsersPage() {
 
     return (
         <div className="admin-layout">
+            {/* SIDEBAR TÍCH HỢP HOÀN CHỈNH */}
             <aside className="admin-sidebar">
                 <div className="admin-brand" onClick={() => navigate("/admin")}>
                     <h2>PrepAce <span>Admin</span></h2>
@@ -274,6 +275,7 @@ export default function AdminUsersPage() {
                     <li className={activeMenu === "violations" ? "active" : ""} onClick={() => navigate("/admin/violations")}>🚨 Quản lý vi phạm</li>
                     <li className={activeMenu === "ui" ? "active" : ""} onClick={() => navigate("/admin/ui-config")}>🎨 Cấu hình UI</li>
                     <li className={activeMenu === "sepay" ? "active" : ""} onClick={() => navigate("/admin/sepay-guide")}>💳 Cấu hình SePay</li>
+                    <li className={activeMenu === "categories" ? "active" : ""} onClick={() => navigate("/admin/categories")}>⚙️ Cấu hình danh mục</li>
                 </ul>
                 <div className="admin-logout">
                     <button onClick={handleLogout}>Đăng xuất</button>

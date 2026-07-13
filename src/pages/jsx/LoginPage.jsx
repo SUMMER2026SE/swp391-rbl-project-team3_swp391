@@ -147,10 +147,10 @@ const currentUserId = decoded.userId || decoded.id;
             setMessageType("success");
 
             // 🔥 TỰ ĐỘNG GHI LOG: Đăng nhập bằng tài khoản Google thành công
-            // const currentUserId = data.user?.id || data.user?.userId;
-            // if (currentUserId) {
-            //     await sendActivityLog(currentUserId, data.token, "Đăng nhập hệ thống thông qua tài khoản Google");
-            // }
+             const currentUserId = data.user?.id || data.user?.userId;
+             if (currentUserId) {
+                await sendActivityLog(currentUserId, data.token, "Đăng nhập hệ thống thông qua tài khoản Google");
+             }
 
             // setTimeout(() => {
             //     if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
