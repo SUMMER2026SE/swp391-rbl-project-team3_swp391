@@ -26,12 +26,47 @@ export default function PracticeResultPage() {
             .finally(() => setLoading(false));
     }, [attemptId, result]);
 
+    // Tự động phân loại danh sách câu hỏi theo tab được chọn
     const filteredDetails = useMemo(() => {
-        if (!result) return [];
-        if (filter === "wrong") return result.details.filter((d) => !d.correct);
-        if (filter === "correct") return result.details.filter((d) => d.correct);
-        return result.details;
+        if (!result || !result.details) return [];
+
+        return result.details.filter((d) => {
+            const type = d.questionType || d.question_type;
+            const isPendingEssay = (type === "ESSAY" || d.questionType === "ESSAY") && (d.score === null || d.score === undefined);
+
+            if (filter === "wrong") {
+                // Câu sai thực sự: không đúng, không phải tự luận đang chờ chấm, và có câu trả lời
+                return !d.correct && !isPendingEssay && d.answered;
+            }
+            if (filter === "correct") {
+                return d.correct;
+            }
+            if (filter === "pending") {
+                // Nhóm chờ chấm bài
+                return isPendingEssay;
+            }
+            return true; // Tab "Tất cả"
+        });
     }, [result, filter]);
+
+    // Tính toán động số lượng câu cho từng Tab hiển thị
+    const counts = useMemo(() => {
+        if (!result || !result.details) return { all: 0, correct: 0, wrong: 0, pending: 0 };
+
+        let correct = 0;
+        let wrong = 0;
+        let pending = 0;
+
+        result.details.forEach((d) => {
+            const type = d.questionType || d.question_type;
+            const isPendingEssay = (type === "ESSAY" || d.questionType === "ESSAY") && (d.score === null || d.score === undefined);
+            if (d.correct) correct++;
+            else if (isPendingEssay) pending++;
+            else if (d.answered) wrong++;
+        });
+
+        return { all: result.details.length, correct, wrong, pending };
+    }, [result]);
 
     if (loading) return <div className="pr-page"><p className="pr-status">Đang tải kết quả...</p></div>;
     if (error) return <div className="pr-page"><p className="pr-status pr-status-error">{error}</p></div>;
@@ -81,16 +116,23 @@ export default function PracticeResultPage() {
             />
 
             {/* ============ BỘ LỌC XEM LẠI ============ */}
+            {/* ============ BỘ LỌC XEM LẠI ĐÃ ĐƯỢC PHÂN LOẠI CHUẨN ============ */}
             <div className="pr-filter">
                 <button className={filter === "all" ? "pr-filter-active" : ""} onClick={() => setFilter("all")}>
-                    Tất cả ({result.details.length})
-                </button>
-                <button className={filter === "wrong" ? "pr-filter-active" : ""} onClick={() => setFilter("wrong")}>
-                    ❌ Câu sai ({result.details.length - result.correctCount})
+                    Tất cả ({counts.all})
                 </button>
                 <button className={filter === "correct" ? "pr-filter-active" : ""} onClick={() => setFilter("correct")}>
-                    ✅ Câu đúng ({result.correctCount})
+                    ✅ Câu đúng ({counts.correct})
                 </button>
+                <button className={filter === "wrong" ? "pr-filter-active" : ""} onClick={() => setFilter("wrong")}>
+                    ❌ Câu sai ({counts.wrong})
+                </button>
+                {/* Nếu bài làm có câu tự luận thì tự động mở thêm Tab Chờ Chấm */}
+                {counts.pending > 0 && (
+                    <button className={filter === "pending" ? "pr-filter-active" : ""} onClick={() => setFilter("pending")} style={{ color: "#b45309" }}>
+                        ⏳ Chờ chấm ({counts.pending})
+                    </button>
+                )}
             </div>
 
             {/* ============ CHI TIẾT TỪNG CÂU ============ */}
@@ -98,14 +140,32 @@ export default function PracticeResultPage() {
                 {filteredDetails.map((d) => (
                     <section
                         key={d.questionId}
-                        className={`pr-question-card ${d.correct ? "pr-card-correct" : "pr-card-wrong"}`}
+                        className={`pr-question-card ${d.correct
+                                ? "pr-card-correct"
+                                : (d.questionType === "ESSAY" && (d.score === null || d.score === undefined))
+                                    ? "pr-card-pending"
+                                    : "pr-card-wrong"
+                            }`}
+                        style={{
+                            borderLeft: d.correct
+                                ? "5px solid #10b981"
+                                : (d.questionType === "ESSAY" && (d.score === null || d.score === undefined))
+                                    ? "5px solid #f59e0b" // Chưa chấm -> Viền vàng cam
+                                    : "5px solid #ef4444"  // Đã chấm sai (score = 0) -> Đổi sang viền đỏ chuẩn câu sai
+                        }}
                     >
                         <div className="pr-question-head">
                             <span className="pr-question-no">Câu {d.questionOrder}</span>
                             {d.topic && <span className="pr-topic-chip">{d.topic}</span>}
                             {d.correct ? (
                                 <span className="pr-badge pr-badge-correct">✔ Đúng</span>
+                            ) : (d.questionType === "ESSAY" || (!d.options || d.options.length === 0)) && (d.score === null || d.score === undefined) ? (
+                                /* 🔥 Chỉ hiển thị Chờ chấm khi hoàn toàn chưa được nhập điểm */
+                                <span className="pr-badge pr-badge-pending" style={{ background: "#fffbeb", color: "#b45309", border: "1px solid #fde68a", padding: "4px 8px", borderRadius: "4px", fontSize: "12px", fontWeight: "600" }}>
+                                    ⏳ Tự luận / Chờ giáo viên chấm
+                                </span>
                             ) : d.answered ? (
+                                /* 🔥 Khi score = 0, hệ thống nhảy xuống đây hiển thị chữ Sai màu đỏ cực chuẩn */
                                 <span className="pr-badge pr-badge-wrong">✘ Sai</span>
                             ) : (
                                 <span className="pr-badge pr-badge-skip">— Bỏ trống</span>
@@ -115,24 +175,36 @@ export default function PracticeResultPage() {
                         <p className="pr-question-content">{d.questionContent}</p>
 
                         <div className="pr-options">
-                            {d.options.map((o, oi) => {
-                                // Xanh: đáp án đúng thật sự. Đỏ: đáp án user chọn nhưng sai.
-                                let cls = "pr-option";
-                                if (o.correct) cls += " pr-option-correct";
-                                else if (o.selected) cls += " pr-option-wrong";
-                                return (
-                                    <div key={o.optionId} className={cls}>
-                                        <span className="pr-option-label">{OPTION_LABELS[oi]}</span>
-                                        <span className="pr-option-content">{o.optionContent}</span>
-                                        {o.selected && (
-                                            <span className="pr-option-tag pr-tag-you">Bạn chọn</span>
-                                        )}
-                                        {o.correct && (
-                                            <span className="pr-option-tag pr-tag-key">Đáp án đúng</span>
-                                        )}
+                            {(!d.options || d.options.length === 0) ? (
+                                /* 🔥 HIỂN THỊ BÀI LÀM VĂN BẢN (TỰ LUẬN / ĐÁP ÁN NGẮN) */
+                                <div className="pr-essay-review-box" style={{ padding: "15px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", marginTop: "10px" }}>
+                                    <div style={{ marginBottom: "5px" }}>
+                                        <strong style={{ color: "#64748b", fontSize: "14px" }}>✍️ Bài làm của bạn:</strong>
+                                        <p style={{ margin: "8px 0 0 0", color: "#1e293b", fontWeight: "500", fontSize: "15px", whiteSpace: "pre-wrap", background: "#fff", padding: "10px", borderRadius: "6px", border: "1px solid #f1f5f9" }}>
+                                            {d.essayAnswer || <span style={{ color: "#94a3b8", fontStyle: "italic" }}>Học sinh bỏ trống không trả lời câu này</span>}
+                                        </p>
                                     </div>
-                                );
-                            })}
+                                </div>
+                            ) : (
+                                /* TRẮC NGHIỆM TRUYỀN THỐNG GIỮ NGUYÊN CODE CŨ */
+                                d.options.map((o, oi) => {
+                                    let cls = "pr-option";
+                                    if (o.correct) cls += " pr-option-correct";
+                                    else if (o.selected) cls += " pr-option-wrong";
+                                    return (
+                                        <div key={o.optionId} className={cls}>
+                                            <span className="pr-option-label">{OPTION_LABELS[oi]}</span>
+                                            <span className="pr-option-content">{o.optionContent}</span>
+                                            {o.selected && (
+                                                <span className="pr-option-tag pr-tag-you">Bạn chọn</span>
+                                            )}
+                                            {o.correct && (
+                                                <span className="pr-option-tag pr-tag-key">Đáp án đúng</span>
+                                            )}
+                                        </div>
+                                    );
+                                })
+                            )}
                         </div>
 
                         {/* Box giải thích chi tiết lỗi sai */}

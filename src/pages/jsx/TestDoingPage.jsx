@@ -129,7 +129,7 @@ export default function TestDoingPage() {
             {/* ===== TOP BAR (sticky) ===== */}
             <header className="td-topbar">
                 <div className="td-topbar-left" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <button 
+                    <button
                         className="td-btn-back"
                         onClick={() => {
                             if (window.confirm("Cảnh báo: Nếu thoát bây giờ, tiến trình làm bài có thể bị gián đoạn. Bạn có chắc chắn muốn trở về Trang chủ không?")) {
@@ -166,26 +166,62 @@ export default function TestDoingPage() {
                             </div>
                             <p className="td-question-content">{q.questionContent}</p>
                             <div className="td-options">
-                                {q.options.map((o, oi) => {
-                                    const selected = answers[q.questionId] === o.optionId;
-                                    return (
-                                        <label
-                                            key={o.optionId}
-                                            className={`td-option ${selected ? "td-option-selected" : ""}`}
-                                        >
-                                            <input
-                                                type="radio"
-                                                name={`q-${q.questionId}`}
-                                                checked={selected}
-                                                onChange={() => choose(q.questionId, o.optionId)}
-                                            />
-                                            <span className="td-option-label">{OPTION_LABELS[oi]}</span>
-                                            <span className="td-option-content">{o.optionContent}</span>
-                                            {selected && <span className="td-option-check">✓</span>}
-                                        </label>
-                                    );
-                                })}
-                            </div>
+    {(() => {
+        // Tự động bắt tất cả các kiểu đặt tên biến có thể xảy ra từ Backend
+        const type = q.questionType || q.question_type || q.type;
+        const hasOptions = q.options && q.options.length > 0;
+
+        // TRƯỜNG HỢP 1: Cấu hình câu TỰ LUẬN (ESSAY)
+        // Hoặc tự động nhận diện nếu không có options và nội dung chứa chữ "tiếp tuyến/tự luận"
+        if (type === "ESSAY" || (!hasOptions && q.questionContent?.toLowerCase().includes("tiếp tuyến"))) {
+            return (
+                <textarea
+                    className="td-option-essay"
+                    placeholder="Nhập bài làm tự luận chi tiết của bạn tại đây..."
+                    value={answers[q.questionId] || ""}
+                    onChange={(e) => choose(q.questionId, e.target.value)}
+                    style={{ width: "100%", minHeight: "120px", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", resize: "vertical" }}
+                />
+            );
+        }
+
+        // TRƯỜNG HỢP 2: Cấu hình câu ĐÁP ÁN NGẮN (SHORT_ANSWER)
+        // Hoặc tự động nhận diện nếu kho câu hỏi trống trơn không có options trắc nghiệm
+        if (type === "SHORT_ANSWER" || !hasOptions) {
+            return (
+                <input
+                    type="text"
+                    className="td-option-short"
+                    placeholder="Nhập đáp án ngắn (Ví dụ: 3)..."
+                    value={answers[q.questionId] || ""}
+                    onChange={(e) => choose(q.questionId, e.target.value)}
+                    style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none" }}
+                />
+            );
+        }
+
+        // TRƯỜNG HỢP 3: Câu hỏi TRẮC NGHIỆM truyền thống
+        return q.options.map((o, oi) => {
+            const selected = answers[q.questionId] === o.optionId;
+            return (
+                <label
+                    key={o.optionId}
+                    className={`td-option ${selected ? "td-option-selected" : ""}`}
+                >
+                    <input
+                        type="radio"
+                        name={`q-${q.questionId}`}
+                        checked={selected}
+                        onChange={() => choose(q.questionId, o.optionId)}
+                    />
+                    <span className="td-option-label">{OPTION_LABELS[oi]}</span>
+                    <span className="td-option-content">{o.optionContent}</span>
+                    {selected && <span className="td-option-check">✓</span>}
+                </label>
+            );
+        });
+    })()}
+</div>
                         </section>
                     ))}
                 </main>
