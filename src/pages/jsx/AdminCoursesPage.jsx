@@ -5,59 +5,30 @@ import "../css/AdminUsersPage.css";
 
 export default function AdminCoursesPage() {
     const navigate = useNavigate();
-    const [activeMenu] = useState("courses");
+    
     const [courses, setCourses] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [loading, setLoading] = useState(true);
 
-    // 1. KHỞI TẠO STATE: Giữ nguyên dữ liệu mẫu để demo
-    const [courses, setCourses] = useState([
-        { id: 1, title: "Mastering Mathematics 12", teacher: "Nguyễn Minh Quân", price: "599,000đ", status: "PUBLISHED" },
-        { id: 2, title: "Physics Problem Solving", teacher: "Trần Bảo Châu", price: "499,000đ", status: "PUBLISHED" },
-        { id: 4, title: "Tuyệt đỉnh Casio", teacher: "Nguyễn Minh Quân", price: "299,000đ", status: "PENDING" }, 
-    ]);
+    // Lọc khóa học theo từ khóa tìm kiếm
+    const filteredCourses = courses.filter(course => {
+        const title = (course.title || course.courseTitle || "").toLowerCase();
+        const teacher = (course.teacherName || course.teacher || "").toLowerCase();
+        const search = searchTerm.toLowerCase();
+        
+        return title.includes(search) || teacher.includes(search);
+    });
 
-    useEffect(() => {
-    // 1. KIỂM TRA QUYỀN ADMIN TRƯỚC
-    const token = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
-
-    if (!token || !storedUser) {
-        alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
-        navigate("/");
-        return;
-    }
-
-    const userObj = JSON.parse(storedUser);
-    if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
-        alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
-        navigate("/home");
-        return;
-    }
-
-    // 2. NẾU HỢP LỆ THÌ MỚI GỌI API LẤY COURSES
-    const fetchAllCourses = async () => {
-        try {
-            const response = await axiosClient.get("/admin/courses");
-            console.log("📡 DỮ LIỆU THỰC TẾ TỪ BACKEND TRẢ VỀ:", response.data);
-
-            if (response.data && Array.isArray(response.data)) {
-                setCourses(response.data);
-            }
-        } catch (error) {
-            console.error("❌ LỖI GỌI API BACKEND (Có thể do Token/URL):", error);
-        }
-    };
-
+    // Kiểm tra quyền Admin + Load dữ liệu
     useEffect(() => {
         const token = localStorage.getItem("token");
         const storedUser = localStorage.getItem("user");
 
         if (!token || !storedUser) {
-            alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
+            alert("⚠️ Bạn chưa đăng nhập!");
             navigate("/");
             return;
         }
-    };
 
         const userObj = JSON.parse(storedUser);
         if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
@@ -69,14 +40,39 @@ export default function AdminCoursesPage() {
         fetchAllCourses();
     }, [navigate]);
 
+    const fetchAllCourses = async () => {
+        setLoading(true);
+        try {
+            const response = await axiosClient.get("/admin/courses");
+            console.log("📡 Dữ liệu khóa học từ backend:", response.data);
+            
+            if (response.data && Array.isArray(response.data)) {
+                setCourses(response.data);
+            } else {
+                setCourses([]);
+            }
+        } catch (error) {
+            console.error("❌ Lỗi khi tải danh sách khóa học:", error);
+            alert("Không thể tải danh sách khóa học từ server.");
+            setCourses([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleApproveCourse = async (courseId) => {
         if (!courseId || !window.confirm(`Bạn có chắc chắn muốn duyệt khóa học #${courseId}?`)) return;
+        
         try {
             await axiosClient.patch(`/admin/courses/${courseId}/status`, { status: "PUBLISHED" });
-            setCourses(prev => prev.map(c => (c.id === courseId || c.courseId === courseId) ? { ...c, status: "PUBLISHED" } : c));
+            setCourses(prev => prev.map(c => 
+                (c.id === courseId || c.courseId === courseId) 
+                    ? { ...c, status: "PUBLISHED" } 
+                    : c
+            ));
             alert(`✅ Khóa học #${courseId} đã được duyệt và xuất bản!`);
         } catch (error) {
-            alert("Lỗi kết nối hoặc không thể duyệt khóa học này.");
+            alert("❌ Lỗi khi duyệt khóa học: " + (error.response?.data?.message || error.message));
         }
     };
 
@@ -86,33 +82,46 @@ export default function AdminCoursesPage() {
         if (!reason) return;
 
         try {
-            await axiosClient.patch(`/admin/courses/${courseId}/status`, { status: "REJECTED", note: reason });
-            setCourses(prev => prev.map(c => (c.id === courseId || c.courseId === courseId) ? { ...c, status: "REJECTED" } : c));
-            alert(`Đã gửi yêu cầu chỉnh sửa cho giảng viên.`);
+            await axiosClient.patch(`/admin/courses/${courseId}/status`, { 
+                status: "REJECTED", 
+                note: reason 
+            });
+            setCourses(prev => prev.map(c => 
+                (c.id === courseId || c.courseId === courseId) 
+                    ? { ...c, status: "REJECTED" } 
+                    : c
+            ));
+            alert("✅ Đã gửi yêu cầu chỉnh sửa cho giảng viên.");
         } catch (error) {
-            alert("Lỗi kết nối hoặc không thể từ chối khóa học này.");
+            alert("❌ Lỗi khi từ chối khóa học: " + (error.response?.data?.message || error.message));
         }
     };
 
     const handleRevokeToPending = async (courseId) => {
-        if (!courseId || !window.confirm(`Hạ khóa học #${courseId} từ "Đã xuất bản" xuống "Chờ duyệt"?`)) return;
+        if (!courseId || !window.confirm(`Hạ khóa học #${courseId} xuống trạng thái "Chờ duyệt"?`)) return;
+        
         try {
             await axiosClient.patch(`/admin/courses/${courseId}/status`, { status: "PENDING" });
-            setCourses(prev => prev.map(c => (c.id === courseId || c.courseId === courseId) ? { ...c, status: "PENDING" } : c));
-            alert(`🔄 Khóa học #${courseId} đã chuyển về trạng thái Chờ kiểm duyệt.`);
+            setCourses(prev => prev.map(c => 
+                (c.id === courseId || c.courseId === courseId) 
+                    ? { ...c, status: "PENDING" } 
+                    : c
+            ));
+            alert(`🔄 Khóa học #${courseId} đã chuyển về trạng thái Chờ duyệt.`);
         } catch (error) {
-            alert("Lỗi kết nối hoặc không thể hạ trạng thái khóa học.");
+            alert("❌ Lỗi khi hạ trạng thái: " + (error.response?.data?.message || error.message));
         }
     };
 
     const handleDeleteCourse = async (courseId) => {
-        if (!courseId || !window.confirm(`🚨 CẢNH BÁO: Bạn có chắc chắn muốn XÓA HOÀN TOÀN khóa học #${courseId}? Hành động này không thể hoàn tác!`)) return;
+        if (!courseId || !window.confirm(`🚨 CẢNH BÁO: Xóa vĩnh viễn khóa học #${courseId}?`)) return;
+        
         try {
             await axiosClient.delete(`/admin/courses/${courseId}`);
-            alert(`🗑️ Đã xóa hoàn toàn khóa học #${courseId} thành công!`);
+            alert(`🗑️ Đã xóa khóa học #${courseId} thành công!`);
             fetchAllCourses();
         } catch (error) {
-            alert("Lỗi kết nối hoặc không có quyền xóa khóa học vĩnh viễn.");
+            alert("❌ Lỗi khi xóa khóa học: " + (error.response?.data?.message || error.message));
         }
     };
 
@@ -125,7 +134,7 @@ export default function AdminCoursesPage() {
     return (
         <div className="admin-layout">
             <aside className="admin-sidebar">
-                <div className="admin-brand" onClick={() => navigate("/admin")}>
+                <div className="admin-brand" onClick={() => navigate("/admin")} style={{ cursor: "pointer" }}>
                     <h2>PrepAce <span>Admin</span></h2>
                 </div>
                 <ul className="admin-menu">
@@ -147,7 +156,7 @@ export default function AdminCoursesPage() {
                 <header className="admin-header">
                     <div className="header-title">
                         <h1>Quản lý khóa học</h1>
-                        <p>Kiểm duyệt, xem trước giao diện và quyết định xuất bản khóa học.</p>
+                        <p>Kiểm duyệt, thẩm định và quyết định xuất bản khóa học trên PrepAce.</p>
                     </div>
                 </header>
 
@@ -156,12 +165,13 @@ export default function AdminCoursesPage() {
                         <div className="manage-header">
                             <input
                                 type="text"
-                                placeholder="Tìm kiếm theo tên hoặc ID khóa học..."
+                                placeholder="Tìm kiếm theo tên khóa học hoặc giáo viên..."
                                 className="manage-search"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
+
                         <div className="table-responsive">
                             <table className="admin-table">
                                 <thead>
@@ -175,21 +185,20 @@ export default function AdminCoursesPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {Array.isArray(filteredCourses) && filteredCourses.length > 0 ? (
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan="6" style={{ textAlign: "center", padding: "40px" }}>
+                                                Đang tải dữ liệu...
+                                            </td>
+                                        </tr>
+                                    ) : filteredCourses.length > 0 ? (
                                         filteredCourses.map((c, index) => {
-                                            // Fallback an toàn cho ID nếu object lỗi rỗng id
-                                            const currentId = c.id || c.courseId || (index + 1);
-
-                                            // Nhận diện linh hoạt trường tên khóa học
-                                            const currentTitle = c.title || c.courseTitle || c.courseDescription || c.course_description || `Khóa học số #${currentId}`;
-                                            const currentStatus = c.status ? String(c.status).toUpperCase() : "PENDING";
-
-                                            let formattedPrice = "0đ";
-                                            if (c.price !== undefined && c.price !== null) {
-                                                formattedPrice = typeof c.price === "number"
-                                                    ? c.price.toLocaleString() + "đ"
-                                                    : String(c.price) + "đ";
-                                            }
+                                            const currentId = c.id || c.courseId || index + 1;
+                                            const currentTitle = c.title || c.courseTitle || `Khóa học #${currentId}`;
+                                            const currentStatus = String(c.status || "PENDING").toUpperCase();
+                                            const formattedPrice = c.price 
+                                                ? (typeof c.price === "number" ? c.price.toLocaleString() : String(c.price)) + "đ" 
+                                                : "0đ";
 
                                             return (
                                                 <tr key={currentId}>
@@ -202,11 +211,25 @@ export default function AdminCoursesPage() {
                                                             {currentTitle}
                                                         </strong>
                                                     </td>
-                                                    <td>{c.teacherName || c.teacher_name || `ID Giáo viên: ${c.teacherId || c.teacher_id || "Chưa rõ"}`}</td>
+                                                    <td>
+                                                        {c.teacherName || c.teacher || c.teacher_id 
+                                                            ? `GV: ${c.teacherName || c.teacher || c.teacher_id}` 
+                                                            : "Chưa có"}
+                                                    </td>
                                                     <td>{formattedPrice}</td>
                                                     <td>
-                                                        <span className={`status-badge ${currentStatus === 'PUBLISHED' || currentStatus === 'APPROVED' ? 'success' : (currentStatus === 'REJECTED' ? 'banned' : 'pending')}`}>
-                                                            {currentStatus === 'PUBLISHED' || currentStatus === 'APPROVED' ? 'Đã xuất bản' : (currentStatus === 'REJECTED' ? 'Yêu cầu sửa' : 'Chờ duyệt')}
+                                                        <span className={`status-badge ${
+                                                            currentStatus === 'PUBLISHED' || currentStatus === 'APPROVED' 
+                                                                ? 'success' 
+                                                                : currentStatus === 'REJECTED' 
+                                                                    ? 'banned' 
+                                                                    : 'pending'
+                                                        }`}>
+                                                            {currentStatus === 'PUBLISHED' || currentStatus === 'APPROVED' 
+                                                                ? 'Đã xuất bản' 
+                                                                : currentStatus === 'REJECTED' 
+                                                                    ? 'Yêu cầu sửa' 
+                                                                    : 'Chờ duyệt'}
                                                         </span>
                                                     </td>
                                                     <td>
@@ -219,8 +242,20 @@ export default function AdminCoursesPage() {
 
                                                         {(currentStatus === 'PENDING' || currentStatus === 'DRAFT') && (
                                                             <>
-                                                                <button className="action-btn approve" style={{ marginLeft: "6px" }} onClick={() => handleApproveCourse(currentId)}>✅ Duyệt</button>
-                                                                <button className="action-btn reject" style={{ marginLeft: "6px" }} onClick={() => handleRejectCourse(currentId)}>❌ Sửa</button>
+                                                                <button 
+                                                                    className="action-btn approve" 
+                                                                    style={{ marginLeft: "6px" }}
+                                                                    onClick={() => handleApproveCourse(currentId)}
+                                                                >
+                                                                    ✅ Duyệt
+                                                                </button>
+                                                                <button 
+                                                                    className="action-btn reject" 
+                                                                    style={{ marginLeft: "6px" }}
+                                                                    onClick={() => handleRejectCourse(currentId)}
+                                                                >
+                                                                    ❌ Sửa
+                                                                </button>
                                                             </>
                                                         )}
 
@@ -248,8 +283,8 @@ export default function AdminCoursesPage() {
                                         })
                                     ) : (
                                         <tr>
-                                            <td colSpan="6" style={{ textAlign: "center", padding: "20px", color: "#9ca3af" }}>
-                                                {searchTerm ? "❌ Không tìm thấy khóa học nào khớp từ khóa!" : "Hệ thống chưa hiển thị được dữ liệu. Vui lòng kiểm tra lại cấu trúc thuộc tính."}
+                                            <td colSpan="6" style={{ textAlign: "center", padding: "40px", color: "#9ca3af" }}>
+                                                {searchTerm ? "Không tìm thấy khóa học nào khớp với từ khóa." : "Chưa có khóa học nào."}
                                             </td>
                                         </tr>
                                     )}

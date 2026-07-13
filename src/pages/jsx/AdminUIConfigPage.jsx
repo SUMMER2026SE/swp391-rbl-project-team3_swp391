@@ -14,7 +14,6 @@ export default function AdminUIConfigPage() {
         navigate("/home");
         return;
     }
-}, [navigate]);
     
     // State cho Cấu hình Banner
     const [bannerConfig, setBannerConfig] = useState({

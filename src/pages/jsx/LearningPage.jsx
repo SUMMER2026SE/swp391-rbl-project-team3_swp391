@@ -572,9 +572,7 @@ export default function LearningPage() {
                         </button>
                     </div>
                 </div>
-            </div>
-        )}
-    </div>
+                )
 
                     <div className="learning-content">
                         <h1 className="current-lesson-title">{currentLesson.title}</h1>
@@ -880,6 +878,5 @@ export default function LearningPage() {
                     </div>
                 </div>
             </div>
-        </div>
-    );
-}
+        );
+    };
