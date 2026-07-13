@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "../css/HomePage.css";
+import "../css/TeacherDashboard.css"; // 🔥 MỚI: CSS cao cấp dành riêng cho Giáo viên
 import axiosClient from "../../api/axiosClient";
 
 export default function TeacherDashboard() {
@@ -195,62 +195,47 @@ export default function TeacherDashboard() {
             alert("❌ Lỗi khi gửi trả lời: " + (error.response?.data?.message || error.message));
         }
     };
-
-    const handleLogout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        navigate("/");
-    };
-
+    
     return (
-        <div className="home-layout">
-            {/* SIDEBAR */}
-            <aside className="sidebar">
-                <div className="logo" onClick={() => navigate("/home")} style={{ cursor: 'pointer' }}>
-                    PrepAce
+        <div className="teacher-dashboard-layout">
+            <aside className="teacher-sidebar">
+                <div className="teacher-brand" onClick={() => navigate("/teacher/dashboard")}>
+                    PrepAce <span>Teacher</span>
                 </div>
-
-                <ul className="menu">
-                    <li 
-                        className={activeTab === "COURSES" ? "active" : ""}
-                        onClick={() => setActiveTab("COURSES")}
-                    >
-                        👨‍🏫 Quản lý khóa học
+                <ul className="teacher-menu">
+                    <li className={activeTab === "COURSES" ? "active" : ""} onClick={() => setActiveTab("COURSES")}>
+                        📚 Khóa học của tôi
                     </li>
-                    <li 
-                        className={activeTab === "QA" ? "active" : ""}
-                        onClick={() => setActiveTab("QA")}
-                    >
-                        💬 Hỏi đáp Học viên
+                    <li className={activeTab === "QA" ? "active" : ""} onClick={() => setActiveTab("QA")}>
+                        💬 Quản lý Hỏi & Đáp
+                    </li>
+                    <li onClick={() => navigate("/teacher/grading")}>
+                        ✍️ Chấm điểm Tự luận
+                    </li>
+                    <li style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.1)' }} onClick={handleLogout}>
+                        🚪 Đăng xuất
                     </li>
                 </ul>
-
-                <div className="sidebar-actions">
-                    <button className="profile-btn" onClick={() => navigate("/profile")}>
-                        👤 {user?.fullName || "Giáo viên"}
-                    </button>
-                    <button className="logout-btn" onClick={handleLogout}>
-                        Đăng xuất
-                    </button>
-                </div>
             </aside>
 
-            {/* NỘI DUNG CHÍNH */}
-            <main className="content" style={{ maxWidth: "100%", margin: "0" }}>
+            <main className="teacher-main">
+                <header className="teacher-header">
+                    <div>
+                        <h1>Xin chào, Giảng viên {user?.fullName || "Khách"}! 🎓</h1>
+                        <p>Quản lý toàn bộ tiến độ, báo cáo học tập và khóa học của bạn tại đây.</p>
+                    </div>
+                    {activeTab === "COURSES" && (
+                        <button className="teacher-create-btn" onClick={() => setCreateCourseModalOpen(true)}>
+                            ✨ + Tạo Khóa Học Mới
+                        </button>
+                    )}
+                </header>
+
                 {activeTab === "COURSES" && (
                     <>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
-                            <h2 style={{ fontSize: "24px", fontWeight: "700", color: "#0f172a", margin: 0 }}>
-                                📚 Quản lý khóa học của tôi
-                            </h2>
-                            <button 
-                                className="register-btn" 
-                                style={{ padding: "12px 20px", border: "none", borderRadius: "12px", cursor: "pointer", fontWeight: "700" }}
-                                onClick={handleCreateCourse}
-                            >
-                                + Tạo khóa học mới
-                            </button>
-                        </div>
+                        <h2 style={{ fontSize: "24px", fontWeight: "700", color: "#0f172a", marginBottom: "20px" }}>
+                            📚 Quản lý khóa học của tôi
+                        </h2>
 
                         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                             {myCourses.length > 0 ? myCourses.map(course => (

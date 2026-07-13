@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import entryTestService from "../../services/entryTestService";
+import practiceService from "../../services/practiceService";
+import ConfirmModal from "../../components/ConfirmModal";
 import "../css/EntryTestPage.css";
 
 export default function EntryTestPage() {
@@ -68,6 +70,22 @@ export default function EntryTestPage() {
     const choose = (questionId, optionContent) =>
         setAnswers((prev) => ({ ...prev, [questionId]: optionContent }));
 
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [confirmMsg, setConfirmMsg] = useState("");
+
+    const doSubmit = async () => {
+        setSubmitting(true);
+        setShowConfirm(false);
+        try {
+            const result = await entryTestService.submit(sessionsId, answers);
+            localStorage.setItem("entryTestAttempt", result.attemptId || result.sessionsId);
+            navigate(`/entry-test/result/${result.attemptId || result.sessionsId}`, { state: result });
+        } catch (e) {
+            alert("Không thể nộp bài: " + (e.response?.data?.message || e.message));
+            setSubmitting(false);
+        }
+    };
+
     const handleSubmit = async (auto = false) => {
         if (submitting) return;
         const total = questions.length;
@@ -76,17 +94,11 @@ export default function EntryTestPage() {
             return;
         }
         if (!auto && Object.keys(answers).length < total) {
-            if (!window.confirm("Bạn còn câu chưa trả lời. Vẫn nộp bài?")) return;
+            setConfirmMsg(`Bạn còn ${total - Object.keys(answers).length} câu chưa trả lời. Vẫn nộp bài?`);
+            setShowConfirm(true);
+            return;
         }
-        try {
-            setSubmitting(true);
-            const result = await entryTestService.submit(sessionsId, answers);
-            localStorage.setItem("entryTestAttempt", result.attemptId || result.sessionsId);
-            navigate(`/entry-test/result/${result.attemptId || result.sessionsId}`, { state: result });
-        } catch (e) {
-            alert("Không thể nộp bài: " + (e.response?.data?.message || e.message));
-            setSubmitting(false);
-        }
+        doSubmit();
     };
 
     const fmtTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -150,6 +162,14 @@ export default function EntryTestPage() {
                         {submitting ? "Đang chấm điểm..." : "Nộp bài & xem đánh giá"}
                     </button>
                 </div>
+                <ConfirmModal
+                    isOpen={showConfirm}
+                    title="Xác nhận nộp bài"
+                    message={confirmMsg}
+                    onConfirm={doSubmit}
+                    onCancel={() => setShowConfirm(false)}
+                    confirmText="Vẫn nộp bài"
+                />
             </div>
         );
     }

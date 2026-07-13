@@ -357,6 +357,79 @@ function LoginPage({ switchToRegister }) {
 
                 </div>
             </div>
+
+            {message && (
+                <div className={`auth-message ${messageType}`}>
+                    {messageType === "success" ? "✅" : "⚠️"} {message}
+                </div>
+            )}
+
+            <form onSubmit={handleLogin}>
+                <div className="auth-form-group">
+                    <label>Email Address</label>
+                    <input
+                        type="email"
+                        className="auth-form-input"
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
+                </div>
+
+                <div className="auth-form-group">
+                    <label>Password</label>
+                    <input
+                        type="password"
+                        className="auth-form-input"
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                    />
+                </div>
+
+                <div className="auth-form-options">
+                    <label className="auth-checkbox-label">
+                        <input
+                            type="checkbox"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                        />
+                        Remember me
+                    </label>
+                    <span onClick={() => navigate("/forgot-password")} className="auth-forgot-link">
+                        Forgot Password?
+                    </span>
+                </div>
+
+                <button type="submit" className="auth-submit-btn" disabled={loading}>
+                    {loading ? "Logging In..." : "Login"}
+                </button>
+
+                <div className="auth-divider">
+                    <span>OR CONTINUE WITH</span>
+                </div>
+
+                <div className="auth-google-btn-wrapper">
+                    <GoogleLogin
+                        onSuccess={handleGoogleLogin}
+                        onError={() => {
+                            setMessage("Google Login Failed");
+                            setMessageType("error");
+                        }}
+                        theme="filled_blue"
+                        shape="pill"
+                    />
+                </div>
+            </form>
+
+            <div className="auth-switch-text">
+                Don't have an account?
+                <span onClick={switchToRegister} className="auth-switch-link">
+                    Create an account
+                </span>
+            </div>
         </div>
     );
 }

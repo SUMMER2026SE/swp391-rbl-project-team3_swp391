@@ -133,40 +133,42 @@ export default function AdminDashboardPage() {
                         <h1>Tổng quan doanh thu</h1>
                         <p>Theo dõi dòng tiền và sự phát triển của nền tảng thực tế.</p>
                     </div>
-                    <div className="admin-profile">
-                        <img src="https://i.pravatar.cc/100?img=11" alt="Admin" />
+                    <div className="header-user">
                         <span>System Admin</span>
+                        <img src="https://i.pravatar.cc/100?img=11" alt="Admin" className="admin-avatar" />
                     </div>
                 </header>
 
                 <div className="admin-content">
                     {/* KPI CARDS ĐÃ ĐỒNG BỘ TOÀN BỘ TREND ĐỘNG */}
-                    <div className="kpi-grid">
-                        <div className="kpi-card revenue">
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <div className="stat-icon">💰</div>
                             <h3>Tổng doanh thu (Tháng)</h3>
-                            <div className="kpi-value">{loading ? "Đang nạp..." : stats.revenue}</div>
-                            <div className="kpi-trend positive">{stats.revenueTrend}</div>
+                            <h2>{loading ? "Đang nạp..." : stats.revenue}</h2>
+                            <div className="stat-trend positive">{stats.revenueTrend}</div>
                         </div>
-                        <div className="kpi-card">
+                        <div className="stat-card">
+                            <div className="stat-icon">👥</div>
                             <h3>Học viên mới</h3>
-                            <div className="kpi-value">{loading ? "..." : stats.students}</div>
-                            <div className="kpi-trend positive">{stats.studentTrend}</div>
+                            <h2>{loading ? "..." : stats.students}</h2>
+                            <div className="stat-trend positive">{stats.studentTrend}</div>
                         </div>
-                        <div className="kpi-card">
+                        <div className="stat-card">
+                            <div className="stat-icon">📚</div>
                             <h3>Khóa học đang bán</h3>
-                            <div className="kpi-value">{loading ? "..." : stats.activeCourses}</div>
-                            <div className={`kpi-trend ${stats.courseTrend.includes('↓') ? 'negative' : stats.courseTrend.includes('↑') ? 'positive' : 'neutral'}`}>
-                                {stats.courseTrend}
-                            </div>
+                            <h2>{loading ? "..." : stats.activeCourses}</h2>
+                            <div className="stat-trend neutral">{stats.courseTrend}</div>
                         </div>
-                        <div className="kpi-card">
-                            <h3>Tỷ lệ chuyển đổi</h3>
-                            <div className="kpi-value">{stats.conversionRate}</div>
-                            <div className="kpi-trend positive">{stats.conversionTrend}</div>
+                        <div className="stat-card">
+                            <div className="stat-icon">⚡</div>
+                            <h3>Tỉ lệ chuyển đổi</h3>
+                            <h2>{loading ? "..." : stats.conversionRate}</h2>
+                            <div className="stat-trend neutral">{stats.conversionTrend}</div>
                         </div>
                     </div>
 
-                    <div className="dashboard-bottom">
+                    <div className="dashboard-sections">
                         {/* CHART SECTION */}
                         <div className="chart-section">
                             <div className="section-head">
