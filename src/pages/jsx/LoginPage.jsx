@@ -2,175 +2,139 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
-import axiosClient from "../../api/axiosClient";
-import "../css/LoginPage.css";
 
 function LoginPage({ switchToRegister }) {
-    const navigate = useNavigate();
-
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [rememberMe, setRememberMe] = useState(false);
-
-    const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState("");
 
-    //---------------------------------------------------
-    // Gửi Activity Log
-    //---------------------------------------------------
-    const sendActivityLog = async (userId, token, action) => {
+    const [rememberMe, setRememberMe] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    const navigate = useNavigate();
+
+    // 🔥 HÀM HELPER: Gửi yêu cầu lưu log hoạt động xuống cơ sở dữ liệu
+    const sendActivityLog = async (userId, token, actionText) => {
         try {
-            await fetch(
-                `http://localhost:8080/api/admin/users/${userId}/activity`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({
-                        action,
-                    }),
-                }
-            );
+            await fetch(`http://localhost:8080/api/admin/users/${userId}/activity`, {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ action: actionText })
+            });
         } catch (err) {
-            console.error("Activity Log Error:", err);
+            console.error("❌ Không thể ghi nhận nhật ký hoạt động:", err);
         }
     };
 
-    //---------------------------------------------------
-    // Điều hướng
-    //---------------------------------------------------
-    const redirectByRole = (role) => {
-        switch (role) {
-            case "ADMIN":
-                navigate("/admin/courses");
-                break;
-
-            case "TEACHER":
-                navigate("/teacher/dashboard");
-                break;
-
-            default:
-                navigate("/home");
-        }
-    };
-
-    //---------------------------------------------------
-    // Login thường
-    //---------------------------------------------------
+    // NORMAL LOGIN - ĐÃ SỬA
     const handleLogin = async (e) => {
         e.preventDefault();
 
-        setLoading(true);
-        setMessage("");
-
         try {
-            const response = await fetch(
-                "http://localhost:8080/api/auth/login",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        email: email.trim(),
-                        password,
-                        rememberMe,
-                    }),
-                }
-            );
+            setLoading(true);
+            setMessage("");
+
+            const response = await fetch("http://localhost:8080/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    email: email.trim(), 
+                    password,
+                    rememberMe 
+                }),
+                credentials: "include" // 🔥 Gửi cookie httpOnly
+            });
 
             const data = await response.json();
+            console.log("🔍 Full Response từ backend:", data);
 
             if (!response.ok) {
-                setMessage(data.message || "Login failed");
+                setMessage(data.message || "Đăng nhập thất bại");
                 setMessageType("error");
                 return;
             }
 
-            //---------------------------------------------------
-            // Lưu token
-            //---------------------------------------------------
+            if (data.token) {
+                localStorage.setItem("token", data.token);
 
-            localStorage.setItem("token", data.token);
+                // Giải mã JWT
+                const decoded = jwtDecode(data.token);
+                console.log("🔍 Decoded JWT:", decoded);   // ← Debug quan trọng
 
-            const decoded = jwtDecode(data.token);
+                // Xử lý role an toàn (phòng trường hợp backend chưa có role hoặc tên field khác)
+                let role = "STUDENT"; // Mặc định
 
-            const role =
-                data.user?.role ||
-                data.user?.roleName ||
-                decoded.role ||
-                "STUDENT";
+                if (decoded.role) {
+                    role = decoded.role.replace("ROLE_", "");
+                } else if (decoded.roles) {
+                    role = Array.isArray(decoded.roles) ? decoded.roles[0].replace("ROLE_", "") : "STUDENT";
+                } else if (decoded.authorities) {
+                    role = decoded.authorities[0]?.replace("ROLE_", "") || "STUDENT";
+                }
+const currentUserId = decoded.userId || decoded.id;
+                const user = {
+                    id: currentUserId,
+                    fullName: decoded.fullName || decoded.name || email.split('@')[0] || "Người dùng", 
+                    email: decoded.sub || decoded.email || email,
+                    role: role
+                };
 
-            const user = {
-                id: decoded.userId || decoded.id || data.user?.id,
-                fullName:
-                    decoded.fullName ||
-                    decoded.name ||
-                    data.user?.fullName ||
-                    "",
-                email:
-                    decoded.sub ||
-                    decoded.email ||
-                    data.user?.email ||
-                    email,
-                role,
-            };
+                localStorage.setItem("user", JSON.stringify(user));
+                console.log("✅ User đã lưu:", user);
 
-            localStorage.setItem("user", JSON.stringify(user));
+                // 🔥 TỰ ĐỘNG GHI LOG: Đăng nhập thường thành công
+                if (currentUserId) {
+                    await sendActivityLog(currentUserId, data.token, "Đăng nhập vào hệ thống PrepAce");
+                }
 
-            //---------------------------------------------------
-            // Activity Log
-            //---------------------------------------------------
-
-            if (user.id) {
-                await sendActivityLog(
-                    user.id,
-                    data.token,
-                    "Đăng nhập vào hệ thống PrepAce"
-                );
+                // Điều hướng theo role
+                setTimeout(() => {
+                    if (role === "ADMIN") {
+                        navigate("/admin");
+                    } else if (role === "TEACHER") {
+                        navigate("/teacher/dashboard");
+                    } else {
+                        navigate("/home");
+                    }
+                }, 800);
+            } else {
+                setMessage("Đăng nhập thất bại! (Không nhận được thông tin User)");
+                setMessageType("error");
             }
-
-            setMessage("Đăng nhập thành công!");
-            setMessageType("success");
-
-            setTimeout(() => {
-                redirectByRole(role);
-            }, 700);
-        } catch (err) {
-            console.error(err);
-            setMessage("Không thể kết nối tới server.");
+        } catch (error) {
+            console.error("Login error:", error);
+            setMessage("❌ Lỗi kết nối với server hoặc tài khoản bị khóa");
             setMessageType("error");
         } finally {
             setLoading(false);
         }
     };
 
-    //---------------------------------------------------
-    // Google Login
-    //---------------------------------------------------
+    // GOOGLE LOGIN
     const handleGoogleLogin = async (credentialResponse) => {
         try {
-            const response = await fetch(
+            const res = await fetch(
                 "http://localhost:8080/api/auth/google",
                 {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json",
+                        "Content-Type": "application/json"
                     },
-                    credentials: "include",
                     body: JSON.stringify({
-                        credential: credentialResponse.credential,
+                        credential: credentialResponse.credential
                     }),
+                    credentials: "include" // 🔥
                 }
             );
 
-            const data = await response.json();
+            const data = await res.json();
 
-            if (!response.ok) {
+            if (!res.ok) {
                 setMessage(data.message || "Google Login Failed");
                 setMessageType("error");
                 return;
@@ -179,183 +143,49 @@ function LoginPage({ switchToRegister }) {
             localStorage.setItem("token", data.token);
             localStorage.setItem("user", JSON.stringify(data.user));
 
-            const role =
-                data.user.role ||
-                data.user.roleName ||
-                "STUDENT";
-
-            if (data.user.id) {
-                await sendActivityLog(
-                    data.user.id,
-                    data.token,
-                    "Đăng nhập Google"
-                );
-            }
-
-            setMessage("Google Login Success!");
+            setMessage("✅ Google Login Success!");
             setMessageType("success");
 
-            setTimeout(() => {
-                redirectByRole(role);
-            }, 700);
-        } catch (err) {
-            console.error(err);
-            setMessage("Google Login Error");
-            setMessageType("error");
+            // 🔥 TỰ ĐỘNG GHI LOG: Đăng nhập bằng tài khoản Google thành công
+            // const currentUserId = data.user?.id || data.user?.userId;
+            // if (currentUserId) {
+            //     await sendActivityLog(currentUserId, data.token, "Đăng nhập hệ thống thông qua tài khoản Google");
+            // }
+
+            // setTimeout(() => {
+            //     if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
+//         navigate("/teacher/dashboard");
+            //     } else if (data.user?.role === "ADMIN" || data.user?.roleId === 1) {
+            //         navigate("/admin/courses");
+            //     } else {
+            //         navigate("/home");
+            //     }
+            // }, 800);
+
+            const role = data.user.roleName || data.user.role || "STUDENT";
+                setTimeout(() => {
+                    if (role === "ADMIN") {
+                        navigate("/admin");
+                    } else if (role === "TEACHER") {
+                        navigate("/teacher/dashboard");
+                    } else {
+                        navigate("/home");
+                    }
+                }, 800);
+        } catch (error) {
+            console.error(error);
+            setMessage("❌ Google Login Error");
         }
+
+        console.log("GOOGLE RESPONSE:", credentialResponse);
+        console.log("CREDENTIAL:", credentialResponse?.credential);
     };
 
     return (
-        <div className="login-container">
-            <div className="login-card">
-
-                {/* LEFT */}
-
-                <div className="login-left">
-                    <div className="overlay-circle top"></div>
-                    <div className="overlay-circle bottom"></div>
-
-                    <div className="left-content">
-                        <h1>
-                            Welcome Back <br />
-                            to PrepAce
-                        </h1>
-
-                        <p>
-                            Continue your learning journey with AI-powered
-                            university preparation, quizzes, assignments,
-                            and smart learning tools.
-                        </p>
-
-                        <div className="feature-list">
-                            <div className="feature-item">
-                                <span className="dot"></span>
-                                <p>AI Learning Assistant</p>
-                            </div>
-
-                            <div className="feature-item">
-                                <span className="dot"></span>
-                                <p>Track Study Progress</p>
-                            </div>
-
-                            <div className="feature-item">
-                                <span className="dot"></span>
-                                <p>Practice Exams & Quizzes</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* RIGHT */}
-
-                <div className="login-right">
-
-                    <div className="login-header">
-                        <h2>Login</h2>
-                        <p>Login to continue learning with PrepAce.</p>
-                    </div>
-
-                    {message && (
-                        <div className={`message-box ${messageType}`}>
-                            {message}
-                        </div>
-                    )}
-
-                    <form className="login-form" onSubmit={handleLogin}>
-
-                        <div className="input-group">
-                            <label>Email</label>
-
-                            <input
-                                type="email"
-                                value={email}
-                                placeholder="Enter your email"
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div className="input-group">
-                            <label>Password</label>
-
-                            <input
-                                type="password"
-                                value={password}
-                                placeholder="Enter your password"
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div
-                            className="login-options"
-                            style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                marginBottom: 15,
-                            }}
-                        >
-                            <label
-                                style={{
-                                    display: "flex",
-                                    gap: 6,
-                                    alignItems: "center",
-                                }}
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={rememberMe}
-                                    onChange={(e) =>
-                                        setRememberMe(e.target.checked)
-                                    }
-                                />
-
-                                Ghi nhớ đăng nhập
-                            </label>
-
-                            <span
-                                style={{
-                                    cursor: "pointer",
-                                }}
-                                onClick={() =>
-                                    navigate("/forgot-password")
-                                }
-                            >
-                                Forgot Password?
-                            </span>
-                        </div>
-
-                        <button
-                            type="submit"
-                            className="login-btn"
-                            disabled={loading}
-                        >
-                            {loading ? "Logging In..." : "Login"}
-                        </button>
-
-                        <div className="divider">
-                            <span>OR</span>
-                        </div>
-
-                        <GoogleLogin
-                            onSuccess={handleGoogleLogin}
-                            onError={() => {
-                                setMessage("Google Login Failed");
-                                setMessageType("error");
-                            }}
-                        />
-                    </form>
-
-                    <div className="register-link">
-                        <p>
-                            Don't have an account?
-                            <span onClick={switchToRegister}>
-                                Register
-                            </span>
-                        </p>
-                    </div>
-
-                </div>
+        <>
+            <div className="auth-form-header">
+                <h2>Welcome Back</h2>
+                <p>Login to continue learning with PrepAce.</p>
             </div>
 
             {message && (
@@ -402,8 +232,7 @@ function LoginPage({ switchToRegister }) {
                         Forgot Password?
                     </span>
                 </div>
-
-                <button type="submit" className="auth-submit-btn" disabled={loading}>
+<button type="submit" className="auth-submit-btn" disabled={loading}>
                     {loading ? "Logging In..." : "Login"}
                 </button>
 
@@ -430,7 +259,7 @@ function LoginPage({ switchToRegister }) {
                     Create an account
                 </span>
             </div>
-        </div>
+        </>
     );
 }
 
