@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
 import { logout } from "../../services/authService";
 import "../css/HomePage.css";
+import "../css/skeleton.css";
 
 export default function HomePage() {
     const navigate = useNavigate();
@@ -11,6 +12,7 @@ export default function HomePage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [timeLeft, setTimeLeft] = useState({ years: 0, months: 0, days: 0 });
+    const [coursesLoading, setCoursesLoading] = useState(true);
 
     // State cấu hình Banner động nhận dữ liệu từ DB
     const [bannerData, setBannerData] = useState({
@@ -19,20 +21,7 @@ export default function HomePage() {
         btnText: "Bắt đầu ngay"
     });
 
-    const [featuredCourses, setFeaturedCourses] = useState([
-        {
-            id: 1, title: "Mastering Mathematics 12 kk", teacher: "Nguyen Minh Quan", userId: 2, subject: "Toán học",
-            price: "599,000đ", students: 1250, thumbnail: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=400&q=80"
-        },
-        {
-            id: 2, title: "Physics Problem Solving Techniques kk", teacher: "Tran Bao Chau", userId: 3, subject: "Vật lý",
-            price: "499,000đ", students: 980, thumbnail: "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?auto=format&fit=crop&w=400&q=80"
-        },
-        {
-            id: 3, title: "English Vocabulary & Grammar kk", teacher: "Le Hoang Nam", userId: 5, subject: "Tiếng Anh",
-            price: "399,000đ", students: 2100, thumbnail: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=400&q=80"
-        }
-    ]);
+    const [featuredCourses, setFeaturedCourses] = useState([]);
 
     const currentAvatar = user?.avatarUrl || user?.avatar_url || null;
 
@@ -125,9 +114,11 @@ export default function HomePage() {
                     });
                     setFeaturedCourses(mappedData.slice(0, 3));
                 }
+                setCoursesLoading(false);
             })
             .catch(err => {
                 console.log("Dùng data khóa học mẫu do chưa kết nối Backend hoặc sập API:", err);
+                setCoursesLoading(false);
             });
 
         return () => clearInterval(interval);
@@ -285,31 +276,43 @@ export default function HomePage() {
                 </div>
 
                 <section className="course-grid">
-                    {featuredCourses.map(course => (
-                        <div className="course-card" key={course.id} onClick={() => navigate(`/course/${course.id}`)}>
-                            <div className="course-thumb">
-                                <img src={course.thumbnail} alt={course.title} />
-                                <span className="subject-badge">{course.subject}</span>
-                                <div className="course-overlay"><button>Xem chi tiết →</button></div>
-                            </div>
-                            <div className="course-info">
-                                <div className="course-rating">⭐⭐⭐⭐⭐ <span>4.9</span></div>
-                                <h3 className="course-title">{course.title}</h3>
-                                <p className="course-teacher" onClick={(e) => { e.stopPropagation(); navigate(`/instructor/${course.userId}`); }}>
-                                    👨‍🏫 {course.teacher}
-                                </p>
-                                <div className="course-features">
-                                    <span>👥 {course.students}</span>
-                                    <span>🕒 20 giờ</span>
-                                    <span>📄 120 bài</span>
+                    {coursesLoading ? (
+                        <>
+                            {[1, 2, 3].map((n) => (
+                                <div className="course-card-skeleton skeleton-box" key={`sk-${n}`}>
+                                    <div className="thumb skeleton-box"></div>
+                                    <div className="line1 skeleton-box"></div>
+                                    <div className="line2 skeleton-box"></div>
                                 </div>
-                                <div className="course-footer">
-                                    <span className="price-tag">{course.price}</span>
-                                    <button>Mua ngay</button>
+                            ))}
+                        </>
+                    ) : (
+                        featuredCourses.map(course => (
+                            <div className="course-card" key={course.id} onClick={() => navigate(`/course/${course.id}`)}>
+                                <div className="course-thumb">
+                                    <img src={course.thumbnail} alt={course.title} />
+                                    <span className="subject-badge">{course.subject}</span>
+                                    <div className="course-overlay"><button>Xem chi tiết →</button></div>
+                                </div>
+                                <div className="course-info">
+                                    <div className="course-rating">⭐⭐⭐⭐⭐ <span>4.9</span></div>
+                                    <h3 className="course-title">{course.title}</h3>
+                                    <p className="course-teacher" onClick={(e) => { e.stopPropagation(); navigate(`/instructor/${course.userId}`); }}>
+                                        👨‍🏫 {course.teacher}
+                                    </p>
+                                    <div className="course-features">
+                                        <span>👥 {course.students}</span>
+                                        <span>🕒 20 giờ</span>
+                                        <span>📄 120 bài</span>
+                                    </div>
+                                    <div className="course-footer">
+                                        <span className="price-tag">{course.price}</span>
+                                        <button>Mua ngay</button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        ))
+                    )}
                 </section>
 
                 {/* CTA */}

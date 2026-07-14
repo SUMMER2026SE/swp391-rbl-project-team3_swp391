@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient"; 
 import "../css/CourseDetailPage.css";
+import "../css/skeleton.css";
 
 const MOCK_COURSE_FALLBACK = {
     title: "Mastering Mathematics 12 kk",
@@ -33,6 +34,7 @@ export default function CourseDetailPage() {
     const [expandedChapterId, setExpandedChapterId] = useState(null);
     const [course, setCourse] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isEnrolled, setIsEnrolled] = useState(false);
 
     const [evaluation, setEvaluation] = useState({
         averageRating: 0,
@@ -92,7 +94,6 @@ export default function CourseDetailPage() {
                         description: data.description || data.course_desc || "",
                         teacher: data.teacher_name || data.teacher || "Giáo viên",
                         
-                        // 🔥 ĐÃ CẬP NHẬT: Lấy tên môn học liên kết từ thực thể Backend trả ra
                         subjectName: data.subject?.subjectName || data.subjectName || "Chung",
 
                         price: cleanPrice > 0 ? `${cleanPrice.toLocaleString('vi-VN')}đ` : "Miễn phí",
@@ -122,6 +123,19 @@ export default function CourseDetailPage() {
                 const reviewRes = await axiosClient.get(`/courses/${id}/reviews/summary`);
                 if (reviewRes.data) {
                     setEvaluation(reviewRes.data);
+                }
+
+                // KIỂM TRA TRẠNG THÁI MUA KHÓA HỌC
+                try {
+                    const token = localStorage.getItem("token");
+                    if (token) {
+                        const enrollRes = await axiosClient.get(`/courses/${id}/check-enrollment`);
+                        if (enrollRes.data && enrollRes.data.isEnrolled) {
+                            setIsEnrolled(true);
+                        }
+                    }
+                } catch (e) {
+                    console.log("Chưa đăng nhập hoặc lỗi check enrollment");
                 }
 
             } catch (error) {
@@ -173,16 +187,49 @@ export default function CourseDetailPage() {
         }
     };
 
+    const getDisplayChapters = () => {
+        return course?.chapters || [];
+    };
+
+    const hasAnyPreview = (course?.chapters || []).some(chapter => 
+        (chapter.lessons || []).some(lesson => lesson.isPreview || lesson.is_preview)
+    );
+
     if (loading) {
         return (
-            <div className="course-detail-loading">
-                <div className="spinner"></div>
-                <p>Đang tải thông tin khóa học...</p>
+            <div className="course-detail-page">
+                <div className="breadcrumb">
+                    <div className="skeleton-box skeleton-text short"></div>
+                </div>
+
+                <div className="course-detail-container">
+                    <div className="course-left">
+                        <div className="skeleton-box skeleton-title"></div>
+                        <div className="skeleton-box skeleton-text"></div>
+                        <div className="skeleton-box skeleton-text short"></div>
+                        
+                        <div className="section-box" style={{marginTop: '30px'}}>
+                            <div className="skeleton-box skeleton-lesson"></div>
+                            <div className="skeleton-box skeleton-lesson"></div>
+                            <div className="skeleton-box skeleton-lesson"></div>
+                        </div>
+                    </div>
+
+                    <div className="course-right">
+                        <div className="floating-card">
+                            <div className="skeleton-box skeleton-thumbnail"></div>
+                            <div className="skeleton-box skeleton-button"></div>
+                            <div className="skeleton-box skeleton-button"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
 
     if (!course) return <div className="error-text">Không tìm thấy khóa học yêu cầu!</div>;
+
+    const displayChapters = getDisplayChapters();
 
     return (
         <div className="course-detail-page">
@@ -200,7 +247,6 @@ export default function CourseDetailPage() {
                     <p className="course-description">{course.description}</p>
                     
                     <div className="course-meta-top" style={{ display: "flex", gap: "15px", alignItems: "center", flexWrap: "wrap" }}>
-                        {/* 🔥 HIỂN THỊ BADGE MÔN HỌC ĐỘNG TỪ BACKEND */}
                         <span style={{ backgroundColor: "#e0e7ff", color: "#4f46e5", padding: "4px 10px", borderRadius: "6px", fontSize: "13px", fontWeight: "600" }}>
                             📚 {course.subjectName}
                         </span>
@@ -222,7 +268,7 @@ export default function CourseDetailPage() {
                     <div className="section-box">
                         <h2>Đề cương khóa học (Syllabus)</h2>
                         <div className="syllabus-list">
-                            {course.chapters.map((chapter) => (
+                            {displayChapters.map((chapter) => (
                                 <div className="chapter-item" key={chapter.id}>
                                     <div 
                                         className={`chapter-header ${expandedChapterId === chapter.id ? 'active' : ''}`}
@@ -242,7 +288,7 @@ export default function CourseDetailPage() {
                                                         {lesson.title}
                                                     </div>
                                                     <div className="lesson-meta">
-                                                        {lesson.isPreview && <span className="preview-badge">Học thử</span>}
+                                                        {((lesson.isPreview || lesson.is_preview) || (!hasAnyPreview && lesson.id === course?.chapters?.[0]?.lessons?.[0]?.id)) && <span className="preview-badge">Học thử</span>}
                                                         <span className="duration">{lesson.duration}</span>
                                                     </div>
                                                 </div>
@@ -299,8 +345,8 @@ export default function CourseDetailPage() {
                                 </div>
                             </div>
 
-                            <div className="evaluation-comments-right" style={{ flex: "1 1 400px", maxHeight: "450px", overflowY: "auto", paddingLeft: "20px", borderLeft: "1px solid #f1f5f9" }}>
-                                <div style={{ backgroundColor: "#f8fafc", padding: "15px", borderRadius: "10px", border: "1px solid #e2e8f0", marginBottom: "25px" }}>
+                            <div className="evaluation-comments-right" style={{ flex: "1 1 400px", maxHeight: "450px", overflowY: "auto", overflowX: "hidden", paddingLeft: "20px", borderLeft: "1px solid #f1f5f9" }}>
+                                <div style={{ backgroundColor: "#f8fafc", padding: "15px", borderRadius: "10px", border: "1px solid #e2e8f0", marginBottom: "25px", boxSizing: "border-box" }}>
                                     <h4 style={{ margin: "0 0 8px 0", fontSize: "14px", color: "#1e293b", fontWeight: "700" }}>Đánh giá khóa học của bạn</h4>
                                     
                                     <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "12px" }}>
@@ -324,7 +370,7 @@ export default function CourseDetailPage() {
                                             id="student-review-comment"
                                             placeholder="Hãy để lại cảm nhận của bạn về chất lượng bài học tại đây để giảng viên cải thiện nhé..."
                                             rows="3"
-                                            style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "13.5px", fontFamily: "'Segoe UI', sans-serif", resize: "none" }}
+                                            style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "13.5px", fontFamily: "'Segoe UI', sans-serif", resize: "none" }}
                                         />
                                         <button 
                                             onClick={handleSendReview}
@@ -383,17 +429,40 @@ export default function CourseDetailPage() {
                             {course.originalPrice && <div className="original-price">{course.originalPrice}</div>}
                         </div>
 
-                        <button className="enroll-btn" onClick={() => navigate(`/checkout/${course.id}`)}>
-                            Mua khóa học ngay
-                        </button>
-                        
-                        <button
-                            className="enroll-btn"
-                            style={{ background: "transparent", color: "#3b82f6", border: "1px solid #3b82f6", marginTop: "10px" }}
-                            onClick={handleFreeTrialLog}
-                        >
-                            Học thử miễn phí
-                        </button>
+                        {isEnrolled ? (
+                            <button className="enroll-btn" onClick={() => navigate(`/learn/${course.id}`)}>
+                                Vào Học
+                            </button>
+                        ) : (
+                            <>
+                                {course.price === "Miễn phí" ? (
+                                    <button className="enroll-btn" onClick={() => {
+                                        const token = localStorage.getItem("token");
+                                        if (!token) {
+                                            alert("Vui lòng đăng nhập để tham gia khóa học miễn phí này!");
+                                            navigate("/auth"); // Trỏ về trang đăng nhập
+                                        } else {
+                                            // Gọi API đăng ký miễn phí nếu cần, hoặc cho vào học luôn
+                                            navigate(`/learn/${course.id}`);
+                                        }
+                                    }}>
+                                        Đăng ký học miễn phí
+                                    </button>
+                                ) : (
+                                    <button className="enroll-btn" onClick={() => navigate(`/checkout/${course.id}`)}>
+                                        Mua khóa học ngay
+                                    </button>
+                                )}
+                                
+                                <button
+                                    className="enroll-btn"
+                                    style={{ background: "transparent", color: "#3b82f6", border: "1px solid #3b82f6", marginTop: "10px" }}
+                                    onClick={handleFreeTrialLog}
+                                >
+                                    Học thử miễn phí
+                                </button>
+                            </>
+                        )}
                         
                         <div className="course-features">
                             <h4>Khóa học bao gồm:</h4>

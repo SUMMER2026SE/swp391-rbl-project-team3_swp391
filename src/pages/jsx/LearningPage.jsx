@@ -95,22 +95,71 @@ export default function LearningPage() {
     };
 
     const [completedLessonIds, setCompletedLessonIds] = useState([]);
+    const [isEnrolled, setIsEnrolled] = useState(false); // Thêm state kiểm tra Mua Khóa Học
 
     // 1. GỌI API LẤY DỮ LIỆU KHÓA HỌC THẬT VÀ TIẾN ĐỘ
     useEffect(() => {
         const fetchCourseData = async () => {
             try {
                 const response = await axiosClient.get(`/courses/${courseId}`);
-                setCourse(response.data);
-
-                if (response.data.chapters?.[0]?.lessons?.[0]) {
-                    setCurrentLesson(response.data.chapters[0].lessons[0]);
+                let fetchedCourse = response.data;
+                
+                // KIỂM TRA BẢO MẬT: XEM ĐÃ MUA KHÓA HỌC CHƯA
+                let userIsEnrolled = false;
+                try {
+                    const token = localStorage.getItem("token");
+                    if (token) {
+                        const enrollRes = await axiosClient.get(`/courses/${courseId}/check-enrollment`);
+                        if (enrollRes.data && enrollRes.data.isEnrolled) {
+                            userIsEnrolled = true;
+                            setIsEnrolled(true);
+                        }
+                    }
+                } catch (e) {
+                    console.log("Lỗi check enrollment", e);
                 }
 
-                // Lấy tiến độ
-                const progressRes = await axiosClient.get(`/reports/progress/course/${courseId}/completed`);
-                if (progressRes.data) {
-                    setCompletedLessonIds(progressRes.data);
+                // NẾU CHƯA MUA HOẶC CHƯA ĐĂNG NHẬP: CHỈ HIỂN THỊ CÁC VIDEO ĐƯỢC GIÁO VIÊN CHỌN HỌC THỬ (isPreview = true)
+                // NẾU KHÔNG CÓ VIDEO NÀO, MẶC ĐỊNH LẤY VIDEO ĐẦU TIÊN
+                if (!userIsEnrolled && fetchedCourse.chapters) {
+                    let hasPreview = false;
+                    const filteredChapters = fetchedCourse.chapters.map(chapter => {
+                        const previewLessons = (chapter.lessons || []).filter(lesson => lesson.isPreview || lesson.is_preview);
+                        if (previewLessons.length > 0) hasPreview = true;
+                        return {
+                            ...chapter,
+                            lessons: previewLessons
+                        };
+                    }).filter(chapter => chapter.lessons.length > 0);
+
+                    if (hasPreview) {
+                        fetchedCourse.chapters = filteredChapters;
+                    } else if (fetchedCourse.chapters.length > 0 && fetchedCourse.chapters[0].lessons && fetchedCourse.chapters[0].lessons.length > 0) {
+                        const firstChapter = fetchedCourse.chapters[0];
+                        const firstLesson = firstChapter.lessons[0];
+                        fetchedCourse.chapters = [{
+                            ...firstChapter,
+                            lessons: [{ ...firstLesson, isPreview: true }]
+                        }];
+                    } else {
+                        fetchedCourse.chapters = [];
+                    }
+                }
+
+                setCourse(fetchedCourse);
+
+                if (fetchedCourse.chapters?.[0]?.lessons?.[0]) {
+                    setCurrentLesson(fetchedCourse.chapters[0].lessons[0]);
+                }
+
+                // Lấy tiến độ (chỉ lấy nếu đã mua để tránh lỗi API)
+                if (userIsEnrolled) {
+                    try {
+                        const progressRes = await axiosClient.get(`/reports/progress/course/${courseId}/completed`);
+                        if (progressRes.data) {
+                            setCompletedLessonIds(progressRes.data);
+                        }
+                    } catch (e) { console.log(e); }
                 }
             } catch (error) {
                 console.error("Lỗi tải nội dung bài học:", error);
@@ -141,6 +190,24 @@ export default function LearningPage() {
         fetchQuestionsAndNotes();
     }, [currentLesson]);
 
+    // AUTO SYNC TIẾN ĐỘ VIDEO LÊN BACKEND MỖI 10 GIÂY
+    useEffect(() => {
+        if (!currentLesson) return;
+        const syncInterval = setInterval(() => {
+            const currentTime = getCurrentVideoTime();
+            if (currentTime > 0) {
+                const token = localStorage.getItem("token");
+                if (token) {
+                    axiosClient.post("/reports/progress", {
+                        lessonId: currentLesson.id,
+                        lastVideoTime: currentTime
+                    }).catch(() => {});
+                }
+            }
+        }, 10000); // 10s lưu 1 lần
+        return () => clearInterval(syncInterval);
+    }, [currentLesson]);
+
     // Tự động tua video về mốc cũ (DÀNH CHO VIDEO THƯỜNG - TẢI LÊN MP4)
     useEffect(() => {
         if (!currentLesson) return;
@@ -149,21 +216,24 @@ export default function LearningPage() {
         const currentVideoUrl = currentLesson.videoUrl || "";
         
         if (!isYouTube(currentVideoUrl)) {
-            if (videoRef.current) {
-                const savedTime = localStorage.getItem(`video_progress_lesson_${currentLesson.id}`);
-                
-                timeoutId = setTimeout(() => {
-                    if (savedTime && parseFloat(savedTime) > 0 && videoRef.current) {
-                        const wantsToResume = window.confirm("Trình duyệt ghi nhận bạn đang xem dở bài học này. Bạn có muốn tiếp tục xem từ vị trí đã lưu không?\n\n(Bấm OK để xem tiếp, Cancel để xem lại từ đầu)");
+            const fetchAndResume = async () => {
+                try {
+                    const token = localStorage.getItem("token");
+                    if (!token) return;
+                    const res = await axiosClient.get(`/reports/progress/lesson/${currentLesson.id}`);
+                    const savedTime = res.data?.lastVideoTime || 0;
+                    if (savedTime > 0 && videoRef.current) {
+                        const wantsToResume = window.confirm("Hệ thống ghi nhận bạn đang xem dở bài học này. Bạn có muốn tiếp tục xem từ vị trí đã lưu không?\n\n(Bấm OK để xem tiếp, Cancel để xem lại từ đầu)");
                         if (wantsToResume) {
                             videoRef.current.currentTime = parseFloat(savedTime);
                             videoRef.current.play().catch(e => console.log("Auto-play blocked:", e));
-                        } else {
-                            localStorage.setItem(`video_progress_lesson_${currentLesson.id}`, 0);
                         }
                     }
-                }, 500);
-            }
+                } catch(e) {
+                    console.log(e);
+                }
+            };
+            timeoutId = setTimeout(fetchAndResume, 500);
         }
         
         return () => {
@@ -205,23 +275,27 @@ export default function LearningPage() {
         let timeoutId;
         let isCancelled = false;
 
-        const initYouTubePlayer = () => {
+        const initYouTubePlayer = async () => {
             if (isCancelled) return;
             const embedUrl = getYouTubeEmbedUrl(currentLesson.videoUrl);
             const videoId = embedUrl.includes('/embed/') ? embedUrl.split('/embed/')[1].split('?')[0] : "";
             if (!videoId) return;
             
-            // Xử lý hỏi xem tiếp hay không trước khi load iframe
+            // Xử lý hỏi xem tiếp hay không trước khi load iframe bằng Backend
             let startSeconds = 0;
-            const savedTime = localStorage.getItem(`video_progress_lesson_${currentLesson.id}`);
-            if (savedTime && parseFloat(savedTime) > 0) {
-                const wantsToResume = window.confirm("Trình duyệt ghi nhận bạn đang xem dở bài học này. Bạn có muốn tiếp tục xem từ vị trí đã lưu không?\n\n(Bấm OK để xem tiếp, Cancel để xem lại từ đầu)");
-                if (wantsToResume) {
-                    startSeconds = parseFloat(savedTime);
-                } else {
-                    localStorage.setItem(`video_progress_lesson_${currentLesson.id}`, 0);
+            try {
+                const token = localStorage.getItem("token");
+                if (token) {
+                    const res = await axiosClient.get(`/reports/progress/lesson/${currentLesson.id}`);
+                    const savedTime = res.data?.lastVideoTime || 0;
+                    if (savedTime > 0) {
+                        const wantsToResume = window.confirm("Hệ thống ghi nhận bạn đang xem dở bài học này. Bạn có muốn tiếp tục xem từ vị trí đã lưu không?\n\n(Bấm OK để xem tiếp, Cancel để xem lại từ đầu)");
+                        if (wantsToResume) {
+                            startSeconds = parseFloat(savedTime);
+                        }
+                    }
                 }
-            }
+            } catch(e) { console.log(e); }
 
             player = new window.YT.Player('youtube-player-container', {
                 videoId: videoId,
@@ -241,7 +315,6 @@ export default function LearningPage() {
                             progressInterval = setInterval(() => {
                                 if (player && player.getCurrentTime) {
                                     const currentTime = player.getCurrentTime();
-                                    localStorage.setItem(`video_progress_lesson_${currentLesson.id}`, currentTime);
                                     checkQuiz(currentTime, () => player.pauseVideo());
                                 }
                             }, 1000);
@@ -271,10 +344,9 @@ export default function LearningPage() {
     }, [currentLesson]);
 
     const handleTimeUpdate = () => {
-        // Hàm này chỉ chạy cho video thường (MP4)
+        // Hàm này chỉ chạy cho video thường (MP4) để popup quiz
         if (videoRef.current && currentLesson && !isYouTube(currentLesson.videoUrl)) {
             const currentTime = videoRef.current.currentTime;
-            localStorage.setItem(`video_progress_lesson_${currentLesson.id}`, currentTime);
             checkQuiz(currentTime, () => videoRef.current.pause());
         }
     };
@@ -294,21 +366,114 @@ export default function LearningPage() {
         return videoId ? `https://www.youtube.com/embed/${videoId}?rel=0` : url;
     };
 
-    const handleDownload = (material) => {
+    const handleDownload = async (material) => {
         const pathUrl = material.fileUrl || material.file_url || material.url || material.link || material.path;
         if (!pathUrl) {
             alert("Rất tiếc, không tìm thấy đường dẫn tải file của tài liệu này!");
             return;
         }
 
-        // Nếu là link Cloudinary, chèn cờ fl_attachment để ép trình duyệt tải file về thay vì chỉ mở tab mới xem
-        let finalUrl = pathUrl;
-        if (pathUrl.includes("res.cloudinary.com") && pathUrl.includes("/upload/")) {
-            finalUrl = pathUrl.replace("/upload/", "/upload/fl_attachment/");
-        }
+        try {
+            // Tải file về dạng Blob
+            const response = await fetch(pathUrl);
+            if (!response.ok) throw new Error("Lỗi mạng khi tải file");
 
-        // Mở URL trực tiếp để tải xuống
-        window.open(finalUrl, "_blank");
+            const contentType = response.headers.get("content-type");
+            let extension = "";
+
+            if (contentType) {
+                if (contentType.includes("application/pdf")) extension = ".pdf";
+                else if (contentType.includes("wordprocessingml.document")) extension = ".docx";
+                else if (contentType.includes("msword")) extension = ".doc";
+                else if (contentType.includes("spreadsheetml.sheet")) extension = ".xlsx";
+                else if (contentType.includes("ms-excel")) extension = ".xls";
+                else if (contentType.includes("presentationml.presentation")) extension = ".pptx";
+                else if (contentType.includes("ms-powerpoint")) extension = ".ppt";
+                else if (contentType.includes("text/plain")) extension = ".txt";
+                else if (contentType.includes("image/jpeg")) extension = ".jpg";
+                else if (contentType.includes("image/png")) extension = ".png";
+                else if (contentType.includes("application/zip")) extension = ".zip";
+                else if (contentType.includes("application/x-rar")) extension = ".rar";
+            }
+
+            const blob = await response.blob();
+            
+            // 1. Thử trích xuất từ URL (chính xác nhất cho các file mới tải lên)
+            if (!extension) {
+                const urlWithoutQuery = pathUrl.split('?')[0];
+                const lastPart = urlWithoutQuery.split('/').pop();
+                if (lastPart && lastPart.includes('.')) {
+                    extension = lastPart.substring(lastPart.lastIndexOf('.'));
+                }
+            }
+
+            // 2. Thử xem tên tài liệu (title) do giáo viên đặt có chứa đuôi file không (vd: baitap.xlsx)
+            if (!extension && material.title && material.title.includes('.')) {
+                 const possibleExt = material.title.substring(material.title.lastIndexOf('.'));
+                 if (possibleExt.length >= 2 && possibleExt.length <= 6 && /^\.[a-zA-Z0-9]+$/.test(possibleExt)) {
+                     extension = possibleExt;
+                 }
+            }
+            
+            // 3. Nếu Content-Type là octet-stream, URL không có đuôi, Tên cũng không có đuôi
+            // Dùng "Magic Bytes" để đoán định dạng (Fallback cuối cùng)
+            if (!extension) {
+                try {
+                    const arr = (new Uint8Array(await blob.slice(0, 4).arrayBuffer())).reduce((a, b) => a + b.toString(16).padStart(2, '0'), '');
+                    if (arr === '25504446') {
+                        extension = ".pdf";
+                    } else if (arr === '504b0304') { 
+                        // ZIP archive - Thường là DOCX, XLSX, PPTX
+                        extension = ".docx"; // Mặc định DOCX cho file học liệu
+                    } else if (arr === 'd0cf11e0') { 
+                        // OLE file - DOC, XLS, PPT cũ
+                        extension = ".doc";
+                    }
+                } catch (e) {
+                    console.error("Lỗi khi đọc magic bytes:", e);
+                }
+            }
+
+            // Cuối cùng nếu vẫn không có, gán mặc định là .pdf cho an toàn (vì tài liệu học liệu 90% là PDF)
+            if (!extension) {
+                extension = ".pdf";
+            }
+
+            // Tạo tên file
+            let downloadName = material.title || "TaiLieu";
+            // Bỏ ký tự đặc biệt có thể gây lỗi hệ điều hành
+            downloadName = downloadName.replace(/[\\/:*?"<>|]/g, ''); 
+            
+            if (extension && !downloadName.toLowerCase().endsWith(extension.toLowerCase())) {
+                downloadName += extension;
+            }
+
+            // Chuyển Data thành URL và tải xuống
+            const blobUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.style.display = "none";
+            a.href = blobUrl;
+            a.download = downloadName;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Dọn dẹp memory
+            setTimeout(() => {
+                window.URL.revokeObjectURL(blobUrl);
+                a.remove();
+            }, 100);
+
+        } catch (error) {
+            console.error("Lỗi khi tải trực tiếp qua blob, dùng cách dự phòng mở tab mới:", error);
+            
+            // Cách dự phòng nếu fetch bị chặn CORS
+            let finalUrl = pathUrl;
+            if (pathUrl.includes("res.cloudinary.com") && pathUrl.includes("/upload/")) {
+                let safeTitle = material.title ? material.title.replace(/[^a-zA-Z0-9.\-_]/g, '_') : "TaiLieu";
+                finalUrl = pathUrl.replace("/upload/", `/upload/fl_attachment:${safeTitle}.pdf/`);
+            }
+            window.open(finalUrl, "_blank");
+        }
     };
 
     const handlePostQuestion = async () => {
@@ -419,7 +584,13 @@ export default function LearningPage() {
     {/* KHỐI VIDEO CONTAINER ĐÃ ĐƯỢC LÀM SẠCH CÚ PHÁP */}
     <div className="video-container" style={{ position: "relative", width: "100%", aspectRatio: "16/9", backgroundColor: "#000", borderRadius: "8px", overflow: "hidden" }}>
         <div key={currentLesson.id} style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}>
-            {currentLesson.videoUrl ? (
+            {!isEnrolled && !currentLesson.isPreview && !currentLesson.is_preview ? (
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", backgroundColor: "#fef3c7", color: "#b45309", padding: "20px", textAlign: "center", zIndex: 10 }}>
+                    <span style={{ fontSize: "48px", marginBottom: "15px" }}>🔒</span>
+                    <h3 style={{ margin: "0 0 10px 0", fontSize: "22px", fontWeight: "700" }}>Video này đã bị khóa</h3>
+                    <p style={{ margin: 0, fontSize: "16px", maxWidth: "450px", lineHeight: "1.5" }}>Bạn cần <strong>Mua khóa học</strong> để xem được video bài giảng này. Hãy đăng ký ngay để mở khóa toàn bộ lộ trình học tập nhé!</p>
+                </div>
+            ) : currentLesson.videoUrl ? (
                 isYouTube(currentLesson.videoUrl) ? (
                     // Phải dùng thẻ div rỗng để YouTube API tự động nhúng iframe vào đây một cách chính xác
                     <div id="youtube-player-container" style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}></div>
@@ -530,22 +701,29 @@ export default function LearningPage() {
 
                             {activeTab === "materials" && (
                                 <div className="materials-tab">
-                                    {currentLesson.materials && currentLesson.materials.length > 0 ? (
-                                        currentLesson.materials.map((material) => (
-                                            <div className="material-file" key={material.id}>
-                                                📄 <span>{material.title}</span>
-                                                {/* 🔥 CHUẨN XÁC: Truyền trọn vẹn object material vào hàm xử lý mới */}
-                                                <button
-                                                    onClick={() => handleDownload(material)}
-                                                    className="download-btn"
-                                                    style={{ cursor: "pointer" }}
-                                                >
-                                                    Tải xuống
-                                                </button>
-                                            </div>
-                                        ))
+                                    {isEnrolled ? (
+                                        currentLesson.materials && currentLesson.materials.length > 0 ? (
+                                            currentLesson.materials.map((material) => (
+                                                <div className="material-file" key={material.id}>
+                                                    📄 <span>{material.title}</span>
+                                                    {/* 🔥 CHUẨN XÁC: Truyền trọn vẹn object material vào hàm xử lý mới */}
+                                                    <button
+                                                        onClick={() => handleDownload(material)}
+                                                        className="download-btn"
+                                                        style={{ cursor: "pointer" }}
+                                                    >
+                                                        Tải xuống
+                                                    </button>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p style={{ padding: "10px", color: "#666" }}>Bài học này chưa có tài liệu đính kèm.</p>
+                                        )
                                     ) : (
-                                        <p style={{ padding: "10px", color: "#666" }}>Bài học này chưa có tài liệu đính kèm.</p>
+                                        <div style={{ padding: "20px", textAlign: "center", backgroundColor: "#fef3c7", color: "#b45309", borderRadius: "8px", border: "1px solid #fde68a" }}>
+                                            <span style={{ fontSize: "24px", display: "block", marginBottom: "10px" }}>🔒</span>
+                                            Bạn cần <strong>Mua khóa học</strong> để xem và tải các tài liệu đính kèm.
+                                        </div>
                                     )}
                                 </div>
                             )}
@@ -597,10 +775,14 @@ export default function LearningPage() {
                                                     <div className="question-item" style={{ display: "flex", gap: "12px", padding: "12px", backgroundColor: "#f8f9fa", borderRadius: "8px" }}>
                                                         <img
                                                             src={
-                                                                q.userAvatarUrl
+                                                                q.userAvatarUrl && q.userAvatarUrl !== "null" && q.userAvatarUrl.trim() !== ""
                                                                     ? (q.userAvatarUrl.startsWith("http") ? q.userAvatarUrl : `http://localhost:8080${q.userAvatarUrl}`)
-                                                                    : "https://via.placeholder.com/40"
+                                                                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(q.userFullName || "User")}&background=64748b&color=fff`
                                                             }
+                                                            onError={(e) => {
+                                                                e.target.onerror = null; 
+                                                                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(q.userFullName || "User")}&background=64748b&color=fff`;
+                                                            }}
                                                             alt="Avatar"
                                                             style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover" }}
                                                         />
@@ -647,10 +829,14 @@ export default function LearningPage() {
                                                                 <div key={ans.id} className="answer-item" style={{ display: "flex", gap: "12px", padding: "10px", backgroundColor: "#f1f3f5", borderRadius: "8px", borderLeft: "3px solid #dee2e6" }}>
                                                                     <img
                                                                         src={
-                                                                            ans.userAvatarUrl
+                                                                            ans.userAvatarUrl && ans.userAvatarUrl !== "null" && ans.userAvatarUrl.trim() !== ""
                                                                                 ? (ans.userAvatarUrl.startsWith("http") ? ans.userAvatarUrl : `http://localhost:8080${ans.userAvatarUrl}`)
-                                                                                : "https://via.placeholder.com/32"
+                                                                                : `https://ui-avatars.com/api/?name=${encodeURIComponent(ans.userFullName || "User")}&background=64748b&color=fff`
                                                                         }
+                                                                        onError={(e) => {
+                                                                            e.target.onerror = null; 
+                                                                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ans.userFullName || "User")}&background=64748b&color=fff`;
+                                                                        }}
                                                                         alt="Avatar"
                                                                         style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }}
                                                                     />

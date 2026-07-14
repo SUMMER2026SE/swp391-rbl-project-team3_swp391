@@ -20,6 +20,33 @@ export default function CourseEditPage() {
     const [isUploading, setIsUploading] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
 
+    // Dùng cho tạo bài học mới có câu hỏi tương tác luôn
+    const [pendingQuestions, setPendingQuestions] = useState([]);
+    const [pendingQuestionInput, setPendingQuestionInput] = useState({ minutes: 0, seconds: 0, questionText: "", optionA: "", optionB: "", optionC: "", optionD: "", correctOption: "A" });
+
+    const handleAddPendingQuestion = () => {
+        if (!pendingQuestionInput.questionText || !pendingQuestionInput.optionA) return alert("Nhập đủ thông tin câu hỏi!");
+        const totalSeconds = (parseInt(pendingQuestionInput.minutes) || 0) * 60 + (parseInt(pendingQuestionInput.seconds) || 0);
+        
+        const newQ = {
+            id: Date.now(), // ID tạm để render
+            timestampSeconds: totalSeconds,
+            questionText: pendingQuestionInput.questionText,
+            optionA: pendingQuestionInput.optionA,
+            optionB: pendingQuestionInput.optionB,
+            optionC: pendingQuestionInput.optionC,
+            optionD: pendingQuestionInput.optionD,
+            correctOption: pendingQuestionInput.correctOption
+        };
+        setPendingQuestions([...pendingQuestions, newQ]);
+        setPendingQuestionInput({ minutes: 0, seconds: 0, questionText: "", optionA: "", optionB: "", optionC: "", optionD: "", correctOption: "A" });
+    };
+
+    const handleDeletePendingQuestion = (id) => {
+        setPendingQuestions(pendingQuestions.filter(q => q.id !== id));
+    };
+
+
     const loadCourseOutline = async () => {
         try {
             const response = await axiosClient.get(`/courses/${id}`);
@@ -105,8 +132,9 @@ export default function CourseEditPage() {
         }
 
         try {
+            const isPreview = document.getElementById(`new-lesson-preview-${chapterId}`)?.checked || false;
             const lessonRes = await axiosClient.post(`/outlines/chapters/${chapterId}/lessons`, {
-                title, description: desc, videoUrl: videoUrl, duration: dur
+                title, description: desc, videoUrl: videoUrl, duration: dur, isPreview
             });
             const newLessonId = lessonRes.data.id;
 
@@ -131,6 +159,26 @@ export default function CourseEditPage() {
                 }
             }
 
+            // 🔥 LƯU CÁC CÂU HỎI TƯƠNG TÁC POP-UP NẾU CÓ
+            if (pendingQuestions.length > 0) {
+                try {
+                    for (const q of pendingQuestions) {
+                        const payload = {
+                            timestampSeconds: q.timestampSeconds,
+                            questionText: q.questionText,
+                            optionA: q.optionA,
+                            optionB: q.optionB,
+                            optionC: q.optionC,
+                            optionD: q.optionD,
+                            correctOption: q.correctOption
+                        };
+                        await axiosClient.post(`/outlines/lessons/${newLessonId}/in-video-questions`, payload);
+                    }
+                } catch(err) {
+                    console.error("Lỗi lưu câu hỏi popup", err);
+                }
+            }
+
             // 🔥 TỰ ĐỘNG LƯU LOG: Ghi nhận Giáo viên/Admin tạo bài giảng thành công
             try {
                 const userObj = JSON.parse(localStorage.getItem("user") || "{}");
@@ -143,6 +191,8 @@ export default function CourseEditPage() {
             } catch (logErr) { console.error("Lỗi ghi log bài giảng:", logErr); }
 
             setActiveChapterId(null);
+            setPendingQuestions([]); // Reset state
+            setPendingQuestionInput({ minutes: 0, seconds: 0, questionText: "", optionA: "", optionB: "", optionC: "", optionD: "", correctOption: "A" });
             loadCourseOutline(); 
         } catch (error) { 
             const msg = error.response?.data?.message || error.response?.data?.error || error.message || "Lỗi không xác định";
@@ -171,6 +221,25 @@ export default function CourseEditPage() {
         } catch (error) { 
             const msg = error.response?.data?.message || error.response?.data?.error || error.message || "Lỗi không xác định";
             alert("Lỗi: " + (typeof msg === 'object' ? JSON.stringify(msg) : msg)); 
+        }
+    };
+
+    const handleTogglePreview = async (lesson) => {
+        try {
+            const isCurrentlyPreview = lesson.isPreview || lesson.is_preview || false;
+            await axiosClient.put(`/outlines/lessons/${lesson.id}`, { 
+                title: lesson.title, 
+                description: lesson.description || "", 
+                videoUrl: lesson.videoUrl || "", 
+                duration: lesson.duration || "", 
+                order: lesson.order,
+                isPreview: !isCurrentlyPreview 
+            });
+            loadCourseOutline();
+        } catch (error) {
+            console.error("Lỗi khi đổi trạng thái học thử", error);
+            const msg = error.response?.data?.message || error.response?.data?.error || error.message;
+            alert("Lỗi khi đổi trạng thái học thử: " + (typeof msg === 'object' ? JSON.stringify(msg) : msg) + "\n\n(Nếu báo lỗi 500, có thể bạn chưa Khởi động lại Backend để tạo cột is_preview trong CSDL)");
         }
     };
 
@@ -351,7 +420,28 @@ export default function CourseEditPage() {
                                                 {lesson.videoUrl && lesson.videoUrl.trim() !== "" && (
                                                     <span style={{ background: "#f1f5f9", padding: "4px 10px", borderRadius: "6px", fontSize: "13px", fontFamily: "'Segoe UI', sans-serif" }}>{lesson.duration}</span>
                                                 )}
-                                                <button onClick={() => { setEditingLessonId(lesson.id); setEditingLessonData({ title: lesson.title, description: lesson.description || "", videoUrl: lesson.videoUrl || "", duration: lesson.duration }); }} className="settings-icon-btn" style={{ fontFamily: "'Segoe UI', sans-serif" }}>Sửa</button>
+                                                <button 
+                                                    onClick={() => handleTogglePreview(lesson)} 
+                                                    style={{ 
+                                                        background: (lesson.isPreview || lesson.is_preview) ? "#dcfce7" : "#f1f5f9", 
+                                                        color: (lesson.isPreview || lesson.is_preview) ? "#166534" : "#64748b", 
+                                                        border: `1px solid ${(lesson.isPreview || lesson.is_preview) ? "#bbf7d0" : "#e2e8f0"}`, 
+                                                        padding: "5px 12px", 
+                                                        borderRadius: "6px", 
+                                                        fontSize: "13px", 
+                                                        cursor: "pointer", 
+                                                        fontWeight: "600",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        gap: "5px",
+                                                        fontFamily: "'Segoe UI', sans-serif",
+                                                        transition: "all 0.2s"
+                                                    }}
+                                                    title={(lesson.isPreview || lesson.is_preview) ? "Đang cho phép học thử. Bấm để tắt." : "Đang khóa. Bấm để cho phép học thử."}
+                                                >
+                                                    {(lesson.isPreview || lesson.is_preview) ? "👁️ Đang mở thử" : "🔒 Đã khóa"}
+                                                </button>
+                                                <button onClick={() => { setEditingLessonId(lesson.id); setEditingLessonData({ title: lesson.title, description: lesson.description || "", videoUrl: lesson.videoUrl || "", duration: lesson.duration, isPreview: lesson.isPreview || lesson.is_preview || false }); }} className="settings-icon-btn" style={{ fontFamily: "'Segoe UI', sans-serif" }}>Sửa</button>
                                                 <button onClick={() => handleDeleteLesson(lesson.id)} className="delete-icon-btn" style={{ fontFamily: "'Segoe UI', sans-serif" }}>Xóa</button>
                                             </div>
                                         </div>
@@ -364,75 +454,125 @@ export default function CourseEditPage() {
                             <div style={{ marginTop: "15px", padding: "20px", border: "1px dashed #2747d9", borderRadius: "8px", display: "flex", flexDirection: "column", gap: "12px", backgroundColor: "#f8fafc" }}>
                                 <h4 style={{ margin: 0, fontSize: "14px", color: "#1e293b", fontWeight: 600 }}>Tạo bài giảng mới:</h4>
                                 
-                                <input 
-                                    type="text" 
-                                    id={`new-lesson-title-${chapter.id}`} 
-                                    placeholder="Nhập tiêu đề bài học (Ví dụ: Bài 1: Khái niệm về Khối Đa Diện)..." 
-                                    style={{ padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
-                                />
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px", display: "block", fontWeight: 600, fontFamily: "'Segoe UI', sans-serif" }}>Tiêu đề bài học</label>
+                                    <input 
+                                        type="text" 
+                                        id={`new-lesson-title-${chapter.id}`} 
+                                        placeholder="Nhập tiêu đề bài học (Ví dụ: Bài 1: Khái niệm về Khối Đa Diện)..." 
+                                        style={{ boxSizing: "border-box", padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
+                                    />
+                                </div>
                                 
-                                <input 
-                                    type="text" 
-                                    id={`new-lesson-desc-${chapter.id}`} 
-                                    placeholder="Nhập mô tả tóm tắt nội dung bài học..." 
-                                    style={{ padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
-                                />
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px", display: "block", fontWeight: 600, fontFamily: "'Segoe UI', sans-serif" }}>Mô tả ngắn</label>
+                                    <input 
+                                        type="text" 
+                                        id={`new-lesson-desc-${chapter.id}`} 
+                                        placeholder="Nhập mô tả tóm tắt nội dung bài học..." 
+                                        style={{ boxSizing: "border-box", padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
+                                    />
+                                </div>
                                 
-                                <div style={{ display: "flex", gap: "10px" }}>
-                                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
-                                        <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>Tải lên Video (Máy tính):</span>
-                                        <input 
-                                            type="file" 
-                                            accept="video/*"
-                                            id={`new-lesson-vid-${chapter.id}`} 
-                                            onChange={(e) => {
-                                                handleVideoSelect(e, chapter.id);
-                                                const ytInput = document.getElementById(`new-lesson-yt-${chapter.id}`);
-                                                if (ytInput) ytInput.value = ""; 
-                                            }}
-                                            style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
-                                        />
+                                <div style={{ display: "flex", gap: "24px", flexDirection: "column" }}>
+                                    <div style={{ display: "flex", gap: "24px" }}>
+                                        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
+                                            <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600, fontFamily: "'Segoe UI', sans-serif" }}>Tải video (Máy tính)</span>
+                                            <input 
+                                                type="file" 
+                                                accept="video/*"
+                                                id={`new-lesson-vid-${chapter.id}`} 
+                                                onChange={(e) => {
+                                                    handleVideoSelect(e, chapter.id);
+                                                    const ytInput = document.getElementById(`new-lesson-yt-${chapter.id}`);
+                                                    if (ytInput) ytInput.value = ""; 
+                                                }}
+                                                style={{ boxSizing: "border-box", padding: "7px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontSize: "13px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
+                                            />
+                                        </div>
+                                        
+                                        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
+                                            <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600, fontFamily: "'Segoe UI', sans-serif" }}>Hoặc gắn link YouTube</span>
+                                            <input 
+                                                type="text" 
+                                                id={`new-lesson-yt-${chapter.id}`} 
+                                                placeholder="https://youtube.com/watch?v=..."
+                                                onChange={(e) => {
+                                                    const fileInput = document.getElementById(`new-lesson-vid-${chapter.id}`);
+                                                    if (fileInput) fileInput.value = ""; 
+                                                    handleYouTubeLinkChange(e, chapter.id);
+                                                }}
+                                                style={{ boxSizing: "border-box", padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontSize: "13px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
+                                            />
+                                        </div>
+                                        
+                                        <div style={{ width: "110px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                                            <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600, textAlign: "center", fontFamily: "'Segoe UI', sans-serif" }}>Thời lượng</span>
+                                            <input 
+                                                type="text" 
+                                                id={`new-lesson-dur-${chapter.id}`} 
+                                                placeholder="15:00" 
+                                                defaultValue="15:00" 
+                                                style={{ boxSizing: "border-box", padding: "10px 0", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", height: "auto", fontSize: "14px", textAlign: "center", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
+                                            />
+                                        </div>
                                     </div>
                                     
-                                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
-                                        <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>Hoặc gắn link YouTube:</span>
-                                        <input 
-                                            type="text" 
-                                            id={`new-lesson-yt-${chapter.id}`} 
-                                            placeholder="https://youtube.com/watch?v=..."
-                                            onChange={(e) => {
-                                                const fileInput = document.getElementById(`new-lesson-vid-${chapter.id}`);
-                                                if (fileInput) fileInput.value = ""; 
-                                                handleYouTubeLinkChange(e, chapter.id);
-                                            }}
-                                            style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
-                                        />
-                                    </div>
-                                    
-                                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
-                                        <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>Tài liệu đính kèm (Có thể chọn nhiều file):</span>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: "4px", padding: "15px", border: "1px dashed #cbd5e1", borderRadius: "8px", background: "#f8fafc" }}>
+                                        <span style={{ fontSize: "13px", color: "#475569", fontWeight: "700", fontFamily: "'Segoe UI', sans-serif", marginBottom: "4px" }}>Tài liệu đính kèm (PDF, Word, PPT...)</span>
                                         <input 
                                             type="file" 
                                             multiple
                                             accept=".pdf,.doc,.docx,.ppt,.pptx"
                                             id={`new-lesson-mats-${chapter.id}`} 
-                                            style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
+                                            style={{ boxSizing: "border-box", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", width: "100%", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
                                         />
                                     </div>
+                                    <div style={{ marginTop: "10px", padding: "15px", border: "1px dashed #f59e0b", borderRadius: "8px", background: "#fffbeb" }}>
+                                        <label style={{ fontSize: "13px", color: "#b45309", marginBottom: "8px", display: "block", fontWeight: "700", fontFamily: "'Segoe UI', sans-serif" }}>Câu hỏi tương tác Pop-up (In-Video Quizzes)</label>
+                                        
+                                        {pendingQuestions.length > 0 && (
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "12px" }}>
+                                                {pendingQuestions.map(q => (
+                                                    <div key={q.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fff", padding: "8px 12px", borderRadius: "6px", border: "1px solid #fde68a" }}>
+                                                        <span style={{ fontSize: "13px", color: "#92400e", fontWeight: "600" }}>⏰ {Math.floor(q.timestampSeconds / 60).toString().padStart(2, '0')}:{(q.timestampSeconds % 60).toString().padStart(2, '0')} - {q.questionText}</span>
+                                                        <button type="button" onClick={() => handleDeletePendingQuestion(q.id)} style={{ color: "#dc2626", background: "#fee2e2", padding: "4px 8px", borderRadius: "4px", border: "none", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>Xóa</button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
 
-                                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                                        <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>Thời lượng:</span>
-                                        <input 
-                                            type="text" 
-                                            id={`new-lesson-dur-${chapter.id}`} 
-                                            placeholder="25:15" 
-                                            defaultValue="15:00" 
-                                            style={{ width: "100px", padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13.5px", textAlign: "center", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
-                                        />
+                                        <div style={{ display: "flex", flexDirection: "column", gap: "10px", background: "#fff", padding: "10px", borderRadius: "6px", border: "1px solid #fcd34d" }}>
+                                            <div style={{ display: "flex", gap: "10px" }}>
+                                                <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+                                                    <input type="number" placeholder="Phút" value={pendingQuestionInput.minutes} onChange={e => setPendingQuestionInput({...pendingQuestionInput, minutes: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", width: "60px", textAlign: "center" }} min="0" />
+                                                    <span style={{ fontWeight: "bold" }}>:</span>
+                                                    <input type="number" placeholder="Giây" value={pendingQuestionInput.seconds} onChange={e => setPendingQuestionInput({...pendingQuestionInput, seconds: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", width: "60px", textAlign: "center" }} min="0" max="59" />
+                                                </div>
+                                                <input type="text" placeholder="Nhập câu hỏi..." value={pendingQuestionInput.questionText} onChange={e => setPendingQuestionInput({...pendingQuestionInput, questionText: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
+                                            </div>
+                                            <div style={{ display: "flex", gap: "10px" }}>
+                                                <input type="text" placeholder="Đáp án A" value={pendingQuestionInput.optionA} onChange={e => setPendingQuestionInput({...pendingQuestionInput, optionA: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
+                                                <input type="text" placeholder="Đáp án B" value={pendingQuestionInput.optionB} onChange={e => setPendingQuestionInput({...pendingQuestionInput, optionB: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
+                                                <input type="text" placeholder="Đáp án C" value={pendingQuestionInput.optionC} onChange={e => setPendingQuestionInput({...pendingQuestionInput, optionC: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
+                                                <input type="text" placeholder="Đáp án D" value={pendingQuestionInput.optionD} onChange={e => setPendingQuestionInput({...pendingQuestionInput, optionD: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
+                                            </div>
+                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                <div style={{ fontSize: "13px", color: "#475569" }}>
+                                                    <strong>Đáp án đúng: </strong>
+                                                    <select value={pendingQuestionInput.correctOption} onChange={e => setPendingQuestionInput({...pendingQuestionInput, correctOption: e.target.value})} style={{ padding: "4px 8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}>
+                                                        <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                                                    </select>
+                                                </div>
+                                                <button type="button" onClick={handleAddPendingQuestion} style={{ padding: "8px 16px", borderRadius: "6px", background: "#f59e0b", color: "#fff", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: "600" }}>
+                                                    + Thêm Câu Hỏi
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div style={{ display: "flex", gap: "10px", marginTop: "5px" }}>
+                                <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
                                     <button disabled={isUploading} onClick={() => handleCreateLesson(chapter.id)} className="btn-primary" style={{ padding: "8px 18px", borderRadius: "6px", fontFamily: "'Segoe UI', sans-serif", cursor: isUploading ? "wait" : "pointer", opacity: isUploading ? 0.7 : 1 }}>
                                         {isUploading ? "Đang tải lên..." : "Lưu bài học"}
                                     </button>

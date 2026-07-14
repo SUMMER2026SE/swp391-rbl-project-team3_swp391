@@ -6,7 +6,8 @@ export default function LessonEditForm({ lesson, initialData, onSave, onCancel }
         title: initialData.title || "",
         description: initialData.description || "",
         videoUrl: initialData.videoUrl || "",
-        duration: initialData.duration || ""
+        duration: initialData.duration || "",
+        isPreview: initialData.isPreview || false
     });
     const [videoFile, setVideoFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -231,7 +232,7 @@ export default function LessonEditForm({ lesson, initialData, onSave, onCancel }
                     value={formData.title} 
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })} 
                     placeholder="Tiêu đề bài học" 
-                    style={{ padding: "10px 14px", borderRadius: "8px", border: "1px solid #2747d9", width: "100%", fontFamily: "'Segoe UI', sans-serif", fontSize: "14px" }} 
+                    style={{ boxSizing: "border-box", padding: "10px 14px", borderRadius: "8px", border: "1px solid #2747d9", width: "100%", fontFamily: "'Segoe UI', sans-serif", fontSize: "14px" }} 
                 />
             </div>
             <div className="form-group" style={{ margin: 0 }}>
@@ -241,18 +242,18 @@ export default function LessonEditForm({ lesson, initialData, onSave, onCancel }
                     value={formData.description} 
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })} 
                     placeholder="Mô tả bài học" 
-                    style={{ padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontFamily: "'Segoe UI', sans-serif", fontSize: "14px" }} 
+                    style={{ boxSizing: "border-box", padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontFamily: "'Segoe UI', sans-serif", fontSize: "14px" }} 
                 />
             </div>
-            <div style={{ display: "flex", gap: "12px", flexDirection: "column" }}>
-                <div style={{ display: "flex", gap: "12px" }}>
+            <div style={{ display: "flex", gap: "24px", flexDirection: "column" }}>
+                <div style={{ display: "flex", gap: "24px" }}>
                     <div className="form-group" style={{ margin: 0, flex: 1 }}>
                         <label style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px", fontFamily: "'Segoe UI', sans-serif" }}>Tải video (Máy tính)</label>
                         <input 
                             type="file" 
                             accept="video/*"
                             onChange={handleVideoSelect} 
-                            style={{ padding: "7px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontFamily: "'Segoe UI', sans-serif", fontSize: "13px", background: "#fff" }} 
+                            style={{ boxSizing: "border-box", padding: "7px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontFamily: "'Segoe UI', sans-serif", fontSize: "13px", background: "#fff" }} 
                         />
                     </div>
                     <div className="form-group" style={{ margin: 0, flex: 1 }}>
@@ -272,7 +273,7 @@ export default function LessonEditForm({ lesson, initialData, onSave, onCancel }
                                 }
                             }} 
                             placeholder="https://youtube.com/watch?v=..." 
-                            style={{ padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontFamily: "'Segoe UI', sans-serif", fontSize: "13px" }} 
+                            style={{ boxSizing: "border-box", padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontFamily: "'Segoe UI', sans-serif", fontSize: "13px" }} 
                         />
                     </div>
                     <div className="form-group" style={{ margin: 0, width: "110px" }}>
@@ -282,11 +283,12 @@ export default function LessonEditForm({ lesson, initialData, onSave, onCancel }
                             value={formData.duration} 
                             onChange={(e) => setFormData({ ...formData, duration: e.target.value })} 
                             placeholder="15:00" 
-                            style={{ padding: "10px 0", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", height: "auto", background: "#fff", fontSize: "14px", textAlign: "center", fontFamily: "'Segoe UI', sans-serif" }} 
+                            style={{ boxSizing: "border-box", padding: "10px 0", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", height: "auto", background: "#fff", fontSize: "14px", textAlign: "center", fontFamily: "'Segoe UI', sans-serif" }} 
                         />
                     </div>
                 </div>
             </div>
+
             
             <div style={{ marginTop: "10px", padding: "15px", border: "1px dashed #cbd5e1", borderRadius: "8px", background: "#f8fafc" }}>
                 <label style={{ fontSize: "13px", color: "#475569", marginBottom: "8px", display: "block", fontWeight: "700", fontFamily: "'Segoe UI', sans-serif" }}>Tài liệu đính kèm (PDF, Word, PPT...)</label>
