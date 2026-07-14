@@ -7,14 +7,6 @@ export default function AdminUIConfigPage() {
     const navigate = useNavigate();
     const [activeMenu] = useState("ui");
     const [loading, setLoading] = useState(false);
-
-    const userObj = JSON.parse(storedUser);
-    if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
-        alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
-        navigate("/home");
-        return;
-    }
-}, [navigate]);
     
     // State cho Cấu hình Banner
     const [bannerConfig, setBannerConfig] = useState({
@@ -50,7 +42,8 @@ export default function AdminUIConfigPage() {
         // Tải cấu hình Banner hiện tại từ DB lên form
         const fetchBannerConfig = async () => {
             try {
-                const res = await axiosClient.get("/public/ui-config/banner");
+                // 🔥 ĐÃ SỬA: Thêm /admin vào trước /public để khớp với @RequestMapping("/api/admin") của Backend
+                const res = await axiosClient.get("/admin/public/ui-config/banner");
                 if (res.data) {
                     setBannerConfig({
                         title: res.data.title,
@@ -70,6 +63,7 @@ export default function AdminUIConfigPage() {
         e.preventDefault();
         try {
             setLoading(true);
+            // 🔥 ĐÃ SỬA: Đảm bảo đường dẫn chuẩn xác đồng bộ với Backend
             await axiosClient.post("/admin/ui-config/banner", bannerConfig);
             alert("🎉 Đã lưu cấu hình Banner trang chủ xuống Database thành công!");
         } catch (err) {
@@ -102,25 +96,27 @@ export default function AdminUIConfigPage() {
 
     return (
         <div className="admin-layout">
+            {/* SIDEBAR TÍCH HỢP HOÀN CHỈNH */}
             <aside className="admin-sidebar">
                 <div className="admin-brand" onClick={() => navigate("/admin")}>
                     <h2>PrepAce <span>Admin</span></h2>
                 </div>
                 <ul className="admin-menu">
-                    <li onClick={() => navigate("/admin")}>📊 Dashboard</li>
-                    <li onClick={() => navigate("/admin/courses")}>📚 Quản lý khóa học</li>
-                    <li onClick={() => navigate("/admin/users")}>👥 Quản lý người dùng</li>
-                    <li onClick={() => navigate("/admin/question-bank")}>📝 Quản lý thư viện đề</li>
-                    <li onClick={() => navigate("/admin/violations")}>🚨 Quản lý vi phạm</li>
+                    <li className={activeMenu === "dashboard" ? "active" : ""} onClick={() => navigate("/admin")}>📊 Dashboard</li>
+                    <li className={activeMenu === "courses" ? "active" : ""} onClick={() => navigate("/admin/courses")}>📚 Quản lý khóa học</li>
+                    <li className={activeMenu === "users" ? "active" : ""} onClick={() => navigate("/admin/users")}>👥 Quản lý người dùng</li>
+                    <li className={activeMenu === "question-bank" ? "active" : ""} onClick={() => navigate("/admin/question-bank")}>📝 Quản lý thư viện đề</li>
+                    <li className={activeMenu === "violations" ? "active" : ""} onClick={() => navigate("/admin/violations")}>🚨 Quản lý vi phạm</li>
                     <li className={activeMenu === "ui" ? "active" : ""} onClick={() => navigate("/admin/ui-config")}>🎨 Cấu hình UI</li>
-                    <li onClick={() => navigate("/admin/sepay-guide")}>💳 Cấu hình SePay</li>
-                    <li onClick={() => navigate("/admin/categories")}>⚙️ Cấu hình danh mục</li>
+                    <li className={activeMenu === "sepay" ? "active" : ""} onClick={() => navigate("/admin/sepay-guide")}>💳 Cấu hình SePay</li>
+                    <li className={activeMenu === "categories" ? "active" : ""} onClick={() => navigate("/admin/categories")}>⚙️ Cấu hình danh mục</li>
                 </ul>
                 <div className="admin-logout">
                     <button onClick={handleLogout}>Đăng xuất</button>
                 </div>
             </aside>
 
+            {/* MAIN CONTENT */}
             <main className="admin-main">
                 <header className="admin-header">
                     <div className="header-title">
@@ -180,8 +176,9 @@ export default function AdminUIConfigPage() {
                                     onChange={(e) => setAnnouncement({...announcement, target: e.target.value})}
                                 >
                                     <option value="all">Tất cả người dùng</option>
-                                    <option value="students">Chỉ Học sinh</option>
-                                    <option value="teachers">Chỉ Giáo viên</option>
+                                    {/* 🔥 ĐÃ SỬA: Đổi từ số nhiều 'students/teachers' sang số ít 'student/teacher' để Backend so khớp logic DB chuẩn xác */}
+                                    <option value="student">Chỉ Học sinh</option>
+                                    <option value="teacher">Chỉ Giáo viên</option>
                                 </select>
                             </div>
                             <div className="form-group">

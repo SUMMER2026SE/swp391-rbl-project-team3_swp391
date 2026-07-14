@@ -171,7 +171,7 @@ export default function TestListPage() {
                     <h2>🕘 Lượt thi gần đây</h2>
                     <div className="tl-history-list">
                         {history.slice(0, 6).map((h) => (
-                            <Link key={h.attemptId} to={`/tests/result/${h.attemptId}`} className="tl-history-item">
+                            <Link key={h.attemptId} to={`/practice/result/${h.attemptId}`} className="tl-history-item">
                                 <span
                                     className={`tl-history-score ${
                                         h.score >= 8 ? "good" : h.score >= 5 ? "mid" : "bad"

@@ -50,16 +50,35 @@
     margin: 0 0 16px;
 }
 
-/* ---- Topic bars ---- */
-.ai-gap-topics h3, .ai-gap-roadmap h3 {
-    font-size: 14px; font-weight: 800; color: #4c1d95; margin: 0 0 10px;
+/* ---- Grid Layout (Glassmorphism) ---- */
+.ai-gap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 16px;
 }
+.ai-gap-col {
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.05);
+}
+.ai-gap-col-title {
+    font-size: 15px; font-weight: 800; color: #4c1d95; margin: 0 0 16px;
+    border-bottom: 2px solid rgba(139, 92, 246, 0.15);
+    padding-bottom: 8px;
+}
+
+/* ---- Topic bars ---- */
 .ai-gap-topic-row {
     display: grid;
-    grid-template-columns: minmax(120px, 200px) 1fr auto;
+    grid-template-columns: minmax(100px, 140px) 1fr auto;
     align-items: center;
     gap: 12px;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
 }
 .ai-gap-topic-name { font-size: 13px; font-weight: 700; color: #1e1b4b; }
 .ai-gap-bar {
@@ -77,14 +96,24 @@
 
 .ai-gap-strong {
     font-size: 13.5px; color: #14532d;
-    background: #f0fdf4; border: 1px solid #bbf7d0;
-    border-radius: 10px; padding: 10px 14px; margin: 14px 0;
+    background: rgba(240, 253, 244, 0.7);
+    border: 1px solid #bbf7d0;
+    border-radius: 12px; padding: 12px 16px; margin-top: 16px;
+    line-height: 1.6;
 }
 
+.ai-gap-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 20px; text-align: center; color: #6b7280; font-size: 14px;
+}
+.ai-gap-empty .emoji { font-size: 32px; margin-bottom: 8px; }
+
 /* ---- Roadmap ---- */
-.ai-gap-roadmap { margin-top: 16px; }
-.ai-gap-roadmap ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
-.ai-gap-roadmap li { font-size: 13.5px; line-height: 1.65; color: #312e81; }
+.ai-gap-roadmap ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 12px; }
+.ai-gap-roadmap li { 
+    font-size: 14px; line-height: 1.65; color: #312e81; 
+    list-style-type: '👉  ';
+}
 
 /* ---- Actions ---- */
 .ai-gap-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
@@ -108,6 +137,9 @@
 }
 .ai-gap-btn.primary:hover { transform: translateY(-2px); }
 
+@media (max-width: 768px) {
+    .ai-gap-grid { grid-template-columns: 1fr; }
+}
 @media (max-width: 560px) {
     .ai-gap-topic-row { grid-template-columns: 1fr; gap: 4px; }
     .ai-gap-accuracy { display: none; }

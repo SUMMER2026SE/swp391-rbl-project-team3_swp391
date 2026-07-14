@@ -143,7 +143,13 @@ export default function CoursePreviewPage() {
             }
         } catch (error) {
             console.error("Lỗi gửi review:", error);
-            alert("Gửi đánh giá thất bại. Vui lòng thử lại!");
+            if (error.response?.status === 401) {
+                alert("Bạn cần đăng nhập hệ thống để thực hiện gửi đánh giá!");
+            } else if (error.response?.status === 500) {
+                alert("Lỗi máy chủ (500). Xin hãy khởi động lại Backend theo hướng dẫn của AI!");
+            } else {
+                alert("Gửi đánh giá thất bại: " + (error.response?.data?.message || error.message));
+            }
         }
     };
 
@@ -192,6 +198,13 @@ export default function CoursePreviewPage() {
                         </span>
                     </div>
                     <div className="banner-actions">
+                        <button 
+                            className="edit-btn" 
+                            style={{ background: "#6c757d", color: "white", marginRight: "10px" }}
+                            onClick={() => navigate(`/teacher/dashboard`)} 
+                        >
+                            🏠 Về bảng điều khiển
+                        </button>
                         <button 
                             className="edit-btn" 
                             onClick={() => navigate(`/teacher/course/${id}/edit`)} 

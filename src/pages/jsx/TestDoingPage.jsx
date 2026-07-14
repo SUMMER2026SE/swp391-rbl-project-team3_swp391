@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import practiceService from "../../services/practiceService";
 import "../css/TestDoingPage.css";
+import ConfirmModal from "../../components/ConfirmModal";
 
 const OPTION_LABELS = ["A", "B", "C", "D"];
 const TYPE_LABEL = {
@@ -35,6 +36,8 @@ export default function TestDoingPage() {
     const [answers, setAnswers] = useState({}); // { [questionId]: optionId }
     const [timeLeft, setTimeLeft] = useState(location.state?.session?.remainingSeconds ?? 0);
     const [submitting, setSubmitting] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [confirmMsg, setConfirmMsg] = useState("");
     const questionRefs = useRef({});
 
     // Resume khi vào thẳng URL / F5 (không có state)
@@ -59,24 +62,31 @@ export default function TestDoingPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [attemptId]);
 
+    const doSubmit = async () => {
+        setSubmitting(true);
+        setShowConfirm(false);
+        try {
+            const result = await practiceService.submit(session.attemptId, answers);
+            navigate(`/practice/result/${result.attemptId}`, { state: { result } });
+        } catch (e) {
+            alert("Nộp bài thất bại: " + (e.response?.data?.message || e.message));
+            setSubmitting(false);
+        }
+    };
+
     const handleSubmit = useCallback(
-        async (auto = false) => {
+        (auto = false) => {
             if (!session || submitting) return;
             const total = session.questions.length;
             const answered = Object.keys(answers).length;
             if (!auto && answered < total) {
-                if (!window.confirm(`Bạn còn ${total - answered} câu chưa trả lời. Vẫn nộp bài?`)) return;
+                setConfirmMsg(`Bạn còn ${total - answered} câu chưa trả lời. Vẫn nộp bài?`);
+                setShowConfirm(true);
+                return;
             }
-            setSubmitting(true);
-            try {
-                const result = await practiceService.submit(session.attemptId, answers);
-                navigate(`/practice/result/${result.attemptId}`, { state: { result } });
-            } catch (e) {
-                alert("Nộp bài thất bại: " + (e.response?.data?.message || e.message));
-                setSubmitting(false);
-            }
+            doSubmit();
         },
-        [session, submitting, answers, navigate]
+        [session, submitting, answers]
     );
 
     // Đồng hồ đếm ngược (khởi tạo từ remainingSeconds của server → resume-safe)
@@ -118,7 +128,18 @@ export default function TestDoingPage() {
         <div className="td-page">
             {/* ===== TOP BAR (sticky) ===== */}
             <header className="td-topbar">
-                <div className="td-topbar-left">
+                <div className="td-topbar-left" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <button
+                        className="td-btn-back"
+                        onClick={() => {
+                            if (window.confirm("Cảnh báo: Nếu thoát bây giờ, tiến trình làm bài có thể bị gián đoạn. Bạn có chắc chắn muốn trở về Trang chủ không?")) {
+                                navigate("/home");
+                            }
+                        }}
+                        style={{ background: 'transparent', border: '1px solid #e2e8f0', color: '#64748b', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
+                    >
+                        ← Trang chủ
+                    </button>
                     <h2>{session.quizTitle}</h2>
                     <span className="td-type-chip">{TYPE_LABEL[session.quizType] || "Bài thi"}</span>
                 </div>
@@ -145,26 +166,62 @@ export default function TestDoingPage() {
                             </div>
                             <p className="td-question-content">{q.questionContent}</p>
                             <div className="td-options">
-                                {q.options.map((o, oi) => {
-                                    const selected = answers[q.questionId] === o.optionId;
-                                    return (
-                                        <label
-                                            key={o.optionId}
-                                            className={`td-option ${selected ? "td-option-selected" : ""}`}
-                                        >
-                                            <input
-                                                type="radio"
-                                                name={`q-${q.questionId}`}
-                                                checked={selected}
-                                                onChange={() => choose(q.questionId, o.optionId)}
-                                            />
-                                            <span className="td-option-label">{OPTION_LABELS[oi]}</span>
-                                            <span className="td-option-content">{o.optionContent}</span>
-                                            {selected && <span className="td-option-check">✓</span>}
-                                        </label>
-                                    );
-                                })}
-                            </div>
+    {(() => {
+        // Tự động bắt tất cả các kiểu đặt tên biến có thể xảy ra từ Backend
+        const type = q.questionType || q.question_type || q.type;
+        const hasOptions = q.options && q.options.length > 0;
+
+        // TRƯỜNG HỢP 1: Cấu hình câu TỰ LUẬN (ESSAY)
+        // Hoặc tự động nhận diện nếu không có options và nội dung chứa chữ "tiếp tuyến/tự luận"
+        if (type === "ESSAY" || (!hasOptions && q.questionContent?.toLowerCase().includes("tiếp tuyến"))) {
+            return (
+                <textarea
+                    className="td-option-essay"
+                    placeholder="Nhập bài làm tự luận chi tiết của bạn tại đây..."
+                    value={answers[q.questionId] || ""}
+                    onChange={(e) => choose(q.questionId, e.target.value)}
+                    style={{ width: "100%", minHeight: "120px", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", resize: "vertical" }}
+                />
+            );
+        }
+
+        // TRƯỜNG HỢP 2: Cấu hình câu ĐÁP ÁN NGẮN (SHORT_ANSWER)
+        // Hoặc tự động nhận diện nếu kho câu hỏi trống trơn không có options trắc nghiệm
+        if (type === "SHORT_ANSWER" || !hasOptions) {
+            return (
+                <input
+                    type="text"
+                    className="td-option-short"
+                    placeholder="Nhập đáp án ngắn (Ví dụ: 3)..."
+                    value={answers[q.questionId] || ""}
+                    onChange={(e) => choose(q.questionId, e.target.value)}
+                    style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none" }}
+                />
+            );
+        }
+
+        // TRƯỜNG HỢP 3: Câu hỏi TRẮC NGHIỆM truyền thống
+        return q.options.map((o, oi) => {
+            const selected = answers[q.questionId] === o.optionId;
+            return (
+                <label
+                    key={o.optionId}
+                    className={`td-option ${selected ? "td-option-selected" : ""}`}
+                >
+                    <input
+                        type="radio"
+                        name={`q-${q.questionId}`}
+                        checked={selected}
+                        onChange={() => choose(q.questionId, o.optionId)}
+                    />
+                    <span className="td-option-label">{OPTION_LABELS[oi]}</span>
+                    <span className="td-option-content">{o.optionContent}</span>
+                    {selected && <span className="td-option-check">✓</span>}
+                </label>
+            );
+        });
+    })()}
+</div>
                         </section>
                     ))}
                 </main>
@@ -204,6 +261,15 @@ export default function TestDoingPage() {
                     </button>
                 </aside>
             </div>
+
+            <ConfirmModal
+                isOpen={showConfirm}
+                title="Xác nhận nộp bài"
+                message={confirmMsg}
+                onConfirm={doSubmit}
+                onCancel={() => setShowConfirm(false)}
+                confirmText="Vẫn nộp bài"
+            />
         </div>
     );
 }

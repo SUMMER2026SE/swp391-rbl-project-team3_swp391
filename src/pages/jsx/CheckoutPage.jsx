@@ -57,7 +57,7 @@ export default function CheckoutPage() {
             setProcessing(true);
 
             const res = await paymentService.createBank(courseId);
-
+            console.log(res);
             navigate(`/payment/bank/${courseId}`, {
                 state: res
             });

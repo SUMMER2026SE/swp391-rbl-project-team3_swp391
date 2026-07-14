@@ -35,6 +35,20 @@ export default function StudyCalendarPage() {
     for (let i = 0; i < firstDayOffset; i++) calendarDays.push(null);
     for (let i = 1; i <= daysInMonth; i++) calendarDays.push(i);
 
+    // Danh sách khóa học để chọn
+    const [courses, setCourses] = useState([]);
+    useEffect(() => {
+        const fetchCourses = async () => {
+            try {
+                const res = await axiosClient.get("/courses");
+                setCourses(res.data);
+            } catch (err) {
+                console.error("Lỗi lấy danh sách khóa học:", err);
+            }
+        };
+        fetchCourses();
+    }, []);
+
     // Hàm xử lý gửi dữ liệu lên Backend để lưu lịch học mới
     const handleAddScheduleSubmit = async (e) => {
         e.preventDefault();
@@ -252,19 +266,36 @@ export default function StudyCalendarPage() {
                         <h3 style={{ marginBottom: "16px", fontSize: "20px" }}>📅 Thêm lịch học cá nhân</h3>
                         <form onSubmit={handleAddScheduleSubmit}>
                             <div style={{ marginBottom: "12px" }}>
+                                <label style={{ display: "block", marginBottom: "4px", fontWeight: "600" }}>Liên kết khóa học (Tùy chọn):</label>
+                                <select 
+                                    style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }}
+                                    onChange={(e) => {
+                                        const c = courses.find(x => x.courseId == e.target.value);
+                                        if (c) setTitle("Học " + c.title);
+                                    }}
+                                >
+                                    <option value="">-- Chọn khóa học --</option>
+                                    {courses.map(c => (
+                                        <option key={c.courseId} value={c.courseId}>{c.title}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div style={{ marginBottom: "12px" }}>
                                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "600" }}>Tiêu đề công việc:</label>
                                 <input type="text" placeholder="Ví dụ: Ôn tập chương 1 lý" value={title} onChange={(e) => setTitle(e.target.value)} required style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }} />
                             </div>
-                            <div style={{ marginBottom: "12px" }}>
-                                <label style={{ display: "block", marginBottom: "4px", fontWeight: "600" }}>Chọn ngày:</label>
-                                <input type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} required style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }} />
-                            </div>
-                            <div style={{ marginBottom: "12px" }}>
-                                <label style={{ display: "block", marginBottom: "4px", fontWeight: "600" }}>Chọn giờ:</label>
-                                <input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} required style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }} />
+                            <div style={{ marginBottom: "12px", display: "flex", gap: "10px" }}>
+                                <div style={{ flex: 1 }}>
+                                    <label style={{ display: "block", marginBottom: "4px", fontWeight: "600" }}>Chọn ngày:</label>
+                                    <input type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} required style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }} />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <label style={{ display: "block", marginBottom: "4px", fontWeight: "600" }}>Chọn giờ:</label>
+                                    <input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} required style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }} />
+                                </div>
                             </div>
                             <div style={{ marginBottom: "20px" }}>
-                                <label style={{ display: "block", marginBottom: "4px", fontWeight: "600" }}>Môn học (Phân loại màu):</label>
+                                <label style={{ display: "block", marginBottom: "4px", fontWeight: "600" }}>Phân loại (Màu sắc):</label>
                                 <select value={scheduleType} onChange={(e) => setScheduleType(e.target.value)} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }}>
                                     <option value="math">Toán học (Xanh dương)</option>
                                     <option value="physics">Vật lý (Tím)</option>
@@ -273,8 +304,8 @@ export default function StudyCalendarPage() {
                                 </select>
                             </div>
                             <div style={{ display: "flex", justifyContent: "end", gap: "10px" }}>
-                                <button type="button" onClick={() => setShowModal(false)} style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid #ccc", background: "#f5f5f5", cursor: "pointer" }}>Hủy</button>
-                                <button type="submit" style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "#2747d9", color: "#fff", fontWeight: "600", cursor: "pointer" }}>Lưu lịch học</button>
+                                <button type="button" onClick={() => setShowModal(false)} style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid #ccc", background: "#f1f5f9", cursor: "pointer", fontWeight: "600", color: "#475569" }}>Hủy</button>
+                                <button type="submit" style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "#3b82f6", color: "#fff", fontWeight: "600", cursor: "pointer" }}>Lưu lịch học</button>
                             </div>
                         </form>
                     </div>

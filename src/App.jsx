@@ -46,6 +46,7 @@ import AiChatbotPage from './pages/jsx/AiChatbotPage';
 import GapDiagnosisPage from './pages/jsx/GapDiagnosisPage';
 import ScoreForecastPage from './pages/jsx/ScoreForecastPage';
 import UniversityAdvisingPage from './pages/jsx/UniversityAdvisingPage';
+import PracticeResultPage from './pages/jsx/PracticeResultPage';
 import BankPaymentPage from './pages/jsx/BankPaymentPage';
 
 import { Routes, Route } from "react-router-dom";
@@ -77,7 +78,9 @@ function App() {
             {/* Thi - Thi Thử */}
             <Route path='/tests' element={<TestListPage />} />
             <Route path='/tests/:sessionsId' element={<TestPage />} />
+            <Route path='/tests/doing/:sessionsId' element={<TestDoingPage />} />
             <Route path='/tests/result/:sessionsId' element={<TestResult />} />
+            <Route path='/practice/result/:attemptId' element={<PracticeResultPage />} />
 
             {/* #13 Kiểm tra đầu vào */}
             <Route path='/entry-test' element={<EntryTestPage />} />
