@@ -463,7 +463,7 @@ export default function TeacherDashboard() {
                 )}
             </main>
 
-<<<<<<< HEAD
+
             {/* MODAL KHỞI TẠO KHÓA HỌC (TÊN + DANH MỤC + MÔN HỌC) */}
             {createCourseModalOpen && (
                 <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100 }}>
@@ -601,8 +601,7 @@ export default function TeacherDashboard() {
                 </div>
             )}
 
-=======
->>>>>>> 6fdb59b2b25eebec1f0debc76dd397f417a07ebc
+
             {/* MODAL BÁO CÁO TIẾN ĐỘ */}
             {reportModalOpen && selectedCourseForReport && (
                 <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>

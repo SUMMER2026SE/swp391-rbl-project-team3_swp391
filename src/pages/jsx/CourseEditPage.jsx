@@ -166,11 +166,6 @@ export default function CourseEditPage() {
                     });
                 }
             } catch (logErr) { console.error("Lỗi ghi log bài giảng:", logErr); }
-                    });
-                } catch(err) {
-                    console.error("Lỗi tạo câu hỏi draft", err);
-                }
-            }
 
             // Reset form draft
             setDraftMaterials([]);
@@ -449,16 +444,7 @@ export default function CourseEditPage() {
                 />
             </div>
 
-<<<<<<< HEAD
-                                 <div className="form-group" style={{ margin: 0 }}>
-                                    <label style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px", display: "block", fontWeight: 600, fontFamily: "'Segoe UI', sans-serif" }}>Tiêu đề bài học</label>
-                                    <input 
-                                        type="text" 
-                                        id={`new-lesson-title-${chapter.id}`} 
-                                        placeholder="Nhập tiêu đề bài học (Ví dụ: Bài 1: Khái niệm về Khối Đa Diện)..." 
-                                        style={{ boxSizing: "border-box", padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
-                                    />
-                                </div>
+
                                 
                                 <div className="form-group" style={{ margin: 0 }}>
                                     <label style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px", display: "block", fontWeight: 600, fontFamily: "'Segoe UI', sans-serif" }}>Mô tả ngắn</label>
@@ -596,6 +582,7 @@ export default function CourseEditPage() {
                                         Hủy bỏ
                                     </button>
                                 </div>
+                            </div>
     </div>
 ) : (
     <button onClick={() => setActiveChapterId(chapter.id)} className="add-lesson-btn" style={{ padding: "10px", width: "100%", fontFamily: "'Segoe UI', sans-serif" }}>
