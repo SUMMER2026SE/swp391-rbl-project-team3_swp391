@@ -5,10 +5,17 @@ import "../css/TestListPage.css";
 
 // Icon + màu nhấn theo môn học
 const SUBJECT_META = {
-    "Toán":      { icon: "📐", accent: "indigo" },
-    "Vật Lý":    { icon: "⚛️", accent: "sky" },
-    "Hóa Học":   { icon: "🧪", accent: "emerald" },
-    "Tiếng Anh": { icon: "🌍", accent: "amber" },
+    "Mathematics": { icon: "📐", accent: "indigo", name: "Toán Học" },
+    "Physics":     { icon: "⚛️", accent: "sky", name: "Vật Lý" },
+    "Chemistry":   { icon: "🧪", accent: "emerald", name: "Hóa Học" },
+    "Literature":  { icon: "📖", accent: "rose", name: "Ngữ Văn" },
+    "English":     { icon: "🌍", accent: "amber", name: "Tiếng Anh" },
+    "History":     { icon: "📜", accent: "orange", name: "Lịch Sử" },
+    "Geography":   { icon: "🗺️", accent: "green", name: "Địa Lý" },
+    "Toán":      { icon: "📐", accent: "indigo", name: "Toán Học" },
+    "Vật Lý":    { icon: "⚛️", accent: "sky", name: "Vật Lý" },
+    "Hóa Học":   { icon: "🧪", accent: "emerald", name: "Hóa Học" },
+    "Tiếng Anh": { icon: "🌍", accent: "amber", name: "Tiếng Anh" },
 };
 const TYPE_LABEL = {
     ENTRY_TEST: "Kiểm tra đầu vào",
@@ -119,7 +126,7 @@ export default function TestListPage() {
                             className={subjectFilter === s ? "tl-chip-active" : ""}
                             onClick={() => setSubjectFilter(s)}
                         >
-                            {SUBJECT_META[s]?.icon} {s}
+                            {SUBJECT_META[s]?.icon || "📖"} {SUBJECT_META[s]?.name || s}
                         </button>
                     ))}
                 </div>

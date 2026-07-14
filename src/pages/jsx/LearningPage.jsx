@@ -11,6 +11,8 @@ export default function LearningPage() {
     const [currentLesson, setCurrentLesson] = useState(null);
     const [activeTab, setActiveTab] = useState("overview");
     const [expandedChapter, setExpandedChapter] = useState(0);
+    const [resumePrompt, setResumePrompt] = useState(null); // Quản lý popup xem tiếp video
+
 
     // State quản lý danh sách câu hỏi QnA
     const [questions, setQuestions] = useState([]);
@@ -119,6 +121,13 @@ export default function LearningPage() {
                     console.log("Lỗi check enrollment", e);
                 }
 
+                // NẾU KHÓA HỌC MIỄN PHÍ -> TỰ ĐỘNG XEM NHƯ ĐÃ ĐĂNG KÝ
+                const cleanPrice = Number(String(fetchedCourse.price || fetchedCourse.Price || 0).replace(/[^0-9]/g, ''));
+                if (cleanPrice === 0 && localStorage.getItem("token")) {
+                    userIsEnrolled = true;
+                    setIsEnrolled(true);
+                }
+
                 // NẾU CHƯA MUA HOẶC CHƯA ĐĂNG NHẬP: CHỈ HIỂN THỊ CÁC VIDEO ĐƯỢC GIÁO VIÊN CHỌN HỌC THỬ (isPreview = true)
                 // NẾU KHÔNG CÓ VIDEO NÀO, MẶC ĐỊNH LẤY VIDEO ĐẦU TIÊN
                 if (!userIsEnrolled && fetchedCourse.chapters) {
@@ -223,11 +232,7 @@ export default function LearningPage() {
                     const res = await axiosClient.get(`/reports/progress/lesson/${currentLesson.id}`);
                     const savedTime = res.data?.lastVideoTime || 0;
                     if (savedTime > 0 && videoRef.current) {
-                        const wantsToResume = window.confirm("Hệ thống ghi nhận bạn đang xem dở bài học này. Bạn có muốn tiếp tục xem từ vị trí đã lưu không?\n\n(Bấm OK để xem tiếp, Cancel để xem lại từ đầu)");
-                        if (wantsToResume) {
-                            videoRef.current.currentTime = parseFloat(savedTime);
-                            videoRef.current.play().catch(e => console.log("Auto-play blocked:", e));
-                        }
+                        setResumePrompt({ savedTime: parseFloat(savedTime) });
                     }
                 } catch(e) {
                     console.log(e);
@@ -591,7 +596,39 @@ export default function LearningPage() {
                     <p style={{ margin: 0, fontSize: "16px", maxWidth: "450px", lineHeight: "1.5" }}>Bạn cần <strong>Mua khóa học</strong> để xem được video bài giảng này. Hãy đăng ký ngay để mở khóa toàn bộ lộ trình học tập nhé!</p>
                 </div>
             ) : currentLesson.videoUrl ? (
-                isYouTube(currentLesson.videoUrl) ? (
+                <>
+                    {resumePrompt && (
+                        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.7)", zIndex: 50 }}>
+                            <div style={{ backgroundColor: "#1e293b", padding: "24px", borderRadius: "12px", textAlign: "center", maxWidth: "400px", color: "#f8fafc", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}>
+                                <div style={{ fontSize: "36px", marginBottom: "12px" }}>⏱️</div>
+                                <h3 style={{ margin: "0 0 12px 0", fontSize: "18px", fontWeight: "600" }}>Tiếp tục bài học?</h3>
+                                <p style={{ margin: "0 0 20px 0", fontSize: "14px", color: "#cbd5e1", lineHeight: "1.5" }}>
+                                    Hệ thống ghi nhận bạn đang xem dở bài học này. Bạn có muốn tiếp tục xem từ vị trí đã lưu không?
+                                </p>
+                                <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+                                    <button 
+                                        onClick={() => {
+                                            if (videoRef.current) {
+                                                videoRef.current.currentTime = resumePrompt.savedTime;
+                                                videoRef.current.play().catch(e => console.log("Auto-play blocked:", e));
+                                            }
+                                            setResumePrompt(null);
+                                        }}
+                                        style={{ padding: "8px 20px", borderRadius: "6px", border: "none", backgroundColor: "#3b82f6", color: "white", fontWeight: "600", cursor: "pointer", transition: "all 0.2s" }}
+                                    >
+                                        Xem tiếp
+                                    </button>
+                                    <button 
+                                        onClick={() => setResumePrompt(null)}
+                                        style={{ padding: "8px 20px", borderRadius: "6px", border: "1px solid #475569", backgroundColor: "transparent", color: "#cbd5e1", fontWeight: "600", cursor: "pointer", transition: "all 0.2s" }}
+                                    >
+                                        Từ đầu
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {isYouTube(currentLesson.videoUrl) ? (
                     // Phải dùng thẻ div rỗng để YouTube API tự động nhúng iframe vào đây một cách chính xác
                     <div id="youtube-player-container" style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}></div>
                 ) : (
@@ -602,7 +639,8 @@ export default function LearningPage() {
                         onTimeUpdate={handleTimeUpdate}
                         style={{ width: "100%", height: "100%", display: "block", position: "absolute", top: 0, left: 0 }}
                     />
-                )
+                )}
+                </>
             ) : (
                 <div className="video-placeholder" style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>
                     <div className="play-button-large" style={{ fontSize: "40px", marginBottom: "10px" }}>▶</div>

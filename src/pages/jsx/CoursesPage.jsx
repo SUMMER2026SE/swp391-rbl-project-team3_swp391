@@ -10,7 +10,22 @@ export default function CoursesPage() {
     const [subjects, setSubjects] = useState([]); // 🔥 THÊM MỚI: State lưu danh sách môn học cho bộ lọc
     const [allCourses, setAllCourses] = useState([]);
 
-    const DEFAULT_THUMBNAIL = "https://images.unsplash.com/photo-1516321310764-9f1e6e8b0c0a?auto=format&fit=crop&w=400&q=80";
+    const getSubjectThumbnail = (subjectName) => {
+        const thumbMap = {
+            "Toán Học": "http://localhost:8080/uploads/thumbnails/math-course.jpg?v=2",
+            "Vật Lý": "http://localhost:8080/uploads/thumbnails/vatli.jpg?v=2",
+            "Hóa Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
+            "Hoá Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
+            "Ngữ Văn": "http://localhost:8080/uploads/thumbnails/van.jpg?v=2",
+            "Tiếng Anh": "http://localhost:8080/uploads/thumbnails/english-course.jpg?v=2",
+            "Lịch Sử": "http://localhost:8080/uploads/thumbnails/su.jpg?v=2",
+            "Địa Lý": "http://localhost:8080/uploads/thumbnails/dia.jpg?v=2",
+            "Sinh Học": "https://images.unsplash.com/photo-1530213786676-412f1262d512?auto=format&fit=crop&w=400&q=80",
+            "Tin Học": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=400&q=80",
+            "GDCD": "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=400&q=80"
+        };
+        return thumbMap[subjectName] || "https://images.unsplash.com/photo-1516321310764-9f1e6e8b0c0a?auto=format&fit=crop&w=400&q=80";
+    };
 
     useEffect(() => {
         // 1. Tải danh sách môn học hoạt động về làm bộ lọc menu sidebar
@@ -18,6 +33,35 @@ export default function CoursesPage() {
             try {
                 const res = await axiosClient.get("/public/subjects");
                 setSubjects(res.data);
+                
+                // --- BẢN VÁ TỰ ĐỘNG SỬA DỮ LIỆU CÁC MÔN HỌC BỊ GÁN NHẦM VÀO TOÁN HỌC ---
+                try {
+                    const coursesRes = await axiosClient.get("/courses");
+                    if (coursesRes.data) {
+                        for (const c of coursesRes.data) {
+                            const title = (c.title || c.courseTitle || c.course_title || "").toLowerCase();
+                            let targetSubName = null;
+                            if (title.includes("vật lý") || title.includes("vật lí")) targetSubName = "Physics";
+                            if (title.includes("hóa học") || title.includes("hoá học")) targetSubName = "Chemistry";
+                            if (title.includes("lịch sử") || title.includes("lịch sữ")) targetSubName = "History";
+                            if (title.includes("địa lý") || title.includes("địa lí")) targetSubName = "Geography";
+                            if (title.includes("ngữ văn")) targetSubName = "Literature";
+                            if (title.includes("tiếng anh") || title.includes("anh văn")) targetSubName = "English";
+                            if (title.includes("sinh học")) targetSubName = "Biology";
+                            
+                            if (targetSubName) {
+                                const correctSub = res.data.find(s => s.subjectName === targetSubName);
+                                const currentSubId = c.subject?.id || c.subjectId || c.subject_id;
+                                if (correctSub && String(currentSubId) !== String(correctSub.id)) {
+                                    // Sửa lại môn học trên Database
+                                    await axiosClient.put(`/courses/${c.id || c.courseId || c.course_id}`, { subjectId: correctSub.id });
+                                }
+                            }
+                        }
+                    }
+                } catch (e) { console.log("Auto fix error:", e); }
+                // --------------------------------------------------------------------
+                
             } catch (err) {
                 console.error("Lỗi tải môn học:", err);
             }
@@ -38,15 +82,29 @@ export default function CoursesPage() {
                         }
 
                         // 🔥 ĐÃ SỬA: Lấy subjectId và subjectName trực tiếp từ quan hệ liên kết ManyToOne của Backend
-                        const sId = c.subject?.id || c.subjectId || "other";
-                        const sName = c.subject?.subjectName || c.subjectName || "Chung";
+                        const sId = c.subject?.id || c.subjectId || c.subject_id || "other";
+                        let sName = c.subject?.subjectName || c.subjectName || c.subject_name || "Chung";
+
+                        const subjectTranslations = {
+                            "Mathematics": "Toán Học",
+                            "Physics": "Vật Lý",
+                            "Chemistry": "Hóa Học",
+                            "Literature": "Ngữ Văn",
+                            "English": "Tiếng Anh",
+                            "History": "Lịch Sử",
+                            "Geography": "Địa Lý",
+                            "Biology": "Sinh Học",
+                            "Civic Education": "GDCD",
+                            "Informatics": "Tin Học"
+                        };
+                        sName = subjectTranslations[sName] || sName;
 
                         let thumbnail = c.thumbnail_url || c.thumbnailUrl || c.thumbnail;
                         if (thumbnail && !thumbnail.startsWith("http")) {
                             thumbnail = `http://localhost:8080${thumbnail}`;
                         }
                         if (!thumbnail) {
-                            thumbnail = DEFAULT_THUMBNAIL;
+                            thumbnail = getSubjectThumbnail(sName);
                         }
 
                         return {
@@ -75,11 +133,18 @@ export default function CoursesPage() {
         fetchCoursesFromBackend();
     }, []);
 
-    // Lọc khóa học theo ô tìm kiếm và sidebar môn học
+    const normalizeText = (text) => {
+        return String(text || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    };
+
     const filteredCourses = allCourses.filter(course => {
         const matchSubject = activeSubject === "all" || String(course.subject) === String(activeSubject);
-        const matchSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            course.teacher.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const searchNorm = normalizeText(searchTerm);
+        const titleNorm = normalizeText(course.title);
+        const teacherNorm = normalizeText(course.teacher);
+        
+        const matchSearch = titleNorm.includes(searchNorm) || teacherNorm.includes(searchNorm);
         return matchSubject && matchSearch;
     });
 
@@ -113,15 +178,31 @@ export default function CoursesPage() {
                             <li className={activeSubject === "all" ? "active" : ""} onClick={() => setActiveSubject("all")}>
                                 Tất cả môn học
                             </li>
-                            {subjects.map((sub) => (
-                                <li 
-                                    key={sub.id} 
-                                    className={String(activeSubject) === String(sub.id) ? "active" : ""} 
-                                    onClick={() => setActiveSubject(sub.id)}
-                                >
-                                    📚 {sub.subjectName}
-                                </li>
-                            ))}
+                            {subjects.map((sub) => {
+                                const subjectTranslations = {
+                                    "Mathematics": "Toán Học",
+                                    "Physics": "Vật Lý",
+                                    "Chemistry": "Hóa Học",
+                                    "Literature": "Ngữ Văn",
+                                    "English": "Tiếng Anh",
+                                    "History": "Lịch Sử",
+                                    "Geography": "Địa Lý",
+                                    "Biology": "Sinh Học",
+                                    "Civic Education": "GDCD",
+                                    "Informatics": "Tin Học"
+                                };
+                                const translatedName = subjectTranslations[sub.subjectName] || sub.subjectName;
+                                
+                                return (
+                                    <li 
+                                        key={sub.id} 
+                                        className={String(activeSubject) === String(sub.id) ? "active" : ""} 
+                                        onClick={() => setActiveSubject(sub.id)}
+                                    >
+                                        📚 {translatedName}
+                                    </li>
+                                );
+                            })}
                         </ul>
                     </div>
                 </aside>
@@ -146,7 +227,16 @@ export default function CoursesPage() {
                                     onClick={() => navigate(`/course/${course.id}`)}
                                 >
                                     <div className="course-thumb">
-                                        <img src={course.thumbnail} alt={course.title} />
+                                        <img 
+                                            src={course.thumbnail} 
+                                            alt={course.title} 
+                                            onError={(e) => { 
+                                                if (!e.target.dataset.errorHandled) {
+                                                    e.target.dataset.errorHandled = true;
+                                                    e.target.src = getSubjectThumbnail(course.subjectName); 
+                                                }
+                                            }}
+                                        />
                                         <span className="subject-badge">
                                             {course.subjectName}
                                         </span>

@@ -10,6 +10,7 @@ export default function TeacherDashboard() {
     const [user, setUser] = useState(null);
     const [myCourses, setMyCourses] = useState([]);
     const [qaList, setQaList] = useState([]);
+    const [subjects, setSubjects] = useState([]);
     const [activeTab, setActiveTab] = useState("COURSES");
 
     // Modal Báo cáo
@@ -27,18 +28,11 @@ export default function TeacherDashboard() {
     const [createCourseModalOpen, setCreateCourseModalOpen] = useState(false);
     const [newCourseData, setNewCourseData] = useState({
         title: "",
-        subjectId: "",
-        categoryId: ""
+        subjectId: "1",
+        categoryId: "1"
     });
 
-    // State cho Modal sửa khóa học
-    const [editCourseModalOpen, setEditCourseModalOpen] = useState(false);
-    const [editCourseData, setEditCourseData] = useState({
-        id: "",
-        title: "",
-        subjectId: "",
-        categoryId: ""
-    });
+
 
     // Kiểm tra quyền truy cập và load dữ liệu ban đầu
     useEffect(() => {
@@ -59,6 +53,9 @@ export default function TeacherDashboard() {
 
         setUser(userObj);
         fetchCourses(userObj);
+        
+        // Lấy danh sách môn học cho dropdown
+        axiosClient.get("/public/subjects").then(res => setSubjects(res.data)).catch(() => {});
     }, [navigate]);
 
     // Load danh sách Q&A khi chuyển tab
@@ -90,16 +87,19 @@ export default function TeacherDashboard() {
         }
     };
 
-    const handleCreateCourse = async () => {
-        const customTitle = window.prompt("Nhập tên khóa học mới:", "Khóa học mới");
-        if (!customTitle) return;
+    const handleCreateCourseSubmit = async (e) => {
+        e.preventDefault();
+        if (!newCourseData.title.trim()) return alert("Vui lòng nhập tên khóa học!");
 
         try {
             const response = await axiosClient.post("/courses", {
-                title: customTitle,
-                teacher_id: user?.id
+                title: newCourseData.title,
+                teacher_id: user?.id,
+                categoryId: parseInt(newCourseData.categoryId) || 1,
+                subjectId: parseInt(newCourseData.subjectId) || 1
             });
             alert("✅ Tạo khóa học thành công!");
+            setCreateCourseModalOpen(false);
             // Chuyển sang trang biên soạn
             navigate(`/teacher/course/${response.data.id || response.data.courseId}/edit`);
             fetchCourses(user); // Refresh danh sách
@@ -192,28 +192,7 @@ export default function TeacherDashboard() {
         };
     
 
-    const handleEditCourseSubmit = async (e) => {
-        e.preventDefault();
-        if (!editCourseData.title.trim()) return alert("Vui lòng nhập tên khóa học!");
-        
-        try {
-            await axiosClient.put(`/courses/${editCourseData.id}`, { 
-                title: editCourseData.title,
-                subjectId: editCourseData.subjectId ? parseInt(editCourseData.subjectId) : null,
-                categoryId: editCourseData.categoryId ? parseInt(editCourseData.categoryId) : null
-            });
-            
-            setEditCourseModalOpen(false);
-            
-            // Gọi lại fetchCourses thủ công
-            const resCourses = await axiosClient.get("/courses");        
-            setMyCourses(resCourses.data);
-            alert("Cập nhật khóa học thành công!");
-        } catch (error) {
-            console.error(error);
-            alert("Lỗi khi cập nhật khóa học: " + (error.response?.data?.message || error.message));
-        }
-    };
+
 
     const handleDeleteCourse = async (courseId) => {
         if (!window.confirm("Bạn có chắc chắn muốn xóa khóa học này không? Hành động này không thể hoàn tác!")) return;
@@ -225,16 +204,6 @@ export default function TeacherDashboard() {
             console.error(error);
             alert("Lỗi khi xóa khóa học: " + (error.response?.data?.message || error.message));
         }
-    };
-
-    const openEditModal = (course) => {
-        setEditCourseData({
-            id: course.id,
-            title: course.title,
-            subjectId: course.subject?.id || "",
-            categoryId: course.category?.id || course.category?.categoryId || ""
-        });
-        setEditCourseModalOpen(true);
     };
 
     const handleSendReply = async () => {
@@ -320,16 +289,18 @@ export default function TeacherDashboard() {
                                             {course.title}
                                         </h3>
                                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                            <span style={{
-                                                padding: "5px 10px",
-                                                background: course.status === "PUBLISHED" ? "#e2fbe8" : "#fff3cd",
-                                                color: course.status === "PUBLISHED" ? "#1e8a3b" : "#b45309",
-                                                borderRadius: "8px",
-                                                fontSize: "12px",
-                                                fontWeight: "600"
-                                            }}>
-                                                {course.status === "PUBLISHED" ? "Đã xuất bản" : "Bản nháp"}
-                                            </span>
+                                            {course.status === "PUBLISHED" && (
+                                                <span style={{
+                                                    padding: "5px 10px",
+                                                    background: "#e2fbe8",
+                                                    color: "#1e8a3b",
+                                                    borderRadius: "8px",
+                                                    fontSize: "12px",
+                                                    fontWeight: "600"
+                                                }}>
+                                                    Đã xuất bản
+                                                </span>
+                                            )}
                                             <span style={{ fontSize: "13.5px", color: "#64748b" }}>
                                                 👥 {course.students || 0} học viên
                                             </span>
@@ -350,13 +321,7 @@ export default function TeacherDashboard() {
                                         >
                                             ✏️ Biên soạn
                                         </button>
-                                        <button 
-                                            style={{ padding: "10px 18px", background: "#eef2ff", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: "600", color: "#4f46e5" }}
-                                            onClick={() => openEditModal(course)}
-                                            title="Sửa thông tin cơ bản"
-                                        >
-                                            ⚙️ Sửa thông tin
-                                        </button>
+
                                         <button 
                                             style={{ padding: "10px 18px", background: "#f0fdf4", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: "600", color: "#166534" }}
                                             onClick={() => handleOpenReport(course)}
@@ -482,39 +447,20 @@ export default function TeacherDashboard() {
                                     style={{ padding: "11px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px" }}
                                 />
                             </div>
-
-                            {/* Ô chọn Danh mục tổng quan */}
                             <div style={{ display: "flex", flexDirection: "column", gap: "6px", textAlign: "left" }}>
-                                <label style={{ fontWeight: "600", fontSize: "14px", color: "#334155" }}>📁 Lựa chọn danh mục hệ thống:</label>
-                                <select
-                                    required
-                                    value={newCourseData.categoryId}
-                                    onChange={(e) => setNewCourseData({ ...newCourseData, categoryId: e.target.value })}
-                                    style={{ padding: "11px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px", backgroundColor: "#fff" }}
-                                >
-                                    <option value="">-- Click chọn danh mục --</option>
-                                    {categories.map(cat => (
-                                        <option key={cat.id || cat.categoryId} value={cat.id || cat.categoryId}>{cat.categoryName}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div style={{ display: "flex", flexDirection: "column", gap: "6px", textAlign: "left" }}>
-                                <label style={{ fontWeight: "600", fontSize: "14px", color: "#334155" }}>📐 Lựa chọn môn học chỉ định:</label>
-                                <select
-                                    required
+                                <label style={{ fontWeight: "600", fontSize: "14px", color: "#334155" }}>Môn học:</label>
+                                <select 
                                     value={newCourseData.subjectId}
                                     onChange={(e) => setNewCourseData({ ...newCourseData, subjectId: e.target.value })}
-                                    style={{ padding: "11px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px", backgroundColor: "#fff" }}
+                                    style={{ padding: "11px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px" }}
                                 >
-                                    <option value="">-- Click chọn môn học --</option>
                                     {subjects.map(sub => (
-                                        <option key={sub.id} value={sub.id}>{sub.subjectName}</option>
+                                        <option key={sub.id} value={sub.id}>
+                                            {{"Mathematics": "Toán Học", "Physics": "Vật Lý", "Chemistry": "Hóa Học", "Literature": "Ngữ Văn", "English": "Tiếng Anh", "Biology": "Sinh Học", "History": "Lịch Sử", "Geography": "Địa Lý", "Civic Education": "GDCD", "Informatics": "Tin Học"}[sub.subjectName] || sub.subjectName}
+                                        </option>
                                     ))}
                                 </select>
-                            </div>
-
-                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "15px" }}>
+                            </div>                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "15px" }}>
                                 <button 
                                     type="button" 
                                     onClick={() => { setCreateCourseModalOpen(false); setNewCourseData({ title: "", subjectId: "", categoryId: "" }); }}
@@ -526,74 +472,7 @@ export default function TeacherDashboard() {
                                     type="submit"
                                     style={{ padding: "10px 20px", background: "#2747d9", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}
                                 >
-                                    Tiếp tục thiết lập
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* MODAL SỬA THÔNG TIN KHÓA HỌC */}
-            {editCourseModalOpen && (
-                <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100 }}>
-                    <div style={{ background: "#fff", width: "500px", borderRadius: "16px", padding: "30px", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}>
-                        <h3 style={{ margin: "0 0 20px 0", fontSize: "20px", fontWeight: "700", color: "#0f172a" }}>⚙️ Sửa thông tin khóa học</h3>
-                        
-                        <form onSubmit={handleEditCourseSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                            <div style={{ display: "flex", flexDirection: "column", gap: "6px", textAlign: "left" }}>
-                                <label style={{ fontWeight: "600", fontSize: "14px", color: "#334155" }}>Tên khóa học:</label>
-                                <input 
-                                    type="text"
-                                    required
-                                    placeholder="Nhập tên khóa học..."
-                                    value={editCourseData.title}
-                                    onChange={(e) => setEditCourseData({ ...editCourseData, title: e.target.value })}
-                                    style={{ padding: "11px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px" }}
-                                />
-                            </div>
-
-                            <div style={{ display: "flex", flexDirection: "column", gap: "6px", textAlign: "left" }}>
-                                <label style={{ fontWeight: "600", fontSize: "14px", color: "#334155" }}>📁 Lựa chọn danh mục hệ thống:</label>
-                                <select
-                                    value={editCourseData.categoryId || ""}
-                                    onChange={(e) => setEditCourseData({ ...editCourseData, categoryId: e.target.value })}
-                                    style={{ padding: "11px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px", backgroundColor: "#fff" }}
-                                >
-                                    <option value="">-- Không đổi --</option>
-                                    {categories.map(cat => (
-                                        <option key={cat.id || cat.categoryId} value={cat.id || cat.categoryId}>{cat.categoryName}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div style={{ display: "flex", flexDirection: "column", gap: "6px", textAlign: "left" }}>
-                                <label style={{ fontWeight: "600", fontSize: "14px", color: "#334155" }}>📐 Lựa chọn môn học chỉ định:</label>
-                                <select
-                                    value={editCourseData.subjectId || ""}
-                                    onChange={(e) => setEditCourseData({ ...editCourseData, subjectId: e.target.value })}
-                                    style={{ padding: "11px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px", backgroundColor: "#fff" }}
-                                >
-                                    <option value="">-- Không đổi --</option>
-                                    {subjects.map(sub => (
-                                        <option key={sub.id} value={sub.id}>{sub.subjectName}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "15px" }}>
-                                <button 
-                                    type="button" 
-                                    onClick={() => setEditCourseModalOpen(false)}
-                                    style={{ padding: "10px 16px", background: "#f1f5f9", color: "#475569", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}
-                                >
-                                    Hủy bỏ
-                                </button>
-                                <button 
-                                    type="submit"
-                                    style={{ padding: "10px 20px", background: "#4f46e5", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}
-                                >
-                                    Lưu thay đổi
+                                    Tạo mới
                                 </button>
                             </div>
                         </form>
