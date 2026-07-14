@@ -330,10 +330,6 @@ export default function HomePage() {
                 </section>
             </main>
 
-            {/* AI FLOATING BUTTON */}
-            <button className="ai-fab" title="PrepAce AI" onClick={() => navigate("/ai/chat")}>
-                <span className="pulse"></span>🤖
-            </button>
         </div>
     );
 }

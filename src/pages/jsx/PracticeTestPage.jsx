@@ -105,6 +105,16 @@ export default function PracticeTestPage() {
     const choose = (questionId, optionId) =>
         setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
 
+    const chooseTrueFalse = (questionId, optionId, val) => {
+        setAnswers((prev) => {
+            const currentQAns = prev[questionId] || {};
+            return {
+                ...prev,
+                [questionId]: { ...currentQAns, [optionId]: val }
+            };
+        });
+    };
+
     const scrollToQuestion = (questionId) =>
         questionRefs.current[questionId]?.scrollIntoView({ behavior: "smooth", block: "center" });
 
@@ -161,7 +171,7 @@ export default function PracticeTestPage() {
                                 </div>
                                 <p className="pt-question-content">{q.questionContent}</p>
                                 <div className="pt-options">
-                                    {q.options.map((o, oi) => (
+                                    {(!q.questionType || q.questionType === "CHOICE") && q.options.map((o, oi) => (
                                         <label
                                             key={o.optionId}
                                             className={`pt-option ${answers[q.questionId] === o.optionId ? "pt-option-selected" : ""}`}
@@ -176,6 +186,51 @@ export default function PracticeTestPage() {
                                             <span className="pt-option-content">{o.optionContent}</span>
                                         </label>
                                     ))}
+                                    {q.questionType === "TRUE_FALSE" && (
+                                        <div className="pt-tf-container">
+                                            {q.options.map((o, oi) => {
+                                                const qAns = answers[q.questionId] || {};
+                                                return (
+                                                    <div key={o.optionId} className="pt-tf-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', borderBottom: '1px solid #f1f5f9' }}>
+                                                        <div style={{ flex: 1, paddingRight: '20px' }}>
+                                                            <span className="pt-option-label" style={{ marginRight: '8px' }}>{OPTION_LABELS[oi]}</span>
+                                                            <span className="pt-option-content">{o.optionContent}</span>
+                                                        </div>
+                                                        <div className="pt-tf-actions" style={{ display: 'flex', gap: '10px' }}>
+                                                            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', background: qAns[o.optionId] === true ? '#ecfdf5' : '#fff', padding: '6px 12px', borderRadius: '4px', border: qAns[o.optionId] === true ? '1px solid #10b981' : '1px solid #cbd5e1', color: qAns[o.optionId] === true ? '#047857' : '#475569', fontWeight: qAns[o.optionId] === true ? 'bold' : 'normal' }}>
+                                                                <input type="radio" name={`tf-${q.questionId}-${o.optionId}`} checked={qAns[o.optionId] === true} onChange={() => chooseTrueFalse(q.questionId, o.optionId, true)} style={{ display: 'none' }} />
+                                                                Đúng
+                                                            </label>
+                                                            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', background: qAns[o.optionId] === false ? '#fef2f2' : '#fff', padding: '6px 12px', borderRadius: '4px', border: qAns[o.optionId] === false ? '1px solid #ef4444' : '1px solid #cbd5e1', color: qAns[o.optionId] === false ? '#b91c1c' : '#475569', fontWeight: qAns[o.optionId] === false ? 'bold' : 'normal' }}>
+                                                                <input type="radio" name={`tf-${q.questionId}-${o.optionId}`} checked={qAns[o.optionId] === false} onChange={() => chooseTrueFalse(q.questionId, o.optionId, false)} style={{ display: 'none' }} />
+                                                                Sai
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                    {q.questionType === "SHORT_ANSWER" && (
+                                        <input
+                                            type="text"
+                                            className="pt-short-answer-input"
+                                            placeholder="Nhập câu trả lời ngắn của bạn..."
+                                            value={answers[q.questionId] || ""}
+                                            onChange={(e) => choose(q.questionId, e.target.value)}
+                                            style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', marginTop: '10px' }}
+                                        />
+                                    )}
+                                    {q.questionType === "ESSAY" && (
+                                        <textarea
+                                            className="pt-essay-input"
+                                            placeholder="Nhập câu trả lời tự luận của bạn..."
+                                            value={answers[q.questionId] || ""}
+                                            onChange={(e) => choose(q.questionId, e.target.value)}
+                                            rows={6}
+                                            style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', marginTop: '10px', resize: 'vertical' }}
+                                        />
+                                    )}
                                 </div>
                             </section>
                         ))}

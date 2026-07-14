@@ -127,31 +127,59 @@ export default function EntryTestPage() {
                     </p>
                 </header>
 
-                <div className="entry-quiz">
+                <div className="entry-quiz" style={{ gap: '24px', display: 'flex', flexDirection: 'column' }}>
                     {questions.map((q, idx) => (
-                        <div className="etq-card" key={q.questionId}>
-                            <h3 className="etq-title">
-                                Câu {idx + 1}. {q.questionContent}
+                        <div className="etq-card" key={q.questionId} style={{ background: '#ffffff', borderRadius: '12px', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)', border: '1px solid #f1f5f9', transition: 'all 0.3s ease' }}>
+                            <h3 className="etq-title" style={{ fontSize: '18px', color: '#1e293b', marginBottom: '16px', lineHeight: '1.5' }}>
+                                <span style={{ background: '#eff6ff', color: '#2563eb', padding: '4px 10px', borderRadius: '6px', fontSize: '14px', marginRight: '8px', fontWeight: 'bold' }}>Câu {idx + 1}</span> 
+                                {q.questionContent}
                             </h3>
 
-                            <div className="etq-options">
-                                {q.options?.map((o) => (
+                            <div className="etq-options" style={{ marginTop: '16px' }}>
+                                {(!q.questionType || q.questionType === "CHOICE" || q.questionType === "TRUE_FALSE") && q.options?.map((o) => (
                                     <label
                                         key={o.optionId}
                                         className={`etq-option ${
                                             answers[q.questionId] === o.optionContent ? "selected" : ""
                                         }`}
+                                        style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', border: answers[q.questionId] === o.optionContent ? '2px solid #3b82f6' : '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer', marginBottom: '10px', background: answers[q.questionId] === o.optionContent ? '#eff6ff' : '#fff', transition: 'all 0.2s' }}
                                     >
                                         <input
                                             type="radio"
                                             name={`q-${q.questionId}`}
                                             checked={answers[q.questionId] === o.optionContent}
                                             onChange={() => choose(q.questionId, o.optionContent)}
+                                            style={{ marginRight: '12px', accentColor: '#3b82f6', transform: 'scale(1.2)' }}
                                         />
-
-                                        <span>{o.optionContent}</span>
+                                        <span style={{ color: answers[q.questionId] === o.optionContent ? '#1e40af' : '#475569', fontWeight: answers[q.questionId] === o.optionContent ? '500' : 'normal' }}>{o.optionContent}</span>
                                     </label>
                                 ))}
+
+                                {q.questionType === "SHORT_ANSWER" && (
+                                    <div style={{ marginTop: '12px' }}>
+                                        <input
+                                            type="text"
+                                            placeholder="Nhập câu trả lời ngắn của bạn vào đây..."
+                                            value={answers[q.questionId] || ""}
+                                            onChange={(e) => choose(q.questionId, e.target.value)}
+                                            style={{ 
+                                                width: '100%', 
+                                                padding: '14px 16px', 
+                                                fontSize: '16px',
+                                                borderRadius: '8px', 
+                                                border: answers[q.questionId] ? '2px solid #3b82f6' : '1px solid #cbd5e1', 
+                                                background: answers[q.questionId] ? '#eff6ff' : '#f8fafc',
+                                                color: '#1e293b',
+                                                outline: 'none',
+                                                transition: 'all 0.2s ease',
+                                                boxShadow: answers[q.questionId] ? '0 0 0 3px rgba(59, 130, 246, 0.2)' : 'none'
+                                            }}
+                                        />
+                                        <div style={{ marginTop: '8px', fontSize: '13px', color: '#64748b', fontStyle: 'italic' }}>
+                                            * Câu trả lời tự luận ngắn (1-2 từ hoặc con số).
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}
