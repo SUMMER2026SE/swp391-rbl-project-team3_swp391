@@ -12,6 +12,8 @@ export default function LearningPage() {
     const [activeTab, setActiveTab] = useState("overview");
     const [expandedChapter, setExpandedChapter] = useState(0);
     const [resumePrompt, setResumePrompt] = useState(null); // Quản lý popup xem tiếp video
+    const [showSummaryPopup, setShowSummaryPopup] = useState(false);
+    const [completedChapterId, setCompletedChapterId] = useState(null);
 
 
     // State quản lý danh sách câu hỏi QnA
@@ -254,20 +256,38 @@ export default function LearningPage() {
 
         try {
             const token = localStorage.getItem("token");
-            if (!token) return alert("Vui lòng đăng nhập!");
-            
-            await axiosClient.post("/reports/progress", {
-                lessonId: lessonId,
-                isCompleted: newStatus
-            });
-            
+            if (!token) {
+                alert("Vui lòng đăng nhập!");
+                return;
+            }
+            const res = await axiosClient.post(
+                "/reports/progress",
+                {
+                    lessonId,
+                    isCompleted: newStatus
+                }
+            );
             if (newStatus) {
                 setCompletedLessonIds(prev => [...prev, lessonId]);
+
+                // ===== HIỆN POPUP AI SUMMARY =====
+                if (
+                    res.data.chapterCompleted &&
+                    res.data.chapterId
+                ) {
+
+                    setCompletedChapterId(
+                        res.data.chapterId
+                    );
+                    setShowSummaryPopup(true);
+                }
             } else {
-                setCompletedLessonIds(prev => prev.filter(id => id !== lessonId));
+                setCompletedLessonIds(prev =>
+                    prev.filter(id => id !== lessonId)
+                );
             }
         } catch (error) {
-            console.error("Lỗi cập nhật tiến độ:", error);
+            console.error(error);
         }
     };
 
@@ -1036,6 +1056,45 @@ export default function LearningPage() {
                     </div>
                 </div>
             </div>
+            {
+                showSummaryPopup && (
+                    <div className="summary-popup-overlay">
+                        <div className="summary-popup">
+                            <h2>
+                                🎉 Chúc mừng!
+                            </h2>
+                            <p>
+                                Bạn đã hoàn thành chương học.
+                            </p>
+                            <p>
+                                AI đã tạo bản tóm tắt chương dành riêng cho bạn.
+                            </p>
+                            <div className="summary-popup-buttons">
+                                <button
+                                    className="summary-btn-primary"
+                                    onClick={()=>{
+                                        navigate(
+                                            `/chapter-summary/${completedChapterId}`
+                                        );
+                                    }}
+                                >
+                                    Xem AI Summary
+                                </button>
+
+                                <button
+                                    className="summary-btn-secondary"
+                                    onClick={()=>{
+                                        setShowSummaryPopup(false);
+                                    }}
+                                >
+                                    Để sau
+                                </button>
+
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
         </div>
     );
 }
