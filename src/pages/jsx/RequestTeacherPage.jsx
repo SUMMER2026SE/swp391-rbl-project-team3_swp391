@@ -10,7 +10,6 @@ export default function RequestTeacherPage() {
     const [education, setEducation] = useState("");
     const [experience, setExperience] = useState("");
 
-    // 🔥 ĐÃ SỬA: Dọn dẹp lồng hàm trùng lặp, đưa về 1 cấu trúc duy nhất
     const handleSendRequest = async (e) => {
         e.preventDefault(); // Chặn hành vi tải lại trang mặc định của thẻ form
 
@@ -50,7 +49,7 @@ export default function RequestTeacherPage() {
             console.error("Lỗi gửi hồ sơ ứng tuyển giáo viên:", error);
             alert("❌ Gửi yêu cầu thất bại hoặc bạn đã gửi đơn trước đó.");
         } finally {
-            setSubmitting(false); // 🔥 Nhả kẹt nút bấm dù thành công hay thất bại
+            setSubmitting(false); // Nhả kẹt nút bấm dù thành công hay thất bại
         }
     };
 
@@ -62,9 +61,46 @@ export default function RequestTeacherPage() {
                 <h2 style={{ fontSize: "24px", marginBottom: "10px", color: "#1f2937", fontWeight: "bold", textAlign: "center" }}>
                     👨‍🏫 Hồ Sơ Đăng Ký Giáo Viên Đồng Hành
                 </h2>
-                <p style={{ color: "#6b7280", lineHeight: "1.6", marginBottom: "25px", fontSize: "14px", textAlign: "center" }}>
+                <p style={{ color: "#6b7280", lineHeight: "1.6", marginBottom: "20px", fontSize: "14px", textAlign: "center" }}>
                     Cung cấp thông tin năng lực giúp Ban quản trị PrepAce có cơ sở đánh giá hồ sơ và kích hoạt quyền giảng dạy nhanh chóng hơn.
                 </p>
+
+                {/* Khối Alert Box chứa liên kết tải lên minh chứng Google Biểu mẫu */}
+                <div style={{ 
+                    backgroundColor: "#eff6ff", 
+                    border: "1px solid #bfdbfe", 
+                    borderRadius: "8px", 
+                    padding: "16px", 
+                    marginBottom: "25px", 
+                    textAlign: "left" 
+                }}>
+                    <p style={{ margin: "0 0 8px 0", color: "#1e40af", fontSize: "14px", fontWeight: "600" }}>
+                        📎 Yêu cầu đính kèm minh chứng năng lực:
+                    </p>
+                    <p style={{ margin: "0 0 12px 0", color: "#1e3a8a", fontSize: "13px", lineHeight: "1.5" }}>
+                        Để hồ sơ được duyệt nhanh nhất, thầy/cô vui lòng bấm vào liên kết dưới đây để tải lên ảnh chụp bằng cấp, chứng chỉ chuyên môn và CV kinh nghiệm làm việc thực tế.
+                    </p>
+                    <a 
+                        href="https://docs.google.com/forms/d/e/1FAIpQLSc-DTr0KnSVDqorNP8RcydGWGnnhvk0h5gKE-_XTcwpqH9rvg/viewform?usp=header" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ 
+                            display: "inline-block", 
+                            color: "#fff", 
+                            backgroundColor: "#2563eb", 
+                            padding: "8px 16px", 
+                            borderRadius: "6px", 
+                            fontSize: "13px", 
+                            fontWeight: "bold", 
+                            textDecoration: "none",
+                            transition: "background-color 0.2s"
+                        }}
+                        onMouseOver={(e) => e.target.style.backgroundColor = "#1d4ed8"}
+                        onMouseOut={(e) => e.target.style.backgroundColor = "#2563eb"}
+                    >
+                        📁 Tải lên bằng chứng tại đây ↗
+                    </a>
+                </div>
 
                 {/* BIẾN THÀNH THẺ FORM ĐỂ QUẢN LÝ SUBMIT VÀ NÚT BẤM */}
                 <form onSubmit={handleSendRequest} style={{ textAlign: "left" }}>

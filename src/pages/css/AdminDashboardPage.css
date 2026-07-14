@@ -104,6 +104,64 @@
     color: white;
 }
 
+.payment-confirm-section{
+    background:white;
+    margin-bottom:30px;
+    padding:24px;
+    border-radius:16px;
+    box-shadow:
+    0 8px 20px rgba(0,0,0,.05);
+}
+
+.empty-payment{
+    padding:30px;
+    text-align:center;
+    color:#64748b;
+}
+
+.payment-action-group{
+    display:flex;
+    gap:10px;
+}
+
+
+.confirm-payment-btn{
+    background:#10b981;
+    color:white;
+    border:none;
+    padding:8px 14px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+
+.confirm-payment-btn:hover{
+    background:#059669;
+}
+
+
+.cancel-payment-btn{
+    background:#ef4444;
+    color:white;
+    border:none;
+    padding:8px 14px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+
+.cancel-payment-btn:hover{
+    background:#dc2626;
+}
+
+
+.confirm-payment-btn:disabled,
+.cancel-payment-btn:disabled{
+    opacity:0.6;
+    cursor:not-allowed;
+}
+
+
 /* =========================================
    MAIN CONTENT
 ========================================================= */

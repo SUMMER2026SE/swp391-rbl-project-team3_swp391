@@ -9,11 +9,34 @@ export default function BankTransferPage() {
     const navigate = useNavigate();
     const { courseId } = useParams();
     const [order, setOrder] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [creatingOrder, setCreatingOrder] = useState(true);
+    const [qrLoading, setQrLoading] = useState(false);
     const [error, setError] = useState(null);
     const [paid, setPaid] = useState(false);
     const [confirming, setConfirming] = useState(false);
+    const [waitingConfirm,setWaitingConfirm]=useState(false);
     const pollRef = useRef(null);
+
+    const handleWaitingConfirm = async()=>{
+        try{
+            setConfirming(true);
+            await paymentService.waitingConfirm(
+                order.transactionCode
+            );
+            alert(
+                "Đã gửi yêu cầu xác nhận.\nAdmin sẽ kiểm tra và mở khóa khóa học."
+            );
+        }
+        catch(e){
+            alert(
+                e.response?.data?.message ||
+                "Không gửi được yêu cầu xác nhận."
+            );
+        }
+        finally{
+            setConfirming(false);
+        }
+    };
 
     // 🔥 HÀM HELPER: Lưu log thanh toán khóa học
     const logPaymentSuccess = async (courseTitle, amount) => {
@@ -36,49 +59,89 @@ export default function BankTransferPage() {
         }
         paymentService
             .createBank(Number(courseId))
-            .then((d) => setOrder(d))
-            .catch((e) => setError(e.response?.data?.message || "Không tạo được đơn thanh toán."))
-            .finally(() => setLoading(false));
+            .then((d) => {
+                console.log("PAYMENT RESPONSE:", d);
+
+                setOrder(d);
+                setQrLoading(true);
+            })
+            .catch((e) => {
+                setError(
+                    e.response?.data?.message ||
+                    "Không tạo được đơn thanh toán."
+                );
+            })
+            .finally(() => {
+                setCreatingOrder(false);
+            });
     }, [courseId]);
 
     // Poll trạng thái mỗi 4s — khi tiền vào (webhook) tự động
-    useEffect(() => {
-        if (!order?.transactionRef || paid) return;
-        pollRef.current = setInterval(async () => {
-            try {
-                const s = await paymentService.bankStatus(order.transactionRef);
-                if (s.status === "PAID") {
-                    clearInterval(pollRef.current);
-                    
-                    // 🔥 GHI LOG TỰ ĐỘNG QUA WEBHOOK SEPAY THÀNH CÔNG
-                    await logPaymentSuccess(order.courseTitle, order.amount);
+    // useEffect(() => {
+    //     if (!order?.transactionCode || paid) return;
+    //     pollRef.current = setInterval(async () => {
+    //         try {
+    //             const s = await paymentService.paymentStatus(order.transactionCode);
+    //             if (s.paymentStatus === "SUCCESS") {
 
-                    setPaid(true);
-                    setTimeout(() => navigate(`/learn/${order.courseId}`), 1500);
-                }
-            } catch { /* bỏ qua */ }
-        }, 4000);
-        return () => clearInterval(pollRef.current);
-    }, [order, paid]);
+    //                 clearInterval(pollRef.current);
+
+    //                 await logPaymentSuccess(
+    //                     order.courseTitle,
+    //                     order.amount
+    //                 );
+
+    //                 setPaid(true);
+
+    //                 setTimeout(() => {
+    //                     navigate(`/learn/${order.courseId}`);
+    //                 },1500);
+    //             }
+    //         } catch { /* bỏ qua */ }
+    //     }, 4000);
+    //     return () => clearInterval(pollRef.current);
+    // }, [order, paid]);
 
     // Xác nhận thủ công bằng tay
-    const handleManualConfirm = async () => {
-        try {
-            setConfirming(true);
-            await paymentService.confirmBank(order.transactionRef);
-            
-            // 🔥 GHI LOG KHI XÁC NHẬN THỦ CÔNG THÀNH CÔNG
-            await logPaymentSuccess(order.courseTitle, order.amount);
+    // const handleManualConfirm = async () => {
+    //     try {
+    //         setConfirming(true);
+    //         // Chỉ kiểm tra trạng thái, KHÔNG xác nhận
+    //         const s = await paymentService.bankStatus(order.transactionCode);
+    //         if (s.paymentStatus === "SUCCESS") {
+    //             clearInterval(pollRef.current);
 
-            setPaid(true);
-            setTimeout(() => navigate(`/learn/${order.courseId}`), 1200);
-        } catch (e) {
-            alert("Xác nhận thất bại: " + (e.response?.data?.message || e.message));
-            setConfirming(false);
-        }
-    };
+    //             await logPaymentSuccess(order.courseTitle, order.amount);
 
-    if (loading) return <div style={st.status}>Đang tạo mã thanh toán...</div>;
+    //             setPaid(true);
+
+    //             setTimeout(() => {
+    //                 navigate(`/learn/${order.courseId}`);
+    //             }, 1500);
+    //         } else {
+    //             alert(
+    //                 "Hệ thống chưa ghi nhận giao dịch.\n\n" +
+    //                 "Nếu bạn vừa chuyển khoản, vui lòng đợi khoảng 5-10 giây rồi thử lại."
+    //             );
+    //         }
+    //     } catch (e) {
+    //         alert(
+    //             e.response?.data?.message ||
+    //             "Không kiểm tra được trạng thái thanh toán."
+    //         );
+    //     } finally {
+    //         setConfirming(false);
+    //     }
+    // };
+    
+
+    if (creatingOrder) {
+        return (
+            <div style={st.status}>
+                Đang tạo giao dịch thanh toán...
+            </div>
+        );
+    }
     if (error) return <div style={{ ...st.status, color: "#ef4444" }}>{error}</div>;
 
     if (paid) {
@@ -102,15 +165,28 @@ export default function BankTransferPage() {
                 <div style={st.amount}>{formatVnd(order.amount)}</div>
 
                 <div style={{ textAlign: "center", margin: "20px 0 24px" }}>
-                    <img 
-                        src={`https://img.vietqr.io/image/970436-9703391695-compact2.jpg?amount=${order?.amount || 0}&addInfo=${encodeURIComponent(order?.content || '')}&accountName=NGUYEN%20CUU%20THANG`} 
-                        alt="VietQR Động" 
-                        style={st.qr} 
-                        onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "/src/assets/myqrcode.jpg"; 
-                        }}
-                    />
+                    {order?.qrUrl && (
+                        <>
+                            {qrLoading && (
+                                <p>
+                                    Đang tải mã QR...
+                                </p>
+                            )}
+
+                            <img
+                                src={order.qrUrl}
+                                alt="VietQR"
+                                style={{
+                                    ...st.qr,
+                                    opacity: qrLoading ? 0.5 : 1
+                                }}
+                                onLoad={() => setQrLoading(false)}
+                                onError={() => {
+                                    setQrLoading(false);
+                                }}
+                            />
+                        </>
+                    )}
                     <p style={{ marginTop: 12, fontSize: 14, color: "#64748b", fontWeight: 500 }}>
                         Quét mã QR bằng app ngân hàng<br/>
                         (Đã điền sẵn số tiền & nội dung chuyển khoản)
@@ -130,10 +206,57 @@ export default function BankTransferPage() {
                     khoản thành công, hệ thống sẽ <b>tự động</b> mở khóa khóa học cho bạn.
                 </p>
 
-                <div style={st.spinner}>⏳ Đang chờ thanh toán...</div>
+                {
+                    waitingConfirm ?
 
-                <button style={st.confirmBtn} disabled={confirming} onClick={handleManualConfirm}>
-                    {confirming ? "Đang xác nhận..." : "Tôi đã chuyển khoản (xác nhận thủ công)"}
+                    <div style={{
+                        ...st.spinner,
+                        color:"#2563eb"
+                    }}>
+                        ⏳ Đang chờ Admin xác nhận thanh toán...
+                    </div>
+
+                    :
+
+                    <div style={st.spinner}>
+                        ⏳ Đang chờ bạn chuyển khoản...
+                    </div>
+
+                    }
+
+                <button
+                    disabled={confirming || waitingConfirm}
+                    onClick={handleWaitingConfirm}
+                    style={{
+                        marginTop:16,
+                        width:"100%",
+                        padding:"12px",
+                        border:"none",
+                        borderRadius:"10px",
+                        background:
+                            waitingConfirm
+                            ? "#94a3b8"
+                            : "#10b981",
+                        color:"#fff",
+                        fontWeight:700,
+                        cursor:
+                            waitingConfirm || confirming
+                            ? "not-allowed"
+                            : "pointer"
+                    }}
+                >
+                {
+                    confirming
+                    ?
+                    "Đang gửi xác nhận..."
+                    :
+                    waitingConfirm
+                    ?
+                    "⏳ Đang chờ Admin xác nhận"
+
+                    :
+                    "Tôi đã chuyển khoản"
+                }
                 </button>
             </div>
         </div>

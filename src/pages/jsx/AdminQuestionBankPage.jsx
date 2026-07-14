@@ -5,6 +5,7 @@ import '../css/AdminDashboardPage.css';
 
 const AdminQuestionBankPage = () => {
     const navigate = useNavigate();
+    const [activeMenu] = useState("question-bank"); // Định nghĩa trạng thái menu hiện tại
     const [quizzes, setQuizzes] = useState([]);
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -177,9 +178,8 @@ const AdminQuestionBankPage = () => {
                 return;
             }
 
-            // 🔥 ĐÃ SỬA: Biến đổi mảng chuỗi phẳng thành danh sách Object cấu trúc QuestionOption tương thích JPA
             const formattedOptions = questionForm.options
-                .filter(opt => opt.trim() !== '') // Loại bỏ ô trống
+                .filter(opt => opt.trim() !== '')
                 .map(opt => ({
                     optionContent: opt.trim(),
                     isCorrect: opt.trim() === questionForm.correctAnswer.trim()
@@ -189,7 +189,7 @@ const AdminQuestionBankPage = () => {
                 questionContent: questionForm.questionContent.trim(),
                 correctAnswer: questionForm.correctAnswer.trim(),
                 explanation: questionForm.explanation ? questionForm.explanation.trim() : '',
-                questionType: "MULTIPLE_CHOICE", // Hoặc loại phù hợp hệ thống của bạn
+                questionType: "MULTIPLE_CHOICE",
                 options: formattedOptions
             };
 
@@ -201,7 +201,7 @@ const AdminQuestionBankPage = () => {
                 alert("🎉 Thêm câu hỏi vào đề thành công!");
             }
             setShowQuestionModal(false);
-            handleViewQuestions(selectedQuiz); // Tải lại danh sách câu hỏi bên cột phải
+            handleViewQuestions(selectedQuiz);
         } catch (err) {
             alert("❌ Lỗi khi lưu câu hỏi: " + (err.response?.data?.message || err.message));
         }
@@ -217,106 +217,130 @@ const AdminQuestionBankPage = () => {
         }
     };
 
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/");
+    };
+
     return (
-        <div className="admin-page" style={{ fontFamily: "'Inter', 'Segoe UI', Tahoma, sans-serif" }}>
-            <header className="admin-header">
-                <h2>Quản lý Thư viện đề (Question Bank)</h2>
-                <button onClick={() => navigate('/admin')} className="btn-back">Quay lại Dashboard</button>
-            </header>
-
-            <div className="admin-content" style={{ padding: '20px', display: 'flex', gap: '20px' }}>
-                {/* Cột trái: Quản lý Quizzes */}
-                <div style={{ flex: 1, background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                        <h3>Danh sách Đề thi (Quizzes)</h3>
-                        <button onClick={() => { setEditQuiz(null); setQuizForm({ quizTitle: '', durationMinutes: 60, courseId: courses[0]?.courseId || '' }); setShowQuizModal(true); }} style={st.btnPrimary}>+ Tạo Đề thi</button>
-                    </div>
-
-                    {loading ? <p>Đang tải...</p> : error ? <p style={{ color: 'red' }}>{error}</p> : (
-                        <table style={st.table}>
-                            <thead>
-                                <tr>
-                                    <th style={st.th}>ID</th>
-                                    <th style={st.th}>Tên đề thi</th>
-                                    <th style={st.th}>Thời gian</th>
-                                    <th style={st.th}>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {Array.isArray(quizzes) && quizzes.map(q => (
-                                    <tr key={q?.quizId || Math.random()} style={selectedQuiz?.quizId === q?.quizId ? { background: '#f0f9ff' } : {}}>
-                                        <td style={st.td}>#{q?.quizId}</td>
-                                        <td style={st.td}>
-                                            {/* 🔥 ĐƯỜNG DẪN FIXED CHUẨN XÁC THEO MONG MUỐN */}
-                                            <span
-                                                onClick={() => navigate(`/tests/${q?.quizId}`)}
-                                                style={{ color: '#0284c7', cursor: 'pointer', textDecoration: 'underline', fontWeight: '600' }}
-                                                title="Bấm để nhảy tới link đề thi"
-                                            >
-                                                {q?.quizTitle || 'Chưa có tiêu đề'}
-                                            </span>
-                                        </td>
-                                        <td style={st.td}>{q?.durationMinutes || 0} phút</td>
-                                        <td style={st.td}>
-                                            <button onClick={() => handleViewQuestions(q)} style={st.btnSmallAction}>Chi tiết</button>
-                                            <button onClick={() => handleOpenEditModal(q)} style={{ ...st.btnSmallAction, background: '#f59e0b' }}>Sửa</button>
-                                            <button onClick={() => handleDeleteQuiz(q?.quizId)} style={{ ...st.btnSmallAction, background: '#ef4444' }}>Xóa</button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
+        <div className="admin-layout" style={{ fontFamily: "'Inter', 'Segoe UI', Tahoma, sans-serif" }}>
+            
+            {/* SIDEBAR TÍCH HỢP HOÀN CHỈNH */}
+            <aside className="admin-sidebar">
+                <div className="admin-brand" onClick={() => navigate("/admin")}>
+                    <h2>PrepAce <span>Admin</span></h2>
                 </div>
+                <ul className="admin-menu">
+                    <li className={activeMenu === "dashboard" ? "active" : ""} onClick={() => navigate("/admin")}>📊 Dashboard</li>
+                    <li className={activeMenu === "courses" ? "active" : ""} onClick={() => navigate("/admin/courses")}>📚 Quản lý khóa học</li>
+                    <li className={activeMenu === "users" ? "active" : ""} onClick={() => navigate("/admin/users")}>👥 Quản lý người dùng</li>
+                    <li className={activeMenu === "question-bank" ? "active" : ""} onClick={() => navigate("/admin/question-bank")}>📝 Quản lý thư viện đề</li>
+                    <li className={activeMenu === "violations" ? "active" : ""} onClick={() => navigate("/admin/violations")}>🚨 Quản lý vi phạm</li>
+                    <li className={activeMenu === "ui" ? "active" : ""} onClick={() => navigate("/admin/ui-config")}>🎨 Cấu hình UI</li>
+                    <li className={activeMenu === "sepay" ? "active" : ""} onClick={() => navigate("/admin/sepay-guide")}>💳 Cấu hình SePay</li>
+                    <li className={activeMenu === "categories" ? "active" : ""} onClick={() => navigate("/admin/categories")}>⚙️ Cấu hình danh mục</li>
+                </ul>
+                <div className="admin-logout">
+                    <button onClick={handleLogout}>Đăng xuất</button>
+                </div>
+            </aside>
 
-                {/* Cột phải: Quản lý Questions */}
-                {selectedQuiz && (
+            <main className="admin-main">
+                <div className="admin-content" style={{ padding: '20px', display: 'flex', gap: '20px' }}>
+                    
+                    {/* Cột trái: Quản lý Quizzes */}
                     <div style={{ flex: 1, background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <h3 style={{ maxWidth: '70%', wordBreak: 'break-word' }}>Câu hỏi: {selectedQuiz.quizTitle}</h3>
-                            <button onClick={() => { setEditQuestion(null); setQuestionForm({ questionContent: '', correctAnswer: '', explanation: '', options: ['', '', '', ''] }); setShowQuestionModal(true); }} style={st.btnPrimary}>+ Thêm câu hỏi</button>
+                            <h3>Danh sách Đề thi (Quizzes)</h3>
+                            <button onClick={() => { setEditQuiz(null); setQuizForm({ quizTitle: '', durationMinutes: 60, courseId: courses[0]?.courseId || '' }); setShowQuizModal(true); }} style={st.btnPrimary}>+ Tạo Đề thi</button>
                         </div>
 
-                        {questions.length === 0 ? <p>Đề thi này chưa có câu hỏi nào.</p> : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                {questions.map((q, idx) => (
-                                    <div key={q?.questionId || idx} style={{ border: '1px solid #e2e8f0', padding: '15px', borderRadius: '6px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
-                                            <strong style={{ wordBreak: 'break-word' }}>Câu {idx + 1}: {q?.questionContent}</strong>
-                                            <div style={{ display: 'flex', shrink: 0 }}>
-                                                <button onClick={() => {
-                                                    setEditQuestion(q);
-                                                    let safeOptions = ['', '', '', ''];
-                                                    if (q && Array.isArray(q.options)) {
-                                                        q.options.forEach((o, index) => {
-                                                            if (index < 4) safeOptions[index] = o?.optionContent || '';
-                                                        });
-                                                    }
-                                                    setQuestionForm({
-                                                        questionContent: q?.questionContent || '',
-                                                        correctAnswer: q?.correctAnswer || '',
-                                                        explanation: q?.explanation || '',
-                                                        options: safeOptions
-                                                    });
-                                                    setShowQuestionModal(true);
-                                                }} style={{ ...st.btnSmallAction, background: '#f59e0b' }}>Sửa</button>
-                                                <button onClick={() => handleDeleteQuestion(q?.questionId)} style={{ ...st.btnSmallAction, background: '#ef4444' }}>Xóa</button>
-                                            </div>
-                                        </div>
-                                        <ul style={{ marginTop: '10px', marginLeft: '20px', color: '#475569', listStyleType: 'disc' }}>
-                                            {q?.options?.map((opt, i) => (
-                                                <li key={i} style={{ padding: '2px 0', ...(opt?.optionContent === q?.correctAnswer ? { color: '#10b981', fontWeight: 'bold' } : {}) }}>
-                                                    {opt?.optionContent || ''}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                ))}
-                            </div>
+                        {loading ? <p>Đang tải...</p> : error ? <p style={{ color: 'red' }}>{error}</p> : (
+                            <table style={st.table}>
+                                <thead>
+                                    <tr>
+                                        <th style={st.th}>ID</th>
+                                        <th style={st.th}>Tên đề thi</th>
+                                        <th style={st.th}>Thời gian</th>
+                                        <th style={st.th}>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {Array.isArray(quizzes) && quizzes.map(q => (
+                                        <tr key={q?.quizId || Math.random()} style={selectedQuiz?.quizId === q?.quizId ? { background: '#f0f9ff' } : {}}>
+                                            <td style={st.td}>#{q?.quizId}</td>
+                                            <td style={st.td}>
+                                                <span
+                                                    onClick={() => navigate(`/tests/${q?.quizId}`)}
+                                                    style={{ color: '#0284c7', cursor: 'pointer', textDecoration: 'underline', fontWeight: '600' }}
+                                                    title="Bấm để nhảy tới link đề thi"
+                                                >
+                                                    {q?.quizTitle || 'Chưa có tiêu đề'}
+                                                </span>
+                                            </td>
+                                            <td style={st.td}>{q?.durationMinutes || 0} phút</td>
+                                            <td style={st.td}>
+                                                <button onClick={() => handleViewQuestions(q)} style={st.btnSmallAction}>Chi tiết</button>
+                                                <button onClick={() => handleOpenEditModal(q)} style={{ ...st.btnSmallAction, background: '#f59e0b' }}>Sửa</button>
+                                                <button onClick={() => handleDeleteQuiz(q?.quizId)} style={{ ...st.btnSmallAction, background: '#ef4444' }}>Xóa</button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         )}
                     </div>
-                )}
-            </div>
+
+                    {/* Cột phải: Quản lý Questions */}
+                    {selectedQuiz && (
+                        <div style={{ flex: 1, background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                <h3 style={{ maxWidth: '70%', wordBreak: 'break-word' }}>Câu hỏi: {selectedQuiz.quizTitle}</h3>
+                                <button onClick={() => { setEditQuestion(null); setQuestionForm({ questionContent: '', correctAnswer: '', explanation: '', options: ['', '', '', ''] }); setShowQuestionModal(true); }} style={st.btnPrimary}>+ Thêm câu hỏi</button>
+                            </div>
+
+                            {questions.length === 0 ? <p>Đề thi này chưa có câu hỏi nào.</p> : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                    {questions.map((q, idx) => (
+                                        <div key={q?.questionId || idx} style={{ border: '1px solid #e2e8f0', padding: '15px', borderRadius: '6px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
+                                                <strong style={{ wordBreak: 'break-word' }}>Câu {idx + 1}: {q?.questionContent}</strong>
+                                                <div style={{ display: 'flex', shrink: 0 }}>
+                                                    <button onClick={() => {
+                                                        setEditQuestion(q);
+                                                        let safeOptions = ['', '', '', ''];
+                                                        if (q && Array.isArray(q.options)) {
+                                                            q.options.forEach((o, index) => {
+                                                                if (index < 4) safeOptions[index] = o?.optionContent || '';
+                                                            });
+                                                        }
+                                                        setQuestionForm({
+                                                            questionContent: q?.questionContent || '',
+                                                            correctAnswer: q?.correctAnswer || '',
+                                                            explanation: q?.explanation || '',
+                                                            options: safeOptions
+                                                        });
+                                                        setShowQuestionModal(true);
+                                                    }} style={{ ...st.btnSmallAction, background: '#f59e0b' }}>Sửa</button>
+                                                    <button onClick={() => handleDeleteQuestion(q?.questionId)} style={{ ...st.btnSmallAction, background: '#ef4444' }}>Xóa</button>
+                                                </div>
+                                            </div>
+                                            <ul style={{ marginTop: '10px', marginLeft: '20px', color: '#475569', listStyleType: 'disc' }}>
+                                                {q?.options?.map((opt, i) => (
+                                                    <li key={i} style={{ padding: '2px 0', ...(opt?.optionContent === q?.correctAnswer ? { color: '#10b981', fontWeight: 'bold' } : {}) }}>
+                                                        {opt?.optionContent || ''}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </main>
 
             {/* Modal Quiz */}
             {showQuizModal && (

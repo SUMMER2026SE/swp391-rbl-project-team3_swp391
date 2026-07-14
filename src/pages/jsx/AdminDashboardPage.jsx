@@ -5,6 +5,23 @@ import axiosClient from "../../api/axiosClient";
 
 export default function AdminDashboardPage() {
     const navigate = useNavigate();
+    useEffect(() => {
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+
+    if (!token || !storedUser) {
+        alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
+        navigate("/");
+        return;
+    }
+
+    const userObj = JSON.parse(storedUser);
+    if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
+        alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
+        navigate("/home");
+        return;
+    }
+}, [navigate]);
     const [activeMenu, setActiveMenu] = useState("dashboard");
 
     const [stats, setStats] = useState({
@@ -19,6 +36,9 @@ export default function AdminDashboardPage() {
     });
 
     const [transactions, setTransactions] = useState([]);
+    const [pendingPayments, setPendingPayments] = useState([]);
+    const [confirmingPayment, setConfirmingPayment] = useState(null);
+    const [cancelingPayment, setCancelingPayment] = useState(null);
     const [chartData, setChartData] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -80,6 +100,79 @@ export default function AdminDashboardPage() {
 
         fetchDashboardStats();
     }, []);
+
+    useEffect(() => {
+        const fetchPendingPayments = async()=>{
+            try{
+                const res = await axiosClient.get(
+                    "/payments/admin/pending"
+                );
+                setPendingPayments(res.data);
+
+            }
+            catch(err){
+
+                console.error(
+                    "Load pending payments error:",
+                    err
+                );
+            }
+        };
+        fetchPendingPayments();
+    },[]);
+
+    const handleConfirmPayment = async(transactionCode)=>{
+        try{
+            setConfirmingPayment(transactionCode);
+            await axiosClient.post(
+                `/payments/admin/confirm/${transactionCode}`
+            );
+            alert(
+                "Đã xác nhận thanh toán!"
+            );
+            // reload danh sách
+            const res = await axiosClient.get(
+                "/payments/admin/pending"
+            );
+            setPendingPayments(res.data);
+        }
+        catch(err){
+            alert(
+                err.response?.data?.message ||
+                "Xác nhận thất bại"
+            );
+        }
+        finally{
+            setConfirmingPayment(null);
+        }
+    };
+
+    const handleCancelPayment = async(transactionCode)=>{
+        const confirm = window.confirm(
+            "Bạn chắc chắn muốn hủy giao dịch này?"
+        );
+        if(!confirm) return;
+            try{
+                setCancelingPayment(transactionCode);
+                await axiosClient.post(
+                    `/payments/admin/cancel/${transactionCode}`
+                );
+                alert(
+                    "Đã hủy giao dịch."
+                );
+                const res = await axiosClient.get(
+                    "/payments/admin/pending"
+                );
+                setPendingPayments(res.data);
+            }catch(err){
+                alert(
+                    err.response?.data?.message ||
+                    "Hủy giao dịch thất bại"
+                );
+            }finally{
+                setCancelingPayment(null);
+            }
+    };
 
     const handleLogout = () => {
         localStorage.removeItem("token");
@@ -149,6 +242,124 @@ export default function AdminDashboardPage() {
                             <h2>{loading ? "..." : stats.conversionRate}</h2>
                             <div className="stat-trend neutral">{stats.conversionTrend}</div>
                         </div>
+                    </div>
+
+                    {/* PENDING PAYMENTS */}
+
+                    <div className="payment-confirm-section">
+                        <div className="section-head">
+                            <h3>
+                                💳 Thanh toán chờ xác nhận
+                            </h3>
+                            <span>
+                                {pendingPayments.length} giao dịch
+                            </span>
+                        </div>
+                        {
+                            pendingPayments.length === 0 ?
+                            (
+                                <div className="empty-payment">
+                                    Không có giao dịch chờ xác nhận
+                                </div>
+                            )
+                            :
+                            (
+                            <table className="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Học viên
+                                        </th>
+
+                                        <th>
+                                            Khóa học
+                                        </th>
+
+                                        <th>
+                                            Số tiền
+                                        </th>
+
+                                        <th>
+                                            Mã GD
+                                        </th>
+
+                                        <th>
+                                            Action
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {
+                                    pendingPayments.map(payment=>(
+                                    <tr key={payment.paymentId}>
+                                        <td>
+                                            {payment.studentName}
+                                        </td>
+                                        <td>
+                                            {payment.courseTitle}
+                                        </td>
+                                        <td className="tx-amount">
+                                            {
+                                                Number(payment.amount)
+                                                .toLocaleString("vi-VN")
+                                            }đ
+                                        </td>
+                                        <td>
+                                            <b>
+                                                {payment.transactionCode}
+                                            </b>
+                                        </td>
+                                        <td>
+                                            <div className="payment-action-group">
+                                            <button
+                                                className="confirm-payment-btn"
+                                                disabled={
+                                                    confirmingPayment === payment.transactionCode ||
+                                                    cancelingPayment === payment.transactionCode
+                                                }
+                                                onClick={()=> 
+                                                    handleConfirmPayment(
+                                                        payment.transactionCode
+                                                    )
+                                                }
+                                            >
+                                            {
+                                            confirmingPayment === payment.transactionCode
+                                            ?
+                                            "Đang xử lý..."
+                                            :
+                                            "Xác nhận"
+                                            }
+                                            </button>
+                                            <button
+                                                className="cancel-payment-btn"
+                                                disabled={
+                                                    confirmingPayment === payment.transactionCode ||
+                                                    cancelingPayment === payment.transactionCode
+                                                }
+                                                onClick={()=>
+                                                    handleCancelPayment(
+                                                        payment.transactionCode
+                                                    )
+                                                }
+                                            >
+                                            {
+                                            cancelingPayment === payment.transactionCode
+                                            ?
+                                            "Đang hủy..."
+                                            :
+                                            "Hủy"
+                                            }
+                                            </button>
+                                            </div>
+                                            </td>
+                                    </tr>
+                                    ))
+                                }
+                                </tbody>
+                            </table>
+                            )
+                        }
                     </div>
 
                     <div className="dashboard-sections">

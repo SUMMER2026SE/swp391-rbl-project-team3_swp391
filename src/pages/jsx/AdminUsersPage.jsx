@@ -25,6 +25,14 @@ export default function AdminUsersPage() {
     });
     const [addError, setAddError] = useState("");
 
+    // const userObj = JSON.parse(storedUser);
+    // if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
+    //     alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
+    //     navigate("/home");
+    //     return;
+    // }
+
+    // 2. NẾU HỢP LỆ THÌ MỚI GỌI API LẤY USERS
     const fetchAllUsers = async () => {
         try {
             const response = await axiosClient.get("/admin/users");
@@ -43,20 +51,19 @@ export default function AdminUsersPage() {
         const storedUser = localStorage.getItem("user");
 
         if (!token || !storedUser) {
-            alert("⚠️ Bạn chưa đăng nhập quyền Admin!");
             navigate("/");
             return;
         }
 
         const userObj = JSON.parse(storedUser);
+
         if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
-            alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
             navigate("/home");
             return;
         }
 
         fetchAllUsers();
-    }, [navigate]);
+    }, []);
 
     const setDefaultMockData = () => {
         setUsers([
@@ -255,6 +262,7 @@ export default function AdminUsersPage() {
 
     return (
         <div className="admin-layout">
+            {/* SIDEBAR TÍCH HỢP HOÀN CHỈNH */}
             <aside className="admin-sidebar">
                 <div className="admin-brand" onClick={() => navigate("/admin")}>
                     <h2>PrepAce <span>Admin</span></h2>
@@ -267,6 +275,7 @@ export default function AdminUsersPage() {
                     <li className={activeMenu === "violations" ? "active" : ""} onClick={() => navigate("/admin/violations")}>🚨 Quản lý vi phạm</li>
                     <li className={activeMenu === "ui" ? "active" : ""} onClick={() => navigate("/admin/ui-config")}>🎨 Cấu hình UI</li>
                     <li className={activeMenu === "sepay" ? "active" : ""} onClick={() => navigate("/admin/sepay-guide")}>💳 Cấu hình SePay</li>
+                    <li className={activeMenu === "categories" ? "active" : ""} onClick={() => navigate("/admin/categories")}>⚙️ Cấu hình danh mục</li>
                 </ul>
                 <div className="admin-logout">
                     <button onClick={handleLogout}>Đăng xuất</button>

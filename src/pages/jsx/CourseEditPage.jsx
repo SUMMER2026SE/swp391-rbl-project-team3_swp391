@@ -20,32 +20,13 @@ export default function CourseEditPage() {
     const [isUploading, setIsUploading] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
 
-    // Dùng cho tạo bài học mới có câu hỏi tương tác luôn
-    const [pendingQuestions, setPendingQuestions] = useState([]);
-    const [pendingQuestionInput, setPendingQuestionInput] = useState({ minutes: 0, seconds: 0, questionText: "", optionA: "", optionB: "", optionC: "", optionD: "", correctOption: "A" });
+    // THÊM STATES CHO DRAFT TẠO BÀI HỌC MỚI
+    const [draftMaterials, setDraftMaterials] = useState([]);
+    const [draftMatTitle, setDraftMatTitle] = useState("");
+    const [draftMatFile, setDraftMatFile] = useState(null);
 
-    const handleAddPendingQuestion = () => {
-        if (!pendingQuestionInput.questionText || !pendingQuestionInput.optionA) return alert("Nhập đủ thông tin câu hỏi!");
-        const totalSeconds = (parseInt(pendingQuestionInput.minutes) || 0) * 60 + (parseInt(pendingQuestionInput.seconds) || 0);
-        
-        const newQ = {
-            id: Date.now(), // ID tạm để render
-            timestampSeconds: totalSeconds,
-            questionText: pendingQuestionInput.questionText,
-            optionA: pendingQuestionInput.optionA,
-            optionB: pendingQuestionInput.optionB,
-            optionC: pendingQuestionInput.optionC,
-            optionD: pendingQuestionInput.optionD,
-            correctOption: pendingQuestionInput.correctOption
-        };
-        setPendingQuestions([...pendingQuestions, newQ]);
-        setPendingQuestionInput({ minutes: 0, seconds: 0, questionText: "", optionA: "", optionB: "", optionC: "", optionD: "", correctOption: "A" });
-    };
-
-    const handleDeletePendingQuestion = (id) => {
-        setPendingQuestions(pendingQuestions.filter(q => q.id !== id));
-    };
-
+    const [draftQuestions, setDraftQuestions] = useState([]);
+    const [draftQ, setDraftQ] = useState({ minutes: 0, seconds: 0, questionText: "", optionA: "", optionB: "", optionC: "", optionD: "", correctOption: "A" });
 
     const loadCourseOutline = async () => {
         try {
@@ -59,6 +40,7 @@ export default function CourseEditPage() {
         }
     };
 
+    // Hàm xử lý định dạng video
     const isYouTube = (url) => url && typeof url === "string" && (url.includes("youtube.com") || url.includes("youtu.be"));
     const extractYouTubeVideoId = (url) => {
         if (!url || typeof url !== "string") return null;
@@ -114,6 +96,7 @@ export default function CourseEditPage() {
         
         if (!title.trim()) return alert("Vui lòng nhập tiêu đề!");
         
+        // Ưu tiên YouTube URL nếu có nhập, nếu không thì lấy file tải lên
         let videoUrl = ytInput && ytInput.value.trim() ? ytInput.value.trim() : "";
         if (!videoUrl && fileInput.files && fileInput.files[0]) {
             setIsUploading(true);
@@ -138,44 +121,38 @@ export default function CourseEditPage() {
             });
             const newLessonId = lessonRes.data.id;
 
-            const matInput = document.getElementById(`new-lesson-mats-${chapterId}`);
-            if (matInput && matInput.files && matInput.files.length > 0) {
-                for (let i = 0; i < matInput.files.length; i++) {
-                    const matFile = matInput.files[i];
-                    const matFormData = new FormData();
-                    matFormData.append("file", matFile);
-                    try {
-                        const matUploadRes = await axiosClient.post("/upload/file", matFormData, {
-                            headers: { "Content-Type": "multipart/form-data" }
-                        });
-                        const matUrl = matUploadRes.data.url;
-                        await axiosClient.post(`/outlines/lessons/${newLessonId}/materials`, {
-                            title: matFile.name,
-                            fileUrl: matUrl
-                        });
-                    } catch(err) {
-                        console.error("Lỗi upload tài liệu", err);
-                    }
+            // Xử lý upload tài liệu draft
+            for (const mat of draftMaterials) {
+                const matFormData = new FormData();
+                matFormData.append("file", mat.file);
+                try {
+                    const matUploadRes = await axiosClient.post("/upload/file", matFormData, {
+                        headers: { "Content-Type": "multipart/form-data" }
+                    });
+                    await axiosClient.post(`/outlines/lessons/${newLessonId}/materials`, {
+                        title: mat.title,
+                        fileUrl: matUploadRes.data.url
+                    });
+                } catch(err) {
+                    console.error("Lỗi upload tài liệu draft", err);
                 }
             }
 
-            // 🔥 LƯU CÁC CÂU HỎI TƯƠNG TÁC POP-UP NẾU CÓ
-            if (pendingQuestions.length > 0) {
+            // Xử lý câu hỏi popup draft
+            for (const q of draftQuestions) {
+                const totalSeconds = (parseInt(q.minutes) || 0) * 60 + (parseInt(q.seconds) || 0);
                 try {
-                    for (const q of pendingQuestions) {
-                        const payload = {
-                            timestampSeconds: q.timestampSeconds,
-                            questionText: q.questionText,
-                            optionA: q.optionA,
-                            optionB: q.optionB,
-                            optionC: q.optionC,
-                            optionD: q.optionD,
-                            correctOption: q.correctOption
-                        };
-                        await axiosClient.post(`/outlines/lessons/${newLessonId}/in-video-questions`, payload);
-                    }
+                    await axiosClient.post(`/outlines/lessons/${newLessonId}/in-video-questions`, {
+                        timestampSeconds: totalSeconds,
+                        questionText: q.questionText,
+                        optionA: q.optionA,
+                        optionB: q.optionB,
+                        optionC: q.optionC,
+                        optionD: q.optionD,
+                        correctOption: q.correctOption
+                    });
                 } catch(err) {
-                    console.error("Lỗi lưu câu hỏi popup", err);
+                    console.error("Lỗi tạo câu hỏi draft", err);
                 }
             }
 
@@ -189,10 +166,16 @@ export default function CourseEditPage() {
                     });
                 }
             } catch (logErr) { console.error("Lỗi ghi log bài giảng:", logErr); }
+                    });
+                } catch(err) {
+                    console.error("Lỗi tạo câu hỏi draft", err);
+                }
+            }
 
+            // Reset form draft
+            setDraftMaterials([]);
+            setDraftQuestions([]);
             setActiveChapterId(null);
-            setPendingQuestions([]); // Reset state
-            setPendingQuestionInput({ minutes: 0, seconds: 0, questionText: "", optionA: "", optionB: "", optionC: "", optionD: "", correctOption: "A" });
             loadCourseOutline(); 
         } catch (error) { 
             const msg = error.response?.data?.message || error.response?.data?.error || error.message || "Lỗi không xác định";
@@ -342,6 +325,7 @@ export default function CourseEditPage() {
 
             <div className="edit-general-info" style={{ display: "flex", alignItems: "center", gap: "20px", padding: "20px", borderRadius: "12px", marginBottom: "30px" }}>
                 <form onSubmit={handleCreateChapter} style={{ display: "flex", gap: "12px", flex: 1 }}>
+                    {/* KHÔNG DÙNG value/onChange nữa -> Dùng id để trị dứt điểm Unikey */}
                     <input 
                         type="text" 
                         id="input-new-chapter" 
@@ -449,12 +433,24 @@ export default function CourseEditPage() {
                                 </div>
                             ))}
                         </div>
+{/* PHẦN FORM ĐỘNG ĐỂ THÊM BÀI HỌC VÀO CHƯƠNG NÀY (ĐÃ BUNG ĐẦY ĐỦ Ô NHẬP VIDEO) */}
+{activeChapterId === chapter.id ? (
+    <div style={{ marginTop: "15px", padding: "20px", border: "1px dashed #2747d9", borderRadius: "8px", display: "flex", flexDirection: "column", gap: "12px", backgroundColor: "#f8fafc" }}>
+        <h4 style={{ margin: 0, fontSize: "14px", color: "#1e293b", fontWeight: 700, fontFamily: "'Segoe UI', sans-serif" }}>Tạo bài giảng mới:</h4>
+        
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%" }}>
+            <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px", fontFamily: "'Segoe UI', sans-serif", display: "block" }}>Tiêu đề bài học</label>
+                <input 
+                    type="text" 
+                    id={`new-lesson-title-${chapter.id}`} 
+                    placeholder="Ví dụ: Bài 1: Khái niệm về Khối Đa Diện" 
+                    style={{ padding: "10px 14px", borderRadius: "8px", border: "1px solid #2747d9", width: "100%", fontFamily: "'Segoe UI', sans-serif", fontSize: "14px", background: "#fff", boxSizing: "border-box" }} 
+                />
+            </div>
 
-                        {activeChapterId === chapter.id ? (
-                            <div style={{ marginTop: "15px", padding: "20px", border: "1px dashed #2747d9", borderRadius: "8px", display: "flex", flexDirection: "column", gap: "12px", backgroundColor: "#f8fafc" }}>
-                                <h4 style={{ margin: 0, fontSize: "14px", color: "#1e293b", fontWeight: 600 }}>Tạo bài giảng mới:</h4>
-                                
-                                <div className="form-group" style={{ margin: 0 }}>
+<<<<<<< HEAD
+                                 <div className="form-group" style={{ margin: 0 }}>
                                     <label style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px", display: "block", fontWeight: 600, fontFamily: "'Segoe UI', sans-serif" }}>Tiêu đề bài học</label>
                                     <input 
                                         type="text" 
@@ -520,23 +516,39 @@ export default function CourseEditPage() {
                                     
                                     <div style={{ display: "flex", flexDirection: "column", gap: "4px", padding: "15px", border: "1px dashed #cbd5e1", borderRadius: "8px", background: "#f8fafc" }}>
                                         <span style={{ fontSize: "13px", color: "#475569", fontWeight: "700", fontFamily: "'Segoe UI', sans-serif", marginBottom: "4px" }}>Tài liệu đính kèm (PDF, Word, PPT...)</span>
-                                        <input 
-                                            type="file" 
-                                            multiple
-                                            accept=".pdf,.doc,.docx,.ppt,.pptx"
-                                            id={`new-lesson-mats-${chapter.id}`} 
-                                            style={{ boxSizing: "border-box", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", width: "100%", fontSize: "13.5px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
-                                        />
+                                        {draftMaterials.length > 0 && (
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "12px" }}>
+                                                {draftMaterials.map((mat, idx) => (
+                                                    <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fff", padding: "8px 12px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                                                        <span style={{ fontSize: "13px", color: "#334155", fontWeight: "600" }}>📄 {mat.title}</span>
+                                                        <button type="button" onClick={() => setDraftMaterials(draftMaterials.filter((_, i) => i !== idx))} style={{ color: "#dc2626", background: "#fee2e2", padding: "4px 8px", borderRadius: "4px", border: "none", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>Xóa</button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                                            <input type="text" placeholder="Tên tài liệu (VD: Bài tập tự luyện)..." value={draftMatTitle} onChange={e => setDraftMatTitle(e.target.value)} style={{ boxSizing: "border-box", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1, fontFamily: "'Segoe UI', sans-serif" }} />
+                                            <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx" id={`draft-mat-file`} onChange={e => setDraftMatFile(e.target.files[0])} style={{ boxSizing: "border-box", fontSize: "13px", width: "190px", background: "#fff", padding: "5px", borderRadius: "6px", border: "1px solid #cbd5e1" }} />
+                                            <button type="button" onClick={() => {
+                                                if (!draftMatTitle || !draftMatFile) return alert("Nhập đủ tên và chọn file!");
+                                                setDraftMaterials([...draftMaterials, { title: draftMatTitle, file: draftMatFile }]);
+                                                setDraftMatTitle("");
+                                                setDraftMatFile(null);
+                                                document.getElementById('draft-mat-file').value = '';
+                                            }} style={{ padding: "8px 16px", borderRadius: "6px", background: "#10b981", color: "#fff", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: "600" }}>
+                                                + Tải lên
+                                            </button>
+                                        </div>
                                     </div>
                                     <div style={{ marginTop: "10px", padding: "15px", border: "1px dashed #f59e0b", borderRadius: "8px", background: "#fffbeb" }}>
                                         <label style={{ fontSize: "13px", color: "#b45309", marginBottom: "8px", display: "block", fontWeight: "700", fontFamily: "'Segoe UI', sans-serif" }}>Câu hỏi tương tác Pop-up (In-Video Quizzes)</label>
                                         
-                                        {pendingQuestions.length > 0 && (
+                                        {draftQuestions.length > 0 && (
                                             <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "12px" }}>
-                                                {pendingQuestions.map(q => (
-                                                    <div key={q.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fff", padding: "8px 12px", borderRadius: "6px", border: "1px solid #fde68a" }}>
-                                                        <span style={{ fontSize: "13px", color: "#92400e", fontWeight: "600" }}>⏰ {Math.floor(q.timestampSeconds / 60).toString().padStart(2, '0')}:{(q.timestampSeconds % 60).toString().padStart(2, '0')} - {q.questionText}</span>
-                                                        <button type="button" onClick={() => handleDeletePendingQuestion(q.id)} style={{ color: "#dc2626", background: "#fee2e2", padding: "4px 8px", borderRadius: "4px", border: "none", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>Xóa</button>
+                                                {draftQuestions.map((q, idx) => (
+                                                    <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fff", padding: "8px 12px", borderRadius: "6px", border: "1px solid #fde68a" }}>
+                                                        <span style={{ fontSize: "13px", color: "#92400e", fontWeight: "600" }}>⏰ {q.minutes.toString().padStart(2, '0')}:{q.seconds.toString().padStart(2, '0')} - {q.questionText}</span>
+                                                        <button type="button" onClick={() => setDraftQuestions(draftQuestions.filter((_, i) => i !== idx))} style={{ color: "#dc2626", background: "#fee2e2", padding: "4px 8px", borderRadius: "4px", border: "none", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>Xóa</button>
                                                     </div>
                                                 ))}
                                             </div>
@@ -545,26 +557,30 @@ export default function CourseEditPage() {
                                         <div style={{ display: "flex", flexDirection: "column", gap: "10px", background: "#fff", padding: "10px", borderRadius: "6px", border: "1px solid #fcd34d" }}>
                                             <div style={{ display: "flex", gap: "10px" }}>
                                                 <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
-                                                    <input type="number" placeholder="Phút" value={pendingQuestionInput.minutes} onChange={e => setPendingQuestionInput({...pendingQuestionInput, minutes: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", width: "60px", textAlign: "center" }} min="0" />
+                                                    <input type="number" placeholder="Phút" value={draftQ.minutes} onChange={e => setDraftQ({...draftQ, minutes: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", width: "60px", textAlign: "center" }} min="0" />
                                                     <span style={{ fontWeight: "bold" }}>:</span>
-                                                    <input type="number" placeholder="Giây" value={pendingQuestionInput.seconds} onChange={e => setPendingQuestionInput({...pendingQuestionInput, seconds: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", width: "60px", textAlign: "center" }} min="0" max="59" />
+                                                    <input type="number" placeholder="Giây" value={draftQ.seconds} onChange={e => setDraftQ({...draftQ, seconds: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", width: "60px", textAlign: "center" }} min="0" max="59" />
                                                 </div>
-                                                <input type="text" placeholder="Nhập câu hỏi..." value={pendingQuestionInput.questionText} onChange={e => setPendingQuestionInput({...pendingQuestionInput, questionText: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
+                                                <input type="text" placeholder="Nhập câu hỏi..." value={draftQ.questionText} onChange={e => setDraftQ({...draftQ, questionText: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
                                             </div>
                                             <div style={{ display: "flex", gap: "10px" }}>
-                                                <input type="text" placeholder="Đáp án A" value={pendingQuestionInput.optionA} onChange={e => setPendingQuestionInput({...pendingQuestionInput, optionA: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
-                                                <input type="text" placeholder="Đáp án B" value={pendingQuestionInput.optionB} onChange={e => setPendingQuestionInput({...pendingQuestionInput, optionB: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
-                                                <input type="text" placeholder="Đáp án C" value={pendingQuestionInput.optionC} onChange={e => setPendingQuestionInput({...pendingQuestionInput, optionC: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
-                                                <input type="text" placeholder="Đáp án D" value={pendingQuestionInput.optionD} onChange={e => setPendingQuestionInput({...pendingQuestionInput, optionD: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
+                                                <input type="text" placeholder="Đáp án A" value={draftQ.optionA} onChange={e => setDraftQ({...draftQ, optionA: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
+                                                <input type="text" placeholder="Đáp án B" value={draftQ.optionB} onChange={e => setDraftQ({...draftQ, optionB: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
+                                                <input type="text" placeholder="Đáp án C" value={draftQ.optionC} onChange={e => setDraftQ({...draftQ, optionC: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
+                                                <input type="text" placeholder="Đáp án D" value={draftQ.optionD} onChange={e => setDraftQ({...draftQ, optionD: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
                                             </div>
                                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                                 <div style={{ fontSize: "13px", color: "#475569" }}>
                                                     <strong>Đáp án đúng: </strong>
-                                                    <select value={pendingQuestionInput.correctOption} onChange={e => setPendingQuestionInput({...pendingQuestionInput, correctOption: e.target.value})} style={{ padding: "4px 8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}>
+                                                    <select value={draftQ.correctOption} onChange={e => setDraftQ({...draftQ, correctOption: e.target.value})} style={{ padding: "4px 8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}>
                                                         <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
                                                     </select>
                                                 </div>
-                                                <button type="button" onClick={handleAddPendingQuestion} style={{ padding: "8px 16px", borderRadius: "6px", background: "#f59e0b", color: "#fff", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: "600" }}>
+                                                <button type="button" onClick={() => {
+                                                    if (!draftQ.questionText || !draftQ.optionA) return alert("Nhập đủ thông tin câu hỏi!");
+                                                    setDraftQuestions([...draftQuestions, draftQ]);
+                                                    setDraftQ({ minutes: 0, seconds: 0, questionText: "", optionA: "", optionB: "", optionC: "", optionD: "", correctOption: "A" });
+                                                }} style={{ padding: "8px 16px", borderRadius: "6px", background: "#f59e0b", color: "#fff", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: "600" }}>
                                                     + Thêm Câu Hỏi
                                                 </button>
                                             </div>
@@ -580,12 +596,12 @@ export default function CourseEditPage() {
                                         Hủy bỏ
                                     </button>
                                 </div>
-                            </div>
-                        ) : (
-                            <button onClick={() => setActiveChapterId(chapter.id)} className="add-lesson-btn" style={{ padding: "10px", width: "100%", fontFamily: "'Segoe UI', sans-serif" }}>
-                                + Thêm bài giảng vào chương này
-                            </button>
-                        )}
+    </div>
+) : (
+    <button onClick={() => setActiveChapterId(chapter.id)} className="add-lesson-btn" style={{ padding: "10px", width: "100%", fontFamily: "'Segoe UI', sans-serif" }}>
+        + Thêm bài giảng vào chương này
+    </button>
+)}
                     </div>
                 ))}
             </div>

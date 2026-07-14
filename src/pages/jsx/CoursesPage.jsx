@@ -16,7 +16,7 @@ export default function CoursesPage() {
         // 1. Tải danh sách môn học hoạt động về làm bộ lọc menu sidebar
         const fetchSubjects = async () => {
             try {
-                const res = await axiosClient.get("/api/public/subjects");
+                const res = await axiosClient.get("/public/subjects");
                 setSubjects(res.data);
             } catch (err) {
                 console.error("Lỗi tải môn học:", err);

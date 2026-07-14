@@ -76,8 +76,7 @@ function LoginPage({ switchToRegister }) {
                 } else if (decoded.authorities) {
                     role = decoded.authorities[0]?.replace("ROLE_", "") || "STUDENT";
                 }
-
-                const currentUserId = decoded.userId || decoded.id;
+const currentUserId = decoded.userId || decoded.id;
                 const user = {
                     id: currentUserId,
                     fullName: decoded.fullName || decoded.name || email.split('@')[0] || "Người dùng", 
@@ -148,14 +147,14 @@ function LoginPage({ switchToRegister }) {
             setMessageType("success");
 
             // 🔥 TỰ ĐỘNG GHI LOG: Đăng nhập bằng tài khoản Google thành công
-            // const currentUserId = data.user?.id || data.user?.userId;
-            // if (currentUserId) {
-            //     await sendActivityLog(currentUserId, data.token, "Đăng nhập hệ thống thông qua tài khoản Google");
-            // }
+             const currentUserId = data.user?.id || data.user?.userId;
+             if (currentUserId) {
+                await sendActivityLog(currentUserId, data.token, "Đăng nhập hệ thống thông qua tài khoản Google");
+             }
 
             // setTimeout(() => {
             //     if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
-            //         navigate("/teacher/dashboard");
+//         navigate("/teacher/dashboard");
             //     } else if (data.user?.role === "ADMIN" || data.user?.roleId === 1) {
             //         navigate("/admin/courses");
             //     } else {
@@ -233,8 +232,7 @@ function LoginPage({ switchToRegister }) {
                         Forgot Password?
                     </span>
                 </div>
-
-                <button type="submit" className="auth-submit-btn" disabled={loading}>
+<button type="submit" className="auth-submit-btn" disabled={loading}>
                     {loading ? "Logging In..." : "Login"}
                 </button>
 

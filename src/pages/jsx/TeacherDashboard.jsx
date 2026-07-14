@@ -2,26 +2,33 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../css/TeacherDashboard.css"; // 🔥 MỚI: CSS cao cấp dành riêng cho Giáo viên
 import axiosClient from "../../api/axiosClient";
-import { logout } from "../../services/authService";
 
 export default function TeacherDashboard() {
     const navigate = useNavigate();
-    const [myCourses, setMyCourses] = useState([]);
-    const [user, setUser] = useState(null);
     
-    // State cho việc hiển thị Modal báo cáo tiến độ học viên
+    // State chính
+    const [user, setUser] = useState(null);
+    const [myCourses, setMyCourses] = useState([]);
+    const [qaList, setQaList] = useState([]);
+    const [activeTab, setActiveTab] = useState("COURSES");
+
+    // Modal Báo cáo
     const [reportModalOpen, setReportModalOpen] = useState(false);
     const [selectedCourseForReport, setSelectedCourseForReport] = useState(null);
     const [courseReports, setCourseReports] = useState([]);
-    
-    // Cấu hình State quản lý danh sách môn học, danh mục & đóng mở Modal tạo khóa học
-    const [subjects, setSubjects] = useState([]); 
-    const [categories, setCategories] = useState([]); // State lưu danh sách danh mục
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+    // Modal Trả lời Q&A
+    const [replyModalOpen, setReplyModalOpen] = useState(false);
+    const [selectedQa, setSelectedQa] = useState(null);
+    const [replyContent, setReplyContent] = useState("");
+
+    // Modal Tạo khóa học (nếu dùng form đầy đủ)
     const [createCourseModalOpen, setCreateCourseModalOpen] = useState(false);
     const [newCourseData, setNewCourseData] = useState({
         title: "",
         subjectId: "",
-        categoryId: "" // Trường categoryId trong Form dữ liệu
+        categoryId: ""
     });
 
     // State cho Modal sửa khóa học
@@ -33,101 +40,126 @@ export default function TeacherDashboard() {
         categoryId: ""
     });
 
-    // State cho tab quản lý hỏi đáp
-    const [activeTab, setActiveTab] = useState("COURSES"); 
-    const [qaList, setQaList] = useState([]);
-    const [replyModalOpen, setReplyModalOpen] = useState(false);
-    const [showLogoutModal, setShowLogoutModal] = useState(false);
-    const [selectedQa, setSelectedQa] = useState(null);
-    const [replyContent, setReplyContent] = useState("");
-
+    // Kiểm tra quyền truy cập và load dữ liệu ban đầu
     useEffect(() => {
-        // Check bảo mật đăng nhập
         const token = localStorage.getItem("token");
         const storedUser = localStorage.getItem("user");
 
         if (!token || !storedUser) {
-            alert("⚠️ Bạn chưa đăng nhập!");
-            navigate("/");
+            navigate("/home");
             return;
         }
 
         const userObj = JSON.parse(storedUser);
         if (userObj.role !== "TEACHER" && userObj.roleId !== 2) {
-            alert("❌ Bạn không có quyền truy cập!");
+            alert("❌ Bạn không có quyền truy cập trang này!");
             navigate("/home");
             return;
         }
 
         setUser(userObj);
-
-        // Tải danh sách môn học về hệ thống trước để phục vụ ô chọn Dropdown
-        const fetchSubjects = async () => {
-            try {
-                const res = await axiosClient.get("/public/subjects");
-                setSubjects(res.data);
-            } catch (err) {
-                console.error("Lỗi tải danh sách môn học:", err);
-            }
-        };
-
-        // Hàm gọi API lấy danh sách danh mục hệ thống
-        const fetchCategories = async () => {
-            try {
-                const res = await axiosClient.get("/public/categories");
-                setCategories(res.data);
-            } catch (err) {
-                console.error("Lỗi tải danh sách danh mục:", err);
-            }
-        };
-
-        const fetchCourses = async () => {
-            try {
-                const resCourses = await axiosClient.get("/courses");        
-                setMyCourses(resCourses.data);
-            } catch (error) {
-                console.error("Lỗi tải khóa học:", error);
-            }
-        };
-
-        fetchSubjects();
-        fetchCategories(); // Thực thi tải danh mục
-        fetchCourses();
+        fetchCourses(userObj);
     }, [navigate]);
 
-    const handleLogout = async () => {
-        if (!window.confirm("Bạn có chắc muốn đăng xuất khỏi PrepAce?")) return;
-        try {
-            await logout();
-        } catch (err) {
-            console.error(err);
+    // Load danh sách Q&A khi chuyển tab
+    useEffect(() => {
+        if (activeTab === "QA") {
+            fetchQaList();
         }
-        navigate("/auth");
+    }, [activeTab]);
+
+    const fetchCourses = async (userObj) => {
+        try {
+            const response = await axiosClient.get("/courses");
+            // Hiện tại hiển thị tất cả (sẽ filter theo teacher_id sau khi backend cập nhật)
+            setMyCourses(response.data);
+        } catch (error) {
+            console.error("Lỗi tải danh sách khóa học:", error);
+            const serverErrorMessage = error.response?.data?.message || error.message;
+            alert("❌ Lỗi từ hệ thống: " + serverErrorMessage);
+        }
+    };
+
+    const fetchQaList = async () => {
+        try {
+            const response = await axiosClient.get("/questions/teacher/all");
+            setQaList(response.data);
+        } catch (error) {
+            console.error("Lỗi tải danh sách Q&A:", error);
+            alert("Không thể tải danh sách hỏi đáp.");
+        }
+    };
+
+    const handleCreateCourse = async () => {
+        const customTitle = window.prompt("Nhập tên khóa học mới:", "Khóa học mới");
+        if (!customTitle) return;
+
+        try {
+            const response = await axiosClient.post("/courses", {
+                title: customTitle,
+                teacher_id: user?.id
+            });
+            alert("✅ Tạo khóa học thành công!");
+            // Chuyển sang trang biên soạn
+            navigate(`/teacher/course/${response.data.id || response.data.courseId}/edit`);
+            fetchCourses(user); // Refresh danh sách
+        } catch (error) {
+            console.error(error);
+            alert("❌ Lỗi khi tạo khóa học: " + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const handleDelete = async (courseId) => {
+        if (!window.confirm("Bạn có chắc chắn muốn xóa khóa học này? Hành động này không thể hoàn tác!")) return;
+        
+        try {
+            await axiosClient.delete(`/courses/${courseId}`);
+            setMyCourses(prev => prev.filter(c => c.id !== courseId));
+            alert("✅ Đã xóa khóa học.");
+        } catch (error) {
+            alert("❌ Lỗi khi xóa khóa học: " + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const handleRename = async (courseId, oldTitle) => {
+        const newTitle = window.prompt("Nhập tên mới cho khóa học:", oldTitle);
+        if (!newTitle || newTitle === oldTitle) return;
+
+        try {
+            await axiosClient.put(`/courses/${courseId}`, { title: newTitle });
+            setMyCourses(prev => prev.map(c => 
+                c.id === courseId ? { ...c, title: newTitle } : c
+            ));
+            alert("✅ Đổi tên thành công!");
+        } catch (error) {
+            alert("❌ Lỗi khi đổi tên: " + (error.response?.data?.message || error.message));
+        }
     };
 
     const handleOpenReport = async (course) => {
         setSelectedCourseForReport(course);
         setReportModalOpen(true);
+        
         try {
             const response = await axiosClient.get(`/reports/courses/${course.id}`);
             setCourseReports(response.data);
         } catch (error) {
             console.error("Lỗi tải báo cáo:", error);
-            alert("Lỗi tải báo cáo tiến độ");
+            setCourseReports([]);
         }
     };
 
     const handleExportExcel = async () => {
         if (!selectedCourseForReport) return;
+        
         try {
             const token = localStorage.getItem("token");
             const response = await fetch(`http://localhost:8080/api/reports/courses/${selectedCourseForReport.id}/export`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
+
             if (!response.ok) throw new Error("Lỗi tải file");
-            
+
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -139,24 +171,9 @@ export default function TeacherDashboard() {
             window.URL.revokeObjectURL(url);
         } catch (error) {
             console.error("Lỗi xuất Excel:", error);
-            alert("Không thể xuất file Excel");
+            alert("❌ Không thể xuất file Excel.");
         }
     };
-
-    const fetchQaList = async () => {
-        try {
-            const response = await axiosClient.get("/questions/teacher/all");
-            setQaList(response.data);
-        } catch (error) {
-            console.error("Lỗi tải danh sách Q&A:", error);
-        }
-    };
-
-    useEffect(() => {
-        if (activeTab === "QA") {
-            fetchQaList();
-        }
-    }, [activeTab]);
 
     const handleOpenReplyModal = (qa) => {
         setSelectedQa(qa);
@@ -164,31 +181,16 @@ export default function TeacherDashboard() {
         setReplyModalOpen(true);
     };
 
-    // Hàm xử lý gửi dữ liệu lên Backend tạo khóa học
-    const handleCreateCourseSubmit = async (e) => {
-        e.preventDefault();
-        if (!newCourseData.title.trim()) return alert("Vui lòng nhập tên khóa học!");
-        if (!newCourseData.categoryId) return alert("Vui lòng chọn danh mục khóa học!"); 
-        if (!newCourseData.subjectId) return alert("Vui lòng chọn môn học chỉ định!");
-
-        try {
-            const response = await axiosClient.post("/courses", { 
-                title: newCourseData.title,
-                teacher_id: user?.id,
-                subjectId: parseInt(newCourseData.subjectId), 
-                categoryId: parseInt(newCourseData.categoryId) 
-            });
-            
-            setCreateCourseModalOpen(false);
-            setNewCourseData({ title: "", subjectId: "", categoryId: "" }); // Reset form
-            
-            // Điều hướng thẳng sang trang biên soạn đề cương
-            navigate(`/teacher/course/${response.data.courseId || response.data.id}/edit`);
-        } catch (error) {
-            console.error(error);
-            alert("Lỗi khi tạo khóa học mới: " + (error.response?.data?.message || error.message));
-        }
-    };
+    const handleLogout = async () => {
+            try {
+                await logout();
+            } catch (err) {
+                console.error(err);
+            }
+            setShowLogoutModal(false);
+            navigate("/auth");
+        };
+    
 
     const handleEditCourseSubmit = async (e) => {
         e.preventDefault();
@@ -236,24 +238,27 @@ export default function TeacherDashboard() {
     };
 
     const handleSendReply = async () => {
-        if (!replyContent.trim()) return alert("Vui lòng nhập nội dung trả lời");
-        const questionIdToUse = selectedQa?.questionId || selectedQa?.id;
-        
-        if (!questionIdToUse || questionIdToUse === 'undefined') {
-            return alert("❌ Lỗi: Không tìm thấy ID của câu hỏi để gửi câu trả lời!");
+        if (!replyContent.trim()) {
+            alert("Vui lòng nhập nội dung trả lời!");
+            return;
+        }
+
+        const questionId = selectedQa?.questionId || selectedQa?.id;
+        if (!questionId) {
+            alert("❌ Không tìm thấy ID câu hỏi!");
+            return;
         }
 
         try {
-            await axiosClient.post(`/questions/${questionIdToUse}/answers`, {
+            await axiosClient.post(`/questions/${questionId}/answers`, {
                 content: replyContent
             });
             setReplyModalOpen(false);
-            fetchQaList();
+            fetchQaList(); // Refresh danh sách
             alert("🎉 Đã gửi câu trả lời thành công!");
         } catch (error) {
-            console.error("Lỗi chi tiết từ hệ thống:", error);
-            const serverErrorMessage = error.response?.data?.message || error.message;
-            alert("❌ Lỗi từ hệ thống: " + serverErrorMessage);
+            console.error("Lỗi gửi trả lời:", error);
+            alert("❌ Lỗi khi gửi trả lời: " + (error.response?.data?.message || error.message));
         }
     };
     
@@ -298,39 +303,50 @@ export default function TeacherDashboard() {
                             📚 Quản lý khóa học của tôi
                         </h2>
 
-                        {/* DANH SÁCH KHÓA HỌC */}
                         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                            {myCourses.map(course => (
-                                <div key={course.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "24px", background: "#fff", borderRadius: "18px", boxShadow: "0 6px 20px rgba(20, 40, 120, 0.04)", border: "1px solid #f0f4ff" }}>
+                            {myCourses.length > 0 ? myCourses.map(course => (
+                                <div key={course.id} style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    padding: "24px",
+                                    background: "#fff",
+                                    borderRadius: "18px",
+                                    boxShadow: "0 6px 20px rgba(20, 40, 120, 0.04)",
+                                    border: "1px solid #f0f4ff"
+                                }}>
                                     <div>
                                         <h3 style={{ margin: "0 0 10px 0", fontSize: "17px", fontWeight: "700", color: "#0f172a" }}>
                                             {course.title}
                                         </h3>
                                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                            <span style={{ padding: "5px 10px", background: course.status === "PUBLISHED" ? "#e2fbe8" : "#fff3cd", color: course.status === "PUBLISHED" ? "#1e8a3b" : "#b45309", borderRadius: "8px", fontSize: "12px", fontWeight: "600" }}>
+                                            <span style={{
+                                                padding: "5px 10px",
+                                                background: course.status === "PUBLISHED" ? "#e2fbe8" : "#fff3cd",
+                                                color: course.status === "PUBLISHED" ? "#1e8a3b" : "#b45309",
+                                                borderRadius: "8px",
+                                                fontSize: "12px",
+                                                fontWeight: "600"
+                                            }}>
                                                 {course.status === "PUBLISHED" ? "Đã xuất bản" : "Bản nháp"}
                                             </span>
-                                            {/* Hiển thị tên Môn học của khóa học tại Dashboard nếu có */}
-                                            {course.subject?.subjectName && (
-                                                <span style={{ padding: "5px 10px", background: "#e0e7ff", color: "#4f46e5", borderRadius: "8px", fontSize: "12px", fontWeight: "600" }}>
-                                                    📐 {course.subject.subjectName}
-                                                </span>
-                                            )}
-                                            {/* Hiển thị tên Danh mục của khóa học cạnh tên môn học nếu tồn tại */}
-                                            {course.category?.categoryName && (
-                                                <span style={{ padding: "5px 10px", background: "#fef3c7", color: "#d97706", borderRadius: "8px", fontSize: "12px", fontWeight: "600" }}>
-                                                    📁 {course.category.categoryName}
-                                                </span>
-                                            )}
-                                            <span style={{ fontSize: "13.5px", color: "#64748b" }}>👥 {course.students || 0} học viên</span>
+                                            <span style={{ fontSize: "13.5px", color: "#64748b" }}>
+                                                👥 {course.students || 0} học viên
+                                            </span>
                                         </div>
                                     </div>
                                     
                                     <div style={{ display: "flex", gap: "10px", flexWrap: "nowrap", justifyContent: "flex-end" }}>
                                         <button 
                                             style={{ padding: "10px 18px", background: "#f1f5f9", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: "600", color: "#334155" }}
+                                            onClick={() => handleRename(course.id, course.title)}
+                                        >
+                                            📝 Đổi tên
+                                        </button>
+                                        <button 
+                                            style={{ padding: "10px 18px", background: "#f1f5f9", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: "600", color: "#334155" }}
                                             onClick={() => navigate(`/teacher/course/${course.id}/edit`)}
-                                            title="Biên soạn nội dung"
+                                            title="Biên soạn nội dung khóa học"
                                         >
                                             ✏️ Biên soạn
                                         </button>
@@ -357,12 +373,13 @@ export default function TeacherDashboard() {
                                         </button>
                                     </div>
                                 </div>
-                            ))}
+                            )) : (
+                                <p>Chưa có khóa học nào. Hãy tạo khóa học mới!</p>
+                            )}
                         </div>
                     </>
                 )}
 
-                {/* HỎI ĐÁP HỌC VIÊN TAB */}
                 {activeTab === "QA" && (
                     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                         <h2 style={{ fontSize: "24px", fontWeight: "700", color: "#0f172a", margin: 0 }}>
@@ -383,10 +400,14 @@ export default function TeacherDashboard() {
                                     {qaList.length > 0 ? qaList.map(qa => {
                                         const isAnswered = qa.answers && qa.answers.length > 0;
                                         return (
-                                            <tr key={qa.questionId || qa.id} style={{ borderBottom: "1px solid #f1f5f9" }}>                                                
+                                            <tr key={qa.questionId || qa.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                                                 <td style={{ padding: "16px", verticalAlign: "top" }}>
                                                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                        <img src={qa.userAvatarUrl || "https://ui-avatars.com/api/?name=" + qa.userFullName} alt="" style={{ width: "32px", height: "32px", borderRadius: "50%" }} />
+                                                        <img 
+                                                            src={qa.userAvatarUrl || `https://ui-avatars.com/api/?name=${qa.userFullName}`} 
+                                                            alt="" 
+                                                            style={{ width: "32px", height: "32px", borderRadius: "50%" }} 
+                                                        />
                                                         <div>
                                                             <div style={{ fontWeight: "600", color: "#1e293b", fontSize: "14px" }}>{qa.userFullName}</div>
                                                             <div style={{ color: "#94a3b8", fontSize: "12px" }}>{new Date(qa.createdAt).toLocaleDateString("vi-VN")}</div>
@@ -412,7 +433,16 @@ export default function TeacherDashboard() {
                                                 <td style={{ padding: "16px", verticalAlign: "top" }}>
                                                     <button 
                                                         onClick={() => handleOpenReplyModal(qa)}
-                                                        style={{ padding: "6px 12px", background: isAnswered ? "#f1f5f9" : "#2747d9", color: isAnswered ? "#475569" : "#fff", border: "none", borderRadius: "6px", fontSize: "13px", cursor: "pointer", fontWeight: "600" }}
+                                                        style={{
+                                                            padding: "6px 12px",
+                                                            background: isAnswered ? "#f1f5f9" : "#2747d9",
+                                                            color: isAnswered ? "#475569" : "#fff",
+                                                            border: "none",
+                                                            borderRadius: "6px",
+                                                            fontSize: "13px",
+                                                            cursor: "pointer",
+                                                            fontWeight: "600"
+                                                        }}
                                                     >
                                                         {isAnswered ? "Xem / Sửa" : "Trả lời"}
                                                     </button>
@@ -421,7 +451,9 @@ export default function TeacherDashboard() {
                                         );
                                     }) : (
                                         <tr>
-                                            <td colSpan="5" style={{ padding: "30px", textAlign: "center", color: "#64748b" }}>Chưa có câu hỏi nào từ học viên.</td>
+                                            <td colSpan="5" style={{ padding: "30px", textAlign: "center", color: "#64748b" }}>
+                                                Chưa có câu hỏi nào từ học viên.
+                                            </td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -431,6 +463,7 @@ export default function TeacherDashboard() {
                 )}
             </main>
 
+<<<<<<< HEAD
             {/* MODAL KHỞI TẠO KHÓA HỌC (TÊN + DANH MỤC + MÔN HỌC) */}
             {createCourseModalOpen && (
                 <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100 }}>
@@ -568,34 +601,65 @@ export default function TeacherDashboard() {
                 </div>
             )}
 
+=======
+>>>>>>> 6fdb59b2b25eebec1f0debc76dd397f417a07ebc
             {/* MODAL BÁO CÁO TIẾN ĐỘ */}
-            {reportModalOpen && (
+            {reportModalOpen && selectedCourseForReport && (
                 <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
-                    <div style={{ background: "#fff", width: "800px", maxWidth: "90%", borderRadius: "16px", padding: "30px", position: "relative" }}>
-                        <button onClick={() => setReportModalOpen(false)} style={{ position: "absolute", top: "20px", right: "20px", background: "none", border: "none", fontSize: "24px", cursor: "pointer" }}>&times;</button>
-                        <h2 style={{ margin: "0 0 20px 0", fontSize: "22px" }}>📊 Báo cáo tiến độ: {selectedCourseForReport?.title}</h2>
+                    <div style={{ background: "#fff", width: "800px", maxWidth: "90%", borderRadius: "16px", padding: "30px", boxShadow: "0 10px 30px rgba(0,0,0,0.2)", position: "relative" }}>
+                        <button 
+                            onClick={() => setReportModalOpen(false)}
+                            style={{ position: "absolute", top: "20px", right: "20px", background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "#64748b" }}
+                        >
+                            &times;
+                        </button>
+                        <h2 style={{ margin: "0 0 20px 0", fontSize: "22px", color: "#0f172a" }}>
+                            📊 Báo cáo tiến độ: {selectedCourseForReport.title}
+                        </h2>
+                        
                         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
-                            <button onClick={handleExportExcel} style={{ padding: "10px 20px", background: "#16a34a", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>📥 Tải báo cáo Excel</button>
+                            <button 
+                                onClick={handleExportExcel}
+                                style={{ padding: "10px 20px", background: "#16a34a", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}
+                            >
+                                📥 Tải báo cáo Excel
+                            </button>
                         </div>
-                        <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+
+                        <div style={{ maxHeight: "400px", overflowY: "auto", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
                             <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                                <thead style={{ background: "#f8fafc" }}>
+                                <thead style={{ background: "#f8fafc", position: "sticky", top: 0 }}>
                                     <tr>
-                                        <th style={{ padding: "12px 16px" }}>Học sinh</th>
-                                        <th style={{ padding: "12px 16px" }}>Đã học</th>
-                                        <th style={{ padding: "12px 16px" }}>Tiến độ</th>
-                                        <th style={{ padding: "12px 16px" }}>Điểm TB</th>
+                                        <th style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0" }}>Học sinh</th>
+                                        <th style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0" }}>Đã học</th>
+                                        <th style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0" }}>Tiến độ</th>
+                                        <th style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0" }}>Điểm TB</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {courseReports.map(report => (
+                                    {courseReports.length > 0 ? courseReports.map(report => (
                                         <tr key={report.userId} style={{ borderBottom: "1px solid #f1f5f9" }}>
                                             <td style={{ padding: "12px 16px" }}>{report.userFullName}</td>
                                             <td style={{ padding: "12px 16px" }}>{report.completedLessons} / {report.totalLessons}</td>
-                                            <td style={{ padding: "12px 16px" }}><div style={{ width: `${report.progressPercentage}%`, background: "#3b82f6", height: "8px" }}></div> {report.progressPercentage}%</td>
-                                            <td style={{ padding: "12px 16px" }}>{report.averageScore || "-"}</td>
+                                            <td style={{ padding: "12px 16px" }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                                    <div style={{ flex: 1, background: "#e2e8f0", height: "8px", borderRadius: "4px" }}>
+                                                        <div style={{ width: `${report.progressPercentage}%`, background: report.progressPercentage === 100 ? "#16a34a" : "#3b82f6", height: "100%" }}></div>
+                                                    </div>
+                                                    <span>{report.progressPercentage}%</span>
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: "12px 16px" }}>
+                                                {report.averageScore != null ? report.averageScore : "-"}
+                                            </td>
                                         </tr>
-                                    ))}
+                                    )) : (
+                                        <tr>
+                                            <td colSpan="4" style={{ padding: "30px", textAlign: "center", color: "#64748b" }}>
+                                                Chưa có dữ liệu học viên.
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -603,16 +667,57 @@ export default function TeacherDashboard() {
                 </div>
             )}
 
-            {/* MODAL PHẢN HỒI HỎI ĐÁP */}
+            {/* MODAL TRẢ LỜI Q&A */}
             {replyModalOpen && selectedQa && (
                 <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
-                    <div style={{ background: "#fff", width: "600px", borderRadius: "16px", padding: "30px", position: "relative" }}>
-                        <button onClick={() => setReplyModalOpen(false)} style={{ position: "absolute", top: "20px", right: "20px", background: "none", border: "none", fontSize: "24px", cursor: "pointer" }}>&times;</button>
-                        <h2 style={{ margin: "0 0 20px 0", fontSize: "20px" }}>Phản hồi Câu hỏi</h2>
-                        <textarea value={replyContent} onChange={(e) => setReplyContent(e.target.value)} placeholder="Nhập câu trả lời..." rows="4" style={{ width: "100%", padding: "12px", borderRadius: "8px" }} />
-                        <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
-                            <button onClick={() => setReplyModalOpen(false)} style={{ padding: "10px 16px", background: "#f1f5f9", border: "none", borderRadius: "6px" }}>Hủy</button>
-                            <button onClick={handleSendReply} style={{ padding: "10px 20px", background: "#2747d9", color: "#fff", border: "none", borderRadius: "6px" }}>Gửi câu trả lời</button>
+                    <div style={{ background: "#fff", width: "600px", borderRadius: "16px", padding: "30px", boxShadow: "0 10px 30px rgba(0,0,0,0.2)", position: "relative" }}>
+                        <button 
+                            onClick={() => setReplyModalOpen(false)}
+                            style={{ position: "absolute", top: "20px", right: "20px", background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "#64748b" }}
+                        >
+                            &times;
+                        </button>
+                        
+                        <h2 style={{ margin: "0 0 20px 0", fontSize: "20px", color: "#0f172a" }}>Phản hồi câu hỏi</h2>
+                        
+                        <div style={{ background: "#f8fafc", padding: "15px", borderRadius: "8px", marginBottom: "20px", border: "1px solid #e2e8f0" }}>
+                            <div style={{ fontWeight: "600", marginBottom: "5px" }}>{selectedQa.userFullName} hỏi:</div>
+                            <div>{selectedQa.content}</div>
+                        </div>
+
+                        {selectedQa.answers && selectedQa.answers.length > 0 && (
+                            <div style={{ marginBottom: "20px" }}>
+                                <div style={{ fontWeight: "600", color: "#64748b", marginBottom: "10px" }}>Các câu trả lời trước:</div>
+                                {selectedQa.answers.map(ans => (
+                                    <div key={ans.id} style={{ background: "#eef2ff", padding: "12px", borderRadius: "8px", marginBottom: "8px" }}>
+                                        <strong>{ans.userFullName}</strong> ({new Date(ans.createdAt).toLocaleDateString()}):<br />
+                                        {ans.content}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <textarea 
+                            value={replyContent}
+                            onChange={(e) => setReplyContent(e.target.value)}
+                            placeholder="Nhập câu trả lời của bạn..."
+                            rows="5"
+                            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", marginBottom: "15px" }}
+                        />
+
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                            <button 
+                                onClick={() => setReplyModalOpen(false)}
+                                style={{ padding: "10px 20px", background: "#f1f5f9", border: "none", borderRadius: "8px", cursor: "pointer" }}
+                            >
+                                Hủy
+                            </button>
+                            <button 
+                                onClick={handleSendReply}
+                                style={{ padding: "10px 20px", background: "#2747d9", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer" }}
+                            >
+                                Gửi trả lời
+                            </button>
                         </div>
                     </div>
                 </div>

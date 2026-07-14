@@ -7,11 +7,11 @@ export default function NotificationsPage() {
     const navigate = useNavigate();
     const [notifications, setNotifications] = useState([]);
     
-    // 🔥 SỬA ĐỔI 1: Thêm State quản lý tab đang chọn ('all' hoặc 'unread')
+    // Quản lý tab đang chọn ('all' hoặc 'unread')
     const [activeTab, setActiveTab] = useState("all"); 
 
     // =========================================================
-    // 1. GỌI API ĐỒNG BỘ ĐÚNG CỘT VÀ TRUYỀN THÊM USERID
+    // 1. GỌI API ĐỒNG BỘ ĐÚNG CỘT VÀ ÉP VIẾT HOA CHUỖI ROLE
     // =========================================================
     useEffect(() => {
         const fetchNotifications = async () => {
@@ -21,15 +21,20 @@ export default function NotificationsPage() {
                 const user = JSON.parse(storedUser);
                 const userId = user.user_id || user.id;
 
-                // 🔥 SỬA ĐỔI 2: Truyền thêm cả userId lên để lọc thông báo nhắc lịch cá nhân
-                const response = await axiosClient.get(`/notifications?role=${user.role}&userId=${userId}`);
+                // 🔥 ĐÃ SỬA: Check linh hoạt cả user.roleName và user.role để tránh bị rơi vào mặc định 'STUDENT'
+                let rawRole = user.roleName || user.role || "STUDENT";
+                const userRole = rawRole.toUpperCase();
+
+                // Log ra console để Hưng kiểm tra nhanh xem Frontend đang gửi quyền gì lên Backend
+                console.log("➡️ Đang gửi request thông báo với Role:", userRole, "và UserId:", userId);
+
+                const response = await axiosClient.get(`/notifications?role=${userRole}&userId=${userId}`);
                 if (response.data) {
                     setNotifications(response.data);
                 }
             } catch (error) {
                 console.warn("[Offline Mode] Đang dùng data mẫu (Đã chuẩn hóa theo CamelCase của BE):");
                 
-                // 🔥 SỬA ĐỔI 3: Đồng bộ lại tên biến khớp 100% với file Notification.java (notificationId, createdAt)
                 setNotifications([
                     { 
                         notificationId: 1, 
@@ -59,7 +64,7 @@ export default function NotificationsPage() {
         fetchNotifications();
     }, []);
 
-    // Định dạng hiển thị thời gian thân thiện (bạn có thể tùy biến thêm)
+    // Định dạng hiển thị thời gian thân thiện
     const formatTime = (dateStr) => {
         if (!dateStr || dateStr.includes("trước") || dateStr.includes("xong")) return dateStr;
         try {
@@ -93,10 +98,10 @@ export default function NotificationsPage() {
         setNotifications(notifications.map(noti => ({ ...noti, is_read: true })));
     };
 
-    // 🔥 SỬA ĐỔI 4: Lọc danh sách thông báo theo Tab đang chọn
+    // Lọc danh sách thông báo theo Tab đang chọn
     const filteredNotifications = notifications.filter(noti => {
         if (activeTab === "unread") return !noti.is_read;
-        return true; // tab 'all' thì hiện hết
+        return true; 
     });
 
     const unreadCount = notifications.filter(n => !n.is_read).length;
@@ -116,7 +121,6 @@ export default function NotificationsPage() {
                 <div className="noti-panel">
                     <div className="panel-header">
                         <div className="tab-group">
-                            {/* 🔥 SỬA ĐỔI 5: Thêm onClick và class active động cho các Tab */}
                             <span 
                                 className={`tab ${activeTab === "all" ? "active" : ""}`} 
                                 onClick={() => setActiveTab("all")}
@@ -141,7 +145,6 @@ export default function NotificationsPage() {
                                 {activeTab === "unread" ? "Bạn không có thông báo chưa đọc nào." : "Bạn không có thông báo nào."}
                             </div>
                         ) : (
-                            // 🔥 SỬA ĐỔI 6: Map qua mảng đã lọc (filteredNotifications) thay vì mảng tổng ban đầu
                             filteredNotifications.map(noti => (
                                 <div 
                                     className={`noti-item ${noti.is_read ? 'read' : 'unread'}`} 
