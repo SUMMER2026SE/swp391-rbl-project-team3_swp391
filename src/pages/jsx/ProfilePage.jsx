@@ -12,6 +12,8 @@ function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
+    const [activeTab, setActiveTab] = useState("profile");
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -21,7 +23,7 @@ function ProfilePage() {
                 setBaselineUser(profileRes.data);
 
                 // Lấy danh sách khóa học đã đăng ký
-                const enrollRes = await axiosClient.get("/api/enrollments/me");
+                const enrollRes = await axiosClient.get("/enrollments/me");
                 setEnrolledCourses(enrollRes.data || []);
             } catch (err) {
                 console.error("Lỗi tải thông tin:", err);
@@ -121,7 +123,23 @@ function ProfilePage() {
 
                     <ul>
                         <li onClick={() => navigate("/home")}>← Về Trang chủ</li>
-                        <li className="active">Thông tin cá nhân</li>
+
+                        {/* Tab thông tin cá nhân */}
+                        <li
+                            className={activeTab === "profile" ? "active" : ""}
+                            onClick={() => setActiveTab("profile")}
+                        >
+                            Thông tin cá nhân
+                        </li>
+
+                        {/* Tab khóa học đã mua */}
+                        <li
+                            className={activeTab === "courses" ? "active" : ""}
+                            onClick={() => setActiveTab("courses")}
+                        >
+                            📚 Khóa học của tôi
+                        </li>
+
                         <li onClick={() => navigate("/change-password")}>🔐 Bảo mật</li>
                         <li onClick={() => navigate("/entry-test")}>📝 Kiểm tra đầu vào</li>
                         <li onClick={() => navigate("/adaptive-path")}>🗺️ Lộ trình AI</li>
@@ -130,106 +148,136 @@ function ProfilePage() {
 
                 {/* Main Content */}
                 <div className="content">
-                    <h1>Thông tin cá nhân</h1>
-                    <p className="subtitle">Quản lý thông tin để PrepAce đồng hành cùng bạn ôn thi Đại học hiệu quả hơn.</p>
+                    {/* ==================== TAB 1: THÔNG TIN CÁ NHÂN ==================== */}
+                    {activeTab === "profile" && (
+                        <>
+                            <h1>Thông tin cá nhân</h1>
+                            <p className="subtitle">Quản lý thông tin để PrepAce đồng hành cùng bạn ôn thi Đại học hiệu quả hơn.</p>
 
-                    {/* Avatar */}
-                    <div className="avatar-card">
-                        <img className="avatar" src={currentAvatar} alt="avatar" />
-                        <div>
-                            <h3>Ảnh đại diện</h3>
-                            <AvatarUpload
-                                onUploaded={(url) => {
-                                    const updatedUser = {
-                                        ...user,
-                                        avatarUrl: url,
-                                        avatar_url: url
-                                    };
-                                    setUser(updatedUser);
-                                    localStorage.setItem(
-                                        "user",
-                                        JSON.stringify(updatedUser)
-                                    );
+                            {/* Avatar */}
+                            <div className="avatar-card">
+                                <img className="avatar" src={currentAvatar} alt="avatar" />
+                                <div>
+                                    <h3>Ảnh đại diện</h3>
+                                    <AvatarUpload
+                                        onUploaded={(url) => {
+                                            const updatedUser = {
+                                                ...user,
+                                                avatarUrl: url,
+                                                avatar_url: url
+                                            };
+                                            setUser(updatedUser);
+                                            localStorage.setItem(
+                                                "user",
+                                                JSON.stringify(updatedUser)
+                                            );
 
-                                    axiosClient.put("/auth/avatar", {
-                                        avatarUrl: url
-                                    });
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Form thông tin */}
-                    <div className="form-grid">
-                        <div>
-                            <label>Họ và tên</label>
-                            <input
-                                value={user.fullName || ""}
-                                onChange={(e) => setUser({ ...user, fullName: e.target.value })}
-                            />
-                        </div>
-                        <div>
-                            <label>Email</label>
-                            <input value={user.email || ""} disabled />
-                        </div>
-                        <div>
-                            <label>Số điện thoại</label>
-                            <input
-                                value={user.phone || ""}
-                                onChange={(e) => setUser({ ...user, phone: e.target.value })}
-                            />
-                        </div>
-                        <div>
-                            <label>Trường học</label>
-                            <input
-                                value={user.school || ""}
-                                onChange={(e) => setUser({ ...user, school: e.target.value })}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="bio-section">
-                        <label>Giới thiệu / Mục tiêu ôn thi</label>
-                        <textarea
-                            rows="4"
-                            value={user.bio || ""}
-                            onChange={(e) => setUser({ ...user, bio: e.target.value })}
-                            placeholder="Ví dụ: Mình đang lớp 12, mục tiêu 28+ khối A, đặc biệt cần cải thiện Vật lý..."
-                        />
-                    </div>
-
-                    {/* === KHÓA HỌC ĐÃ MUA === */}
-                    <div className="enrolled-courses-section" style={{ marginTop: "30px" }}>
-                        <h3>📚 Khóa học của tôi</h3>
-                        {enrolledCourses.length > 0 ? (
-                            <div className="enrolled-grid">
-                                {enrolledCourses.map(course => (
-                                    <div 
-                                        key={course.id} 
-                                        className="enrolled-card"
-                                        onClick={() => navigate(`/learn/${course.id}`)}
-                                    >
-                                        <img src={course.thumbnail} alt={course.title} />
-                                        <div>
-                                            <strong>{course.title}</strong>
-                                            <p>Giảng viên: {course.teacher}</p>
-                                        </div>
-                                    </div>
-                                ))}
+                                            axiosClient.put("/auth/avatar", {
+                                                avatarUrl: url
+                                            });
+                                        }}
+                                    />
+                                </div>
                             </div>
-                        ) : (
-                            <p>Bạn chưa có khóa học nào. <span onClick={() => navigate("/courses")} style={{color:"#3b82f6", cursor:"pointer"}}>Khám phá ngay</span></p>
-                        )}
-                    </div>
 
-                    <div className="actions">
-                        <button className="password-btn" onClick={() => navigate("/change-password")}>
-                            🔐 Đổi mật khẩu
-                        </button>
-                        <button className="save-btn" onClick={handleSave} disabled={saving}>
-                            {saving ? "Đang lưu..." : "💾 Lưu thay đổi"}
-                        </button>
-                    </div>
+                            {/* Form thông tin */}
+                            <div className="form-grid">
+                                <div>
+                                    <label>Họ và tên</label>
+                                    <input
+                                        value={user.fullName || ""}
+                                        onChange={(e) => setUser({ ...user, fullName: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label>Email</label>
+                                    <input value={user.email || ""} disabled />
+                                </div>
+                                <div>
+                                    <label>Số điện thoại</label>
+                                    <input
+                                        value={user.phone || ""}
+                                        onChange={(e) => setUser({ ...user, phone: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label>Trường học</label>
+                                    <input
+                                        value={user.school || ""}
+                                        onChange={(e) => setUser({ ...user, school: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="bio-section">
+                                <label>Giới thiệu / Mục tiêu ôn thi</label>
+                                <textarea
+                                    rows="4"
+                                    value={user.bio || ""}
+                                    onChange={(e) => setUser({ ...user, bio: e.target.value })}
+                                    placeholder="Ví dụ: Mình đang lớp 12, mục tiêu 28+ khối A, đặc biệt cần cải thiện Vật lý..."
+                                />
+                            </div>
+
+                            <div className="actions">
+                                <button className="password-btn" onClick={() => navigate("/change-password")}>
+                                    🔐 Đổi mật khẩu
+                                </button>
+                                <button className="save-btn" onClick={handleSave} disabled={saving}>
+                                    {saving ? "Đang lưu..." : "💾 Lưu thay đổi"}
+                                </button>
+                            </div>
+                        </>
+                    )}
+
+                    {/* ==================== TAB 2: KHÓA HỌC CỦA TÔI ==================== */}
+                  {activeTab === "courses" && (
+                        <div className="enrolled-courses-section">
+                            <h1>📚 Khóa học của tôi</h1>
+                            <p className="subtitle" style={{ marginBottom: "20px" }}>Danh sách các khóa học bạn đang tham gia ôn luyện trên hệ thống PrepAce.</p>
+                            
+                            {enrolledCourses.length > 0 ? (
+                                /* 🔥 Sử dụng class grid và card chuẩn đẹp của ông */
+                                <div className="course-grid">
+                                    {enrolledCourses.map(course => (
+                                        <div
+                                            key={course.id}
+                                            className="course-card"
+                                            onClick={() => navigate(`/learn/${course.id}`)}
+                                        >
+                                            {/* Phần ảnh bìa khóa học */}
+                                            <div className="course-thumb">
+                                                <img
+                                                    src={
+                                                        course.thumbnail_url
+                                                            ? (course.thumbnail_url.startsWith("http")
+                                                                ? course.thumbnail_url
+                                                                : `http://localhost:8080${course.thumbnail_url}`)
+                                                            : "https://placehold.co/600x400?text=PrepAce"
+                                                    }
+                                                    alt={course.title}
+                                                />
+                                                {/* Nhãn môn học tự động lấy từ DB */}
+                                                <span className="subject-badge">{course.subjectName || "Môn học"}</span>
+                                                {/* Lớp phủ hover hiện chữ Vào học */}
+                                                <div className="course-overlay">
+                                                    <button>Vào học ngay →</button>
+                                                </div>
+                                            </div>
+
+                                            {/* Phần thông tin chi tiết (Chỉ giữ lại Tiêu đề & Giáo viên tối giản) */}
+                                            <div className="course-info">
+                                                <h3 className="course-title">{course.title}</h3>
+                                                <p className="course-teacher">👨‍🏫 Giảng viên: {course.teacherName}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p>Bạn chưa có khóa học nào. <span onClick={() => navigate("/courses")} style={{ color: "#3b82f6", cursor: "pointer" }}>Khám phá ngay</span></p>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
