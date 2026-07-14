@@ -13,6 +13,7 @@ import LearningPage from './pages/jsx/LearningPage';
 import AdaptivePathPage from './pages/jsx/AdaptivePathPage';
 import StudyCalendarPage from './pages/jsx/StudyCalendarPage';
 import InstructorProfilePage from './pages/jsx/InstructorProfilePage';
+import AIChapterSummaryPage from './pages/jsx/AIChapterSummaryPage';
 
 import AdminDashboardPage from './pages/jsx/AdminDashboardPage';
 import AdminUIConfigPage from './pages/jsx/AdminUIConfigPage';
@@ -76,6 +77,10 @@ function App() {
             <Route path="/adaptive-path" element={<AdaptivePathPage />} />
             <Route path="/calendar" element={<StudyCalendarPage />} />
             <Route path="/instructor/:id" element={<InstructorProfilePage />} />
+            <Route
+                path="/chapter-summary/:chapterId"
+                element={<AIChapterSummaryPage />}
+            />
 
             {/* Thi - Thi Thử */}
             <Route path='/tests' element={<TestListPage />} />
