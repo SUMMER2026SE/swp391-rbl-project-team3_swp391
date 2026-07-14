@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../css/TeacherDashboard.css"; // 🔥 MỚI: CSS cao cấp dành riêng cho Giáo viên
 import axiosClient from "../../api/axiosClient";
+import { logout } from "../../services/authService";
 
 export default function TeacherDashboard() {
     const navigate = useNavigate();

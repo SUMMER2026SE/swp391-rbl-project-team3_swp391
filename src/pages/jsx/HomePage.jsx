@@ -24,6 +24,28 @@ export default function HomePage() {
 
     const [featuredCourses, setFeaturedCourses] = useState([]);
 
+    const getSubjectThumbnail = (subjectName) => {
+                                const thumbMap = {
+                                    "Toán Học": "http://localhost:8080/uploads/thumbnails/math-course.jpg?v=2",
+                                    "Vật Lý": "http://localhost:8080/uploads/thumbnails/vatli.jpg?v=2",
+                                    "Hóa Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
+                                    "Hoá Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
+                                    "Ngữ Văn": "http://localhost:8080/uploads/thumbnails/van.jpg?v=2",
+                                    "Tiếng Anh": "http://localhost:8080/uploads/thumbnails/english-course.jpg?v=2",
+                                    "Lịch Sử": "http://localhost:8080/uploads/thumbnails/su.jpg?v=2",
+                                    "Địa Lý": "http://localhost:8080/uploads/thumbnails/dia.jpg?v=2",
+                                    "Sinh Học": "https://images.unsplash.com/photo-1530213786676-412f1262d512?auto=format&fit=crop&w=400&q=80",
+                                    "Tin Học": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=400&q=80",
+                                    "GDCD": "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=400&q=80"
+                                };
+                                const translatedName = {
+                                    "Mathematics": "Toán Học", "Physics": "Vật Lý", "Chemistry": "Hóa Học",
+                                    "Literature": "Ngữ Văn", "English": "Tiếng Anh", "Biology": "Sinh Học",
+                                    "History": "Lịch Sử", "Geography": "Địa Lý"
+                                }[subjectName] || subjectName;
+                                return thumbMap[translatedName] || "https://images.unsplash.com/photo-1516321310764-9f1e6e8b0c0a?auto=format&fit=crop&w=400&q=80";
+                            };
+
     const currentAvatar = user?.avatarUrl || user?.avatar_url || null;
 
     const updateCountdown = () => {
@@ -99,27 +121,6 @@ export default function HomePage() {
                         }
 
                         if (!thumbnail) {
-                            const getSubjectThumbnail = (subjectName) => {
-                                const thumbMap = {
-                                    "Toán Học": "http://localhost:8080/uploads/thumbnails/math-course.jpg?v=2",
-                                    "Vật Lý": "http://localhost:8080/uploads/thumbnails/vatli.jpg?v=2",
-                                    "Hóa Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
-                                    "Hoá Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
-                                    "Ngữ Văn": "http://localhost:8080/uploads/thumbnails/van.jpg?v=2",
-                                    "Tiếng Anh": "http://localhost:8080/uploads/thumbnails/english-course.jpg?v=2",
-                                    "Lịch Sử": "http://localhost:8080/uploads/thumbnails/su.jpg?v=2",
-                                    "Địa Lý": "http://localhost:8080/uploads/thumbnails/dia.jpg?v=2",
-                                    "Sinh Học": "https://images.unsplash.com/photo-1530213786676-412f1262d512?auto=format&fit=crop&w=400&q=80",
-                                    "Tin Học": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=400&q=80",
-                                    "GDCD": "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=400&q=80"
-                                };
-                                const translatedName = {
-                                    "Mathematics": "Toán Học", "Physics": "Vật Lý", "Chemistry": "Hóa Học",
-                                    "Literature": "Ngữ Văn", "English": "Tiếng Anh", "Biology": "Sinh Học",
-                                    "History": "Lịch Sử", "Geography": "Địa Lý"
-                                }[subjectName] || subjectName;
-                                return thumbMap[translatedName] || "https://images.unsplash.com/photo-1516321310764-9f1e6e8b0c0a?auto=format&fit=crop&w=400&q=80";
-                            };
                             const sName = c.subject_name || c.subjectName || c.subject?.subjectName || "Chung";
                             thumbnail = getSubjectThumbnail(sName);
                         }
@@ -372,7 +373,7 @@ export default function HomePage() {
                                         onError={(e) => { 
                                             if (!e.target.dataset.errorHandled) {
                                                 e.target.dataset.errorHandled = true;
-                                                e.target.src = getSubjectThumbnail(course.subjectName); 
+                                                e.target.src = getSubjectThumbnail(course.subject); 
                                             }
                                         }}
                                     />
