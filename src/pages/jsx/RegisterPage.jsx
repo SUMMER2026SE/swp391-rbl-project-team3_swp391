@@ -263,7 +263,6 @@ export default function RegisterPage({ switchToLogin }) {
                         className="auth-form-input"
                     >
                         <option value="STUDENT">Student (Prepare for exams)</option>
-                        <option value="TEACHER">Teacher (Pending approval)</option>
                     </select>
                 </div>
 

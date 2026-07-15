@@ -11,6 +11,7 @@ export default function HomePage() {
     const [user, setUser] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [showSuggestions, setShowSuggestions] = useState(false);
     const [timeLeft, setTimeLeft] = useState({ years: 0, months: 0, days: 0 });
     const [coursesLoading, setCoursesLoading] = useState(true);
 
@@ -22,6 +23,28 @@ export default function HomePage() {
     });
 
     const [featuredCourses, setFeaturedCourses] = useState([]);
+
+    const getSubjectThumbnail = (subjectName) => {
+                                const thumbMap = {
+                                    "Toán Học": "http://localhost:8080/uploads/thumbnails/math-course.jpg?v=2",
+                                    "Vật Lý": "http://localhost:8080/uploads/thumbnails/vatli.jpg?v=2",
+                                    "Hóa Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
+                                    "Hoá Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
+                                    "Ngữ Văn": "http://localhost:8080/uploads/thumbnails/van.jpg?v=2",
+                                    "Tiếng Anh": "http://localhost:8080/uploads/thumbnails/english-course.jpg?v=2",
+                                    "Lịch Sử": "http://localhost:8080/uploads/thumbnails/su.jpg?v=2",
+                                    "Địa Lý": "http://localhost:8080/uploads/thumbnails/dia.jpg?v=2",
+                                    "Sinh Học": "https://images.unsplash.com/photo-1530213786676-412f1262d512?auto=format&fit=crop&w=400&q=80",
+                                    "Tin Học": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=400&q=80",
+                                    "GDCD": "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=400&q=80"
+                                };
+                                const translatedName = {
+                                    "Mathematics": "Toán Học", "Physics": "Vật Lý", "Chemistry": "Hóa Học",
+                                    "Literature": "Ngữ Văn", "English": "Tiếng Anh", "Biology": "Sinh Học",
+                                    "History": "Lịch Sử", "Geography": "Địa Lý"
+                                }[subjectName] || subjectName;
+                                return thumbMap[translatedName] || "https://images.unsplash.com/photo-1516321310764-9f1e6e8b0c0a?auto=format&fit=crop&w=400&q=80";
+                            };
 
     const currentAvatar = user?.avatarUrl || user?.avatar_url || null;
 
@@ -98,7 +121,8 @@ export default function HomePage() {
                         }
 
                         if (!thumbnail) {
-                            thumbnail = "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=400&q=80";
+                            const sName = c.subject_name || c.subjectName || c.subject?.subjectName || "Chung";
+                            thumbnail = getSubjectThumbnail(sName);
                         }
 
                         return {
@@ -214,16 +238,69 @@ export default function HomePage() {
             {/* MAIN CONTENT */}
             <main className="content">
                 <div className="content-header">
-                    <form className="search-bar" onSubmit={handleSearchSubmit}>
-                        <div className="search-icon">🔍</div>
-                        <input
-                            placeholder="Tìm khóa học, giáo viên..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        <div className="shortcut">⌘K</div>
-                        <button type="submit" className="search-icon-btn">Tìm</button>
-                    </form>
+                    <div style={{ position: "relative", width: "100%", maxWidth: "600px" }}>
+                        <form className="search-bar" onSubmit={handleSearchSubmit}>
+                            <div className="search-icon">🔍</div>
+                            <input
+                                placeholder="Tìm khóa học, giáo viên..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => setShowSuggestions(true)}
+                                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                            />
+                            <div className="shortcut">⌘K</div>
+                            <button type="submit" className="search-icon-btn">Tìm</button>
+                        </form>
+
+                        {/* BẢNG TỰ ĐỘNG GỢI Ý TÌM KIẾM */}
+                        {showSuggestions && searchQuery.trim().length > 0 && (
+                            <div style={{
+                                position: "absolute",
+                                top: "100%",
+                                left: 0,
+                                right: 0,
+                                marginTop: "8px",
+                                backgroundColor: "#1e293b",
+                                borderRadius: "12px",
+                                boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+                                border: "1px solid #334155",
+                                overflow: "hidden",
+                                zIndex: 100,
+                                maxHeight: "350px",
+                                overflowY: "auto"
+                            }}>
+                                {(() => {
+                                    const normalizeText = (text) => String(text || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+                                    const searchNorm = normalizeText(searchQuery);
+                                    const filtered = featuredCourses.filter(c => normalizeText(c.title).includes(searchNorm));
+                                    
+                                    return filtered.length > 0 ? (
+                                        <ul style={{ listStyle: "none", margin: 0, padding: "8px 0" }}>
+                                            {filtered.slice(0, 5).map(course => (
+                                                <li 
+                                                    key={course.id} 
+                                                    style={{ padding: "12px 20px", display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", transition: "background 0.2s" }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#334155"}
+                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                                                    onMouseDown={() => navigate(`/course/${course.id}`)}
+                                                >
+                                                    <img src={course.thumbnail} alt={course.title} style={{ width: "40px", height: "40px", borderRadius: "8px", objectFit: "cover" }} />
+                                                    <div style={{ display: "flex", flexDirection: "column" }}>
+                                                        <span style={{ color: "#fff", fontWeight: "600", fontSize: "14px" }}>{course.title}</span>
+                                                        <span style={{ color: "#94a3b8", fontSize: "12px" }}>{course.subjectName || course.subject}</span>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <div style={{ padding: "16px 20px", color: "#94a3b8", fontSize: "14px", textAlign: "center" }}>
+                                            Không tìm thấy kết quả nào cho "{searchQuery}"
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                        )}
+                    </div>
 
                     <div className="countdown-wrapper">
                         <div className="countdown-title">🔥 THPT Quốc gia 2027</div>
@@ -290,8 +367,17 @@ export default function HomePage() {
                         featuredCourses.map(course => (
                             <div className="course-card" key={course.id} onClick={() => navigate(`/course/${course.id}`)}>
                                 <div className="course-thumb">
-                                    <img src={course.thumbnail} alt={course.title} />
-                                    <span className="subject-badge">{course.subject}</span>
+                                    <img 
+                                        src={course.thumbnail} 
+                                        alt={course.title} 
+                                        onError={(e) => { 
+                                            if (!e.target.dataset.errorHandled) {
+                                                e.target.dataset.errorHandled = true;
+                                                e.target.src = getSubjectThumbnail(course.subject); 
+                                            }
+                                        }}
+                                    />
+                                    <span className="subject-badge">{course.subjectName}</span>
                                     <div className="course-overlay"><button>Xem chi tiết →</button></div>
                                 </div>
                                 <div className="course-info">
