@@ -9,6 +9,7 @@ export default function CourseEditPage() {
     const navigate = useNavigate();
 
     const [courseTitle, setCourseTitle] = useState("");
+    const [courseThumbnail, setCourseThumbnail] = useState("");
     const [chapters, setChapters] = useState([]);
     
     const [activeChapterId, setActiveChapterId] = useState(null); 
@@ -33,6 +34,7 @@ export default function CourseEditPage() {
             const response = await axiosClient.get(`/courses/${id}`);
             if (response.data) {
                 setCourseTitle(response.data.title || response.data.course_title || "Khóa học");
+                setCourseThumbnail(response.data.thumbnailUrl || response.data.thumbnail_url || "");
                 setChapters(response.data.chapters || []);
             }
         } catch (error) {
@@ -61,6 +63,27 @@ export default function CourseEditPage() {
     };
 
     useEffect(() => { loadCourseOutline(); }, [id]);
+
+    const handleThumbnailUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append("file", file);
+        try {
+            const uploadRes = await axiosClient.post("/upload/file", formData, {
+                headers: { "Content-Type": "multipart/form-data" }
+            });
+            const url = uploadRes.data.url;
+            await axiosClient.put(`/courses/${id}`, { thumbnail_url: url });
+            setCourseThumbnail(url);
+            alert("Cập nhật ảnh đại diện thành công!");
+        } catch (error) {
+            alert("Lỗi khi upload ảnh!");
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
     const handleCreateChapter = async (e) => {
         e.preventDefault();
@@ -305,10 +328,24 @@ export default function CourseEditPage() {
         <div className="course-edit-layout" style={{ padding: "30px", maxWidth: "850px", margin: "0 auto", fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
             <button onClick={() => navigate(-1)} className="back-btn" style={{ marginBottom: "20px", fontFamily: "'Segoe UI', sans-serif" }}>← Quay lại</button>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
-                <div>
-                    <h1 style={{ fontSize: "24px", color: "#0f172a", marginBottom: "5px", fontWeight: 700, fontFamily: "'Segoe UI', sans-serif" }}>Xây dựng khóa học</h1>
-                    <p style={{ color: "#64748b", margin: 0, fontFamily: "'Segoe UI', sans-serif" }}>Khóa học: <strong style={{ color: "#0f172a" }}>{courseTitle}</strong></p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "30px" }}>
+                <div style={{ display: "flex", gap: "20px" }}>
+                    <div style={{ position: "relative", width: "160px", height: "100px", borderRadius: "8px", overflow: "hidden", border: "1px solid #cbd5e1" }}>
+                        <img 
+                            src={courseThumbnail && courseThumbnail.startsWith("http") ? courseThumbnail : (courseThumbnail ? `http://localhost:8080${courseThumbnail}` : "https://placehold.co/600x400?text=Course")}
+                            alt="Course Thumbnail"
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                        <label style={{ position: "absolute", bottom: 0, left: 0, width: "100%", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: "12px", textAlign: "center", padding: "4px 0", cursor: "pointer", margin: 0 }}>
+                            Đổi ảnh
+                            <input type="file" accept="image/*" onChange={handleThumbnailUpload} hidden />
+                        </label>
+                    </div>
+                    <div>
+                        <h1 style={{ fontSize: "24px", color: "#0f172a", marginBottom: "5px", fontWeight: 700, fontFamily: "'Segoe UI', sans-serif" }}>Xây dựng khóa học</h1>
+                        <p style={{ color: "#64748b", margin: 0, fontFamily: "'Segoe UI', sans-serif" }}>Khóa học: <strong style={{ color: "#0f172a" }}>{courseTitle}</strong></p>
+                        {isUploading && <p style={{ fontSize: "12px", color: "#2563eb", marginTop: "5px" }}>Đang tải ảnh lên...</p>}
+                    </div>
                 </div>
                 <button 
                     onClick={() => navigate(`/teacher/preview/${id}`)}

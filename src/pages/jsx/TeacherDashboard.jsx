@@ -30,7 +30,8 @@ export default function TeacherDashboard() {
     const [newCourseData, setNewCourseData] = useState({
         title: "",
         subjectId: "1",
-        categoryId: "1"
+        categoryId: "1",
+        price: ""
     });
 
 
@@ -100,7 +101,8 @@ export default function TeacherDashboard() {
                 title: newCourseData.title,
                 teacher_id: user?.id,
                 categoryId: parseInt(newCourseData.categoryId) || 1,
-                subjectId: parseInt(newCourseData.subjectId) || 1
+                subjectId: parseInt(newCourseData.subjectId) || 1,
+                price: parseFloat(newCourseData.price) || 0
             });
             alert("✅ Tạo khóa học thành công!");
             setCreateCourseModalOpen(false);
@@ -472,10 +474,22 @@ export default function TeacherDashboard() {
                                         </option>
                                     ))}
                                 </select>
-                            </div>                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "15px" }}>
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "6px", textAlign: "left" }}>
+                                <label style={{ fontWeight: "600", fontSize: "14px", color: "#334155" }}>Giá tiền (VNĐ):</label>
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    placeholder="Nhập giá khóa học (bỏ trống nếu miễn phí)"
+                                    value={newCourseData.price}
+                                    onChange={(e) => setNewCourseData({ ...newCourseData, price: e.target.value })}
+                                    style={{ padding: "11px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px" }}
+                                />
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "15px" }}>
                                 <button 
                                     type="button" 
-                                    onClick={() => { setCreateCourseModalOpen(false); setNewCourseData({ title: "", subjectId: "", categoryId: "" }); }}
+                                    onClick={() => { setCreateCourseModalOpen(false); setNewCourseData({ title: "", subjectId: "1", categoryId: "1", price: "" }); }}
                                     style={{ padding: "10px 16px", background: "#f1f5f9", color: "#475569", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}
                                 >
                                     Hủy bỏ
