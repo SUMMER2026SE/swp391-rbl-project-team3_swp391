@@ -13,7 +13,12 @@ export default function AdminCoursesPage() {
     // Lọc khóa học theo từ khóa tìm kiếm
     const filteredCourses = courses.filter(course => {
         const title = (course.title || course.courseTitle || "").toLowerCase();
-        const teacher = (course.teacherName || course.teacher || "").toLowerCase();
+        const teacher =
+            (
+                course.teacherName ||
+                course.teacher?.fullName ||
+                ""
+            ).toLowerCase();
         const search = searchTerm.toLowerCase();
         
         return title.includes(search) || teacher.includes(search);
@@ -212,9 +217,15 @@ export default function AdminCoursesPage() {
                                                         </strong>
                                                     </td>
                                                     <td>
-                                                        {c.teacherName || c.teacher || c.teacher_id 
-                                                            ? `GV: ${c.teacherName || c.teacher || c.teacher_id}` 
-                                                            : "Chưa có"}
+                                                        {
+                                                            c.teacherName
+                                                                ? `GV: ${c.teacherName}`
+                                                                : c.teacher?.fullName
+                                                                    ? `GV: ${c.teacher.fullName}`
+                                                                    : c.teacherId
+                                                                        ? `GV #${c.teacherId}`
+                                                                        : "Chưa có"
+                                                        }
                                                     </td>
                                                     <td>{formattedPrice}</td>
                                                     <td>
