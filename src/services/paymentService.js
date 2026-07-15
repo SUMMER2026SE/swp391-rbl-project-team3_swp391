@@ -78,4 +78,12 @@ const paymentService = {
             .then(r => r.data),
 };
 
+const getAdminPaymentDashboard = async () => {
+    const response = await axiosClient.get(
+        "/payments/admin/dashboard"
+    );
+
+    return response.data;
+};
+
 export default paymentService;

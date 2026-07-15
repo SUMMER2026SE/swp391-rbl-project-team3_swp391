@@ -53,6 +53,7 @@ import GlobalChatbotWidget from './components/GlobalChatbotWidget';
 
 import { Routes, Route } from "react-router-dom";
 import AdminRoute from './routes/adminRoute';
+import AdminRevenueDashboard from './pages/jsx/AdminRevenueDashboard';
 import TeacherGrading from "./pages/jsx/TeacherGrading";
 
 function App() {
@@ -115,6 +116,15 @@ function App() {
                 element={
                     <AdminRoute>
                         <AdminDashboardPage />
+                    </AdminRoute>
+                }
+            />
+
+            <Route
+                path="/admin/revenue"
+                element={
+                    <AdminRoute>
+                        <AdminRevenueDashboard />
                     </AdminRoute>
                 }
             />
