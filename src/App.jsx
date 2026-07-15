@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import GlobalChatbot from './components/GlobalChatbot';
 
 import AuthPage from './pages/jsx/AuthPage';
 import HomePage from './pages/jsx/HomePage';
@@ -58,8 +59,10 @@ function App() {
     const [count, setCount] = useState(0)
 
     return (
-        <Routes>
-            <Route path='/' element={<HomePage />} />
+        <>
+            <GlobalChatbot />
+            <Routes>
+                <Route path='/' element={<HomePage />} />
             <Route path='/auth' element={<AuthPage />} />
             <Route path='/profile' element={<ProfilePage />} />
 
@@ -207,7 +210,8 @@ function App() {
 
             {/* Fallback: route lạ -> về trang chủ */}
             <Route path="*" element={<HomePage />} />
-        </Routes>
+            </Routes>
+        </>
     );
 }
 
