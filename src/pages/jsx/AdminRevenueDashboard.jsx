@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import axiosClient from "../../api/axiosClient";
+import { useNavigate } from "react-router-dom";
 import "../css/AdminRevenueDashboard.css";
 
 
 export default function AdminRevenueDashboard() {
-
     const [dashboard, setDashboard] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-
+    const navigate = useNavigate();
 
     const formatMoney = (amount) => {
         return Number(amount || 0)
@@ -75,16 +75,12 @@ export default function AdminRevenueDashboard() {
 
 
     return (
-
         <div className="revenue-container">
-
-
             <div className="revenue-header">
-
+                <h2 onClick={() => navigate("/admin")} style={{ cursor: "pointer", color:"black"}}>← Về Trang Admin</h2>
                 <h1>
                     Doanh thu hệ thống
                 </h1>
-
                 <p>
                     Thống kê tình hình thanh toán khóa học
                 </p>
