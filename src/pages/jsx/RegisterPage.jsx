@@ -19,6 +19,7 @@ export default function RegisterPage({ switchToLogin }) {
     const [loading, setLoading] = useState(false);
     const [showVerifyBox, setShowVerifyBox] = useState(false);
     const [otpResendCount, setOtpResendCount] = useState(0);
+    const [showPassword, setShowPassword] = useState(false);
 
     const navigate = useNavigate();
 
@@ -32,8 +33,11 @@ export default function RegisterPage({ switchToLogin }) {
 
     const handleResendOtp = async () => {
         try {
+            if(otpResendCount >= 3){
+                return;
+            }
             await resendOtp(formData.email);
-
+            setOtpResendCount(prev => prev + 1);
             alert("Đã gửi lại mã OTP.");
         } catch (err) {
             alert(err.response?.data?.message || "Không gửi được OTP.");
@@ -231,15 +235,23 @@ export default function RegisterPage({ switchToLogin }) {
 
                 <div className="auth-form-group">
                     <label>Password</label>
-                    <input
-                        type="password"
-                        name="password"
-                        className="auth-form-input"
-                        value={formData.password}
-                        onChange={handleChange}
-                        placeholder="Enter your password"
-                        required
-                    />
+                    <div className="password-wrapper">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            className="auth-form-input"
+                            placeholder="Enter your password"
+                            value={formData.password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+
+                        <span
+                            className="password-toggle"
+                            onClick={() => setShowPassword(!showPassword)}
+                        >
+                            {showPassword ? "🙈" : "👁️"}
+                        </span>
+                    </div>
                 </div>
 
                 <div className="auth-form-group">

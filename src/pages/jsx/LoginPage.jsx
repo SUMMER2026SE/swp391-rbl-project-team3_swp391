@@ -8,6 +8,7 @@ function LoginPage({ switchToRegister }) {
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
 
     const [rememberMe, setRememberMe] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -213,14 +214,23 @@ const currentUserId = decoded.userId || decoded.id;
 
                 <div className="auth-form-group">
                     <label>Password</label>
-                    <input
-                        type="password"
-                        className="auth-form-input"
-                        placeholder="Enter your password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
+                    <div className="password-wrapper">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            className="auth-form-input"
+                            placeholder="Enter your password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+
+                        <span
+                            className="password-toggle"
+                            onClick={() => setShowPassword(!showPassword)}
+                        >
+                            {showPassword ? "🙈" : "👁️"}
+                        </span>
+                    </div>
                 </div>
 
                 <div className="auth-form-options">
