@@ -66,8 +66,14 @@ export default function TestDoingPage() {
         setSubmitting(true);
         setShowConfirm(false);
         try {
-            const result = await practiceService.submit(session.attemptId, answers);
-            navigate(`/practice/result/${result.attemptId}`, { state: { result } });
+            if (session.quizType === "ENTRY_TEST") {
+                const { default: entryTestService } = await import("../../services/entryTestService");
+                const result = await entryTestService.submit(session.attemptId, answers);
+                navigate(`/entry-test/result/${result.attemptId || result.sessionsId}`, { state: result });
+            } else {
+                const result = await practiceService.submit(session.attemptId, answers);
+                navigate(`/practice/result/${result.attemptId}`, { state: { result } });
+            }
         } catch (e) {
             alert("Nộp bài thất bại: " + (e.response?.data?.message || e.message));
             setSubmitting(false);

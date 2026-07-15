@@ -16,6 +16,14 @@ const SUBJECT_META = {
     "Vật Lý":    { icon: "⚛️", accent: "sky", name: "Vật Lý" },
     "Hóa Học":   { icon: "🧪", accent: "emerald", name: "Hóa Học" },
     "Tiếng Anh": { icon: "🌍", accent: "amber", name: "Tiếng Anh" },
+    "english":   { icon: "🌍", accent: "amber", name: "Tiếng Anh" },
+    "math":      { icon: "📐", accent: "indigo", name: "Toán Học" },
+    "physics":   { icon: "⚛️", accent: "sky", name: "Vật Lý" },
+    "chemistry": { icon: "🧪", accent: "emerald", name: "Hóa Học" },
+    "biology":   { icon: "🧬", accent: "green", name: "Sinh Học" },
+    "history":   { icon: "📜", accent: "orange", name: "Lịch Sử" },
+    "geography": { icon: "🗺️", accent: "green", name: "Địa Lý" },
+    "literature":{ icon: "📖", accent: "rose", name: "Ngữ Văn" },
 };
 const TYPE_LABEL = {
     ENTRY_TEST: "Kiểm tra đầu vào",
@@ -87,6 +95,7 @@ export default function TestListPage() {
         <div className="tl-page">
             {/* ===== HERO ===== */}
             <header className="tl-hero">
+                <button className="tl-back-btn" onClick={() => navigate("/")}>← Quay lại Trang Chủ</button>
                 <div className="tl-hero-glow tl-hero-glow-1" />
                 <div className="tl-hero-glow tl-hero-glow-2" />
                 <h1>🎓 Trung tâm Luyện thi PrepACE</h1>
@@ -154,7 +163,11 @@ export default function TestListPage() {
                                     {TYPE_LABEL[quiz.quizType] || quiz.quizType}
                                 </span>
                             </div>
-                            <h3 className="tl-card-title">{quiz.quizTitle}</h3>
+                            <h3 className="tl-card-title">
+                                {quiz.quizTitle && quiz.subject 
+                                    ? quiz.quizTitle.replace(quiz.subject, meta.name || quiz.subject) 
+                                    : quiz.quizTitle}
+                            </h3>
                             <div className="tl-card-meta">
                                 <span>🎲 <b>{quiz.questionsPerTest} câu</b>/lượt</span>
                                 <span>⏱ {quiz.durationMinutes} phút</span>
@@ -178,7 +191,7 @@ export default function TestListPage() {
                     <h2>🕘 Lượt thi gần đây</h2>
                     <div className="tl-history-list">
                         {history.slice(0, 6).map((h) => (
-                            <Link key={h.attemptId} to={`/practice/result/${h.attemptId}`} className="tl-history-item">
+                            <Link key={h.attemptId} to={h.quizType === 'ENTRY_TEST' ? `/entry-test/result/${h.attemptId}` : `/practice/result/${h.attemptId}`} className="tl-history-item">
                                 <span
                                     className={`tl-history-score ${
                                         h.score >= 8 ? "good" : h.score >= 5 ? "mid" : "bad"

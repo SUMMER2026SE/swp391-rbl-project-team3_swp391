@@ -44,6 +44,30 @@
 .tl-hero-glow-1 { width: 320px; height: 320px; background: #a78bfa; top: -120px; right: -60px; }
 .tl-hero-glow-2 { width: 260px; height: 260px; background: #38bdf8; bottom: -140px; left: 8%; }
 
+.tl-back-btn {
+    position: relative;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 24px;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+}
+.tl-back-btn:hover {
+    background: rgba(255, 255, 255, 0.35);
+    transform: translateX(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 .tl-hero h1 { font-size: 34px; font-weight: 800; margin: 0 0 12px; letter-spacing: -0.5px; position: relative; }
 .tl-hero p { max-width: 640px; margin: 0 0 20px; font-size: 15.5px; line-height: 1.7; opacity: 0.92; position: relative; }
 .tl-hero-stats {
