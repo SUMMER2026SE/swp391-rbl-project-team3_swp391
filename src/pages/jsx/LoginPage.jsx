@@ -108,8 +108,12 @@ const currentUserId = decoded.userId || decoded.id;
             }
         } catch (error) {
             console.error("Login error:", error);
-            setMessage("❌ Lỗi kết nối với server hoặc tài khoản bị khóa");
-            setMessageType("error");
+
+            if (error instanceof TypeError) {
+                setMessage("Không thể kết nối tới backend.");
+            } else {
+                setMessage(error.message);
+            }
         } finally {
             setLoading(false);
         }
