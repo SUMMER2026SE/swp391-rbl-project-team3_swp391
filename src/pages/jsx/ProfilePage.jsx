@@ -100,7 +100,15 @@ function ProfilePage() {
         }
     };
 
-    const currentAvatar = user?.avatarUrl || user?.avatar_url || "https://i.pravatar.cc/150?img=12";
+    const getAvatarUrl = () => {
+        let url = user?.avatarUrl || user?.avatar_url;
+        if (!url || url === "null" || url.trim() === "") {
+            return `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || "User")}&background=64748b&color=fff`;
+        }
+        if (url.startsWith("http")) return url;
+        return `http://localhost:8080${url}`;
+    };
+    const currentAvatar = getAvatarUrl();
 
     if (loading) return <div className="profile-loading">Đang tải thông tin cá nhân...</div>;
     if (!user) return <div className="error-text">Không tìm thấy thông tin. Vui lòng đăng nhập lại.</div>;
@@ -116,7 +124,7 @@ function ProfilePage() {
                 {/* Sidebar */}
                 <aside className="sidebar">
                     <div className="user-box">
-                        <img className="sidebar-avatar" src={currentAvatar} alt="avatar" />
+                        <img className="sidebar-avatar" src={currentAvatar} onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || "User")}&background=64748b&color=fff`; }} alt="avatar" />
                         <h4>{user.fullName || "Học sinh PrepAce"}</h4>
                         <p className="role-tag student">Học sinh THPT</p>
                     </div>
@@ -156,7 +164,7 @@ function ProfilePage() {
 
                             {/* Avatar */}
                             <div className="avatar-card">
-                                <img className="avatar" src={currentAvatar} alt="avatar" />
+                                <img className="avatar" src={currentAvatar} onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || "User")}&background=64748b&color=fff`; }} alt="avatar" />
                                 <div>
                                     <h3>Ảnh đại diện</h3>
                                     <AvatarUpload

@@ -49,6 +49,7 @@ import ScoreForecastPage from './pages/jsx/ScoreForecastPage';
 import UniversityAdvisingPage from './pages/jsx/UniversityAdvisingPage';
 import PracticeResultPage from './pages/jsx/PracticeResultPage';
 import BankPaymentPage from './pages/jsx/BankPaymentPage';
+import GlobalChatbotWidget from './components/GlobalChatbotWidget';
 
 import { Routes, Route } from "react-router-dom";
 import AdminRoute from './routes/adminRoute';
@@ -58,6 +59,7 @@ function App() {
     const [count, setCount] = useState(0)
 
     return (
+        <>
         <Routes>
             <Route path='/' element={<HomePage />} />
             <Route path='/auth' element={<AuthPage />} />
@@ -208,6 +210,8 @@ function App() {
             {/* Fallback: route lạ -> về trang chủ */}
             <Route path="*" element={<HomePage />} />
         </Routes>
+        <GlobalChatbotWidget />
+        </>
     );
 }
 

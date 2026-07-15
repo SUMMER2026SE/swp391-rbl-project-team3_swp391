@@ -185,6 +185,47 @@ export default function PracticeResultPage() {
                                         </p>
                                     </div>
                                 </div>
+                            ) : d.questionType === "TRUE_FALSE" ? (
+                                /* HIỂN THỊ ĐÚNG/SAI */
+                                <div className="pr-tf-review">
+                                    {(() => {
+                                        let studentAnswers = {};
+                                        try {
+                                            studentAnswers = JSON.parse(d.essayAnswer || "{}");
+                                        } catch (e) {
+                                            studentAnswers = {};
+                                        }
+                                        return d.options.map((o, oi) => {
+                                            const sAns = studentAnswers[o.optionId];
+                                            const isMatch = sAns === o.correct;
+                                            return (
+                                                <div key={o.optionId} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', borderBottom: '1px solid #f1f5f9', background: isMatch ? '#f0fdf4' : (sAns !== undefined ? '#fef2f2' : '#fff') }}>
+                                                    <div style={{ flex: 1 }}>
+                                                        <span className="pr-option-label" style={{ marginRight: '8px' }}>{OPTION_LABELS[oi]}</span>
+                                                        <span className="pr-option-content">{o.optionContent}</span>
+                                                    </div>
+                                                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                                                        <div>
+                                                            <span style={{ fontSize: '12px', color: '#64748b' }}>Bạn chọn: </span>
+                                                            <strong style={{ color: sAns === true ? '#047857' : (sAns === false ? '#b91c1c' : '#94a3b8') }}>
+                                                                {sAns === true ? "Đúng" : (sAns === false ? "Sai" : "Trống")}
+                                                            </strong>
+                                                        </div>
+                                                        <div>
+                                                            <span style={{ fontSize: '12px', color: '#64748b' }}>Đáp án: </span>
+                                                            <strong style={{ color: o.correct === true ? '#047857' : '#b91c1c' }}>
+                                                                {o.correct === true ? "Đúng" : "Sai"}
+                                                            </strong>
+                                                        </div>
+                                                        <div style={{ width: '20px', textAlign: 'center' }}>
+                                                            {isMatch ? <span style={{ color: '#10b981' }}>✔</span> : <span style={{ color: '#ef4444' }}>✘</span>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        });
+                                    })()}
+                                </div>
                             ) : (
                                 /* TRẮC NGHIỆM TRUYỀN THỐNG GIỮ NGUYÊN CODE CŨ */
                                 d.options.map((o, oi) => {
@@ -207,11 +248,24 @@ export default function PracticeResultPage() {
                             )}
                         </div>
 
-                        {/* Box giải thích chi tiết lỗi sai */}
+                        {/* Box đánh giá của AI hoặc điểm (Cho Tự luận / Trả lời ngắn) */}
+                        {d.questionType && (d.questionType === "ESSAY" || d.questionType === "SHORT_ANSWER") && (d.score !== null && d.score !== undefined) && (
+                            <div className={`pr-explanation ${d.correct ? "pr-explanation-correct" : "pr-explanation-wrong"}`} style={{ marginTop: "15px", backgroundColor: d.correct ? "#f0fdf4" : "#fef2f2", borderColor: d.correct ? "#bbf7d0" : "#fecaca" }}>
+                                <div className="pr-explanation-title" style={{ color: d.correct ? "#166534" : "#991b1b" }}>
+                                    {d.questionType === "ESSAY" ? "🤖 Nhận xét từ AI (Giáo viên)" : "✔️ Đánh giá câu trả lời ngắn"}
+                                    <span style={{ float: "right", fontWeight: "bold" }}>Điểm: <span style={{ color: d.correct ? "#16a34a" : "#dc2626" }}>{d.score.toFixed(1)}/10.0</span></span>
+                                </div>
+                                {d.teacherComment && (
+                                    <p style={{ marginTop: "10px", fontSize: "14.5px", lineHeight: "1.5" }}>{d.teacherComment}</p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Box giải thích chi tiết lỗi sai truyền thống */}
                         {d.explanation && (
                             <div className={`pr-explanation ${d.correct ? "" : "pr-explanation-wrong"}`}>
                                 <div className="pr-explanation-title">
-                                    {d.correct ? "💡 Giải thích" : "🔍 Giải thích chi tiết — lỗi sai ở đâu?"}
+                                    {d.correct ? "💡 Giải thích / Đáp án" : "🔍 Giải thích chi tiết — lỗi sai ở đâu?"}
                                 </div>
                                 <p>{d.explanation}</p>
                             </div>

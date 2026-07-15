@@ -69,8 +69,11 @@ export default function TeacherDashboard() {
     const fetchCourses = async (userObj) => {
         try {
             const response = await axiosClient.get("/courses");
-            // Hiện tại hiển thị tất cả (sẽ filter theo teacher_id sau khi backend cập nhật)
-            setMyCourses(response.data);
+            // Lọc danh sách chỉ lấy khóa học do chính giáo viên này tạo/dạy
+            const teacherCourses = response.data.filter(course => 
+                course.teacherId === userObj.id || course.teacher_id === userObj.id
+            );
+            setMyCourses(teacherCourses);
         } catch (error) {
             console.error("Lỗi tải danh sách khóa học:", error);
             const serverErrorMessage = error.response?.data?.message || error.message;
@@ -370,9 +373,17 @@ export default function TeacherDashboard() {
                                                 <td style={{ padding: "16px", verticalAlign: "top" }}>
                                                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                                         <img 
-                                                            src={qa.userAvatarUrl || `https://ui-avatars.com/api/?name=${qa.userFullName}`} 
+                                                            src={
+                                                                qa.userAvatarUrl && qa.userAvatarUrl !== "null" && qa.userAvatarUrl.trim() !== ""
+                                                                    ? (qa.userAvatarUrl.startsWith("http") ? qa.userAvatarUrl : `http://localhost:8080${qa.userAvatarUrl}`)
+                                                                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(qa.userFullName || "User")}&background=64748b&color=fff`
+                                                            }
+                                                            onError={(e) => {
+                                                                e.target.onerror = null; 
+                                                                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(qa.userFullName || "User")}&background=64748b&color=fff`;
+                                                            }}
                                                             alt="" 
-                                                            style={{ width: "32px", height: "32px", borderRadius: "50%" }} 
+                                                            style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }} 
                                                         />
                                                         <div>
                                                             <div style={{ fontWeight: "600", color: "#1e293b", fontSize: "14px" }}>{qa.userFullName}</div>
