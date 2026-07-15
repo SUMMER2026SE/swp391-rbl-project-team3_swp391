@@ -185,7 +185,11 @@ export default function LearningPage() {
             if (currentLesson?.id) {
                 try {
                     const response = await axiosClient.get(`/questions/lesson/${currentLesson.id}`);
-                    setQuestions(response.data);
+                    const normalizedQuestions = response.data.map(q => ({
+                        ...q,
+                        id: q.id || q.questionId
+                    }));
+                    setQuestions(normalizedQuestions);
                 } catch (error) {
                     console.error("Lỗi tải danh sách câu hỏi thảo luận:", error);
                 }
@@ -515,8 +519,16 @@ export default function LearningPage() {
                 payload.timestampSeconds = qnaTimestamp;
             }
             const response = await axiosClient.post("/questions", payload);
+            
+            // Ensure the new question has a unique ID to avoid issues with replyingTo
+            const newQuestion = response.data;
+            newQuestion.id = newQuestion.id || newQuestion.questionId;
+            if (!newQuestion.id) {
+                newQuestion.id = `temp_q_${Date.now()}`;
+            }
+
             // Bổ sung mảng answers rỗng cho câu hỏi mới
-            setQuestions([{ ...response.data, answers: [] }, ...questions]);
+            setQuestions([{ ...newQuestion, answers: [] }, ...questions]);
             setNewQuestionContent("");
             setQnaTimestamp(null);
         } catch (error) {
@@ -562,12 +574,18 @@ export default function LearningPage() {
                 content: replyContent
             });
             
+            // Ensure the new answer has a unique ID
+            const newAnswer = response.data;
+            if (!newAnswer.id) {
+                newAnswer.id = `temp_a_${Date.now()}`;
+            }
+            
             // Cập nhật lại danh sách questions
             setQuestions(questions.map(q => {
                 if (q.id === questionId) {
                     return {
                         ...q,
-                        answers: [...(q.answers || []), response.data]
+                        answers: [...(q.answers || []), newAnswer]
                     };
                 }
                 return q;

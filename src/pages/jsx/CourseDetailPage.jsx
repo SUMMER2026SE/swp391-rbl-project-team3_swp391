@@ -52,8 +52,9 @@ export default function CourseDetailPage() {
         return "★".repeat(safeRating) + "☆".repeat(5 - safeRating);
     };
 
-    const getSafeAvatarUrl = (url) => {
-        if (!url) return "https://via.placeholder.com/40";
+    const getSafeAvatarUrl = (url, name) => {
+        const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "User")}&background=64748b&color=fff`;
+        if (!url || url === "null" || url.trim() === "") return fallbackUrl;
         if (url.startsWith("http")) return url;
         return `http://localhost:8080${url}`;
     };
@@ -500,7 +501,11 @@ export default function CourseDetailPage() {
                                             <div key={rev.id} style={{ padding: "12px", backgroundColor: "#f8fafc", borderRadius: "8px", border: "1px solid #f1f5f9" }}>
                                                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
                                                     <img 
-                                                        src={getSafeAvatarUrl(rev.userAvatarUrl)} 
+                                                        src={getSafeAvatarUrl(rev.userAvatarUrl, rev.userFullName)} 
+                                                        onError={(e) => {
+                                                            e.target.onerror = null; 
+                                                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(rev.userFullName || "User")}&background=64748b&color=fff`;
+                                                        }}
                                                         alt="User Avatar" 
                                                         style={{ width: "30px", height: "30px", borderRadius: "50%", objectFit: "cover" }}
                                                     />
