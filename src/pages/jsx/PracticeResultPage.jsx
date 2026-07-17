@@ -158,33 +158,32 @@ export default function PracticeResultPage() {
                             <span className="pr-question-no">Câu {d.questionOrder}</span>
                             {d.topic && <span className="pr-topic-chip">{d.topic}</span>}
                             {d.correct ? (
-                                <span className="pr-badge pr-badge-correct">✔ Đúng</span>
-                            ) : (d.questionType === "ESSAY" || (!d.options || d.options.length === 0)) && (d.score === null || d.score === undefined) ? (
-                                /* 🔥 Chỉ hiển thị Chờ chấm khi hoàn toàn chưa được nhập điểm */
-                                <span className="pr-badge pr-badge-pending" style={{ background: "#fffbeb", color: "#b45309", border: "1px solid #fde68a", padding: "4px 8px", borderRadius: "4px", fontSize: "12px", fontWeight: "600" }}>
-                                    ⏳ Tự luận / Chờ giáo viên chấm
-                                </span>
-                            ) : d.answered ? (
-                                /* 🔥 Khi score = 0, hệ thống nhảy xuống đây hiển thị chữ Sai màu đỏ cực chuẩn */
-                                <span className="pr-badge pr-badge-wrong">✘ Sai</span>
-                            ) : (
-                                <span className="pr-badge pr-badge-skip">— Bỏ trống</span>
-                            )}
+    <span className="pr-badge pr-badge-correct">✔ Đúng</span>
+) : (d.questionType === "ESSAY" && (d.score === null || d.score === undefined)) ? (
+    <span className="pr-badge pr-badge-pending" style={{ background: "#fffbeb", color: "#b45309", border: "1px solid #fde68a", padding: "4px 8px", borderRadius: "4px", fontSize: "12px", fontWeight: "600" }}>
+        ⏳ Chờ chấm
+    </span>
+) : d.answered ? (
+    <span className="pr-badge pr-badge-wrong">✘ Sai</span>
+) : (
+    <span className="pr-badge pr-badge-skip">— Bỏ trống</span>
+)}
                         </div>
 
-                        <p className="pr-question-content">{d.questionContent}</p>
-
+<p className="pr-question-content" dangerouslySetInnerHTML={{ __html: d.questionContent }} />
                         <div className="pr-options">
                             {(!d.options || d.options.length === 0) ? (
-                                /* 🔥 HIỂN THỊ BÀI LÀM VĂN BẢN (TỰ LUẬN / ĐÁP ÁN NGẮN) */
-                                <div className="pr-essay-review-box" style={{ padding: "15px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", marginTop: "10px" }}>
-                                    <div style={{ marginBottom: "5px" }}>
-                                        <strong style={{ color: "#64748b", fontSize: "14px" }}>✍️ Bài làm của bạn:</strong>
-                                        <p style={{ margin: "8px 0 0 0", color: "#1e293b", fontWeight: "500", fontSize: "15px", whiteSpace: "pre-wrap", background: "#fff", padding: "10px", borderRadius: "6px", border: "1px solid #f1f5f9" }}>
-                                            {d.essayAnswer || <span style={{ color: "#94a3b8", fontStyle: "italic" }}>Học sinh bỏ trống không trả lời câu này</span>}
-                                        </p>
-                                    </div>
-                                </div>
+    <div className="pr-essay-review-box" style={{ padding: "15px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", marginTop: "10px" }}>
+        <div style={{ marginBottom: "5px" }}>
+            {/* Tự động đổi tiêu đề nếu là câu trả lời ngắn */}
+            <strong style={{ color: "#64748b", fontSize: "14px" }}>
+                {d.questionType === "SHORT_ANSWER" ? "⌨️ Câu trả lời của bạn:" : "✍️ Bài làm của bạn:"}
+            </strong>
+            <p style={{ margin: "8px 0 0 0", color: "#1e293b", fontWeight: "500", fontSize: "15px", whiteSpace: "pre-wrap", background: "#fff", padding: "10px", borderRadius: "6px", border: "1px solid #f1f5f9" }}>
+                {d.essayAnswer || <span style={{ color: "#94a3b8", fontStyle: "italic" }}>Học sinh bỏ trống không trả lời câu này</span>}
+            </p>
+        </div>
+    </div>
                             ) : d.questionType === "TRUE_FALSE" ? (
                                 /* HIỂN THỊ ĐÚNG/SAI */
                                 <div className="pr-tf-review">
@@ -202,8 +201,7 @@ export default function PracticeResultPage() {
                                                 <div key={o.optionId} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', borderBottom: '1px solid #f1f5f9', background: isMatch ? '#f0fdf4' : (sAns !== undefined ? '#fef2f2' : '#fff') }}>
                                                     <div style={{ flex: 1 }}>
                                                         <span className="pr-option-label" style={{ marginRight: '8px' }}>{OPTION_LABELS[oi]}</span>
-                                                        <span className="pr-option-content">{o.optionContent}</span>
-                                                    </div>
+<span className="pr-option-content" dangerouslySetInnerHTML={{ __html: o.optionContent }} />                                                    </div>
                                                     <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
                                                         <div>
                                                             <span style={{ fontSize: '12px', color: '#64748b' }}>Bạn chọn: </span>
@@ -235,7 +233,7 @@ export default function PracticeResultPage() {
                                     return (
                                         <div key={o.optionId} className={cls}>
                                             <span className="pr-option-label">{OPTION_LABELS[oi]}</span>
-                                            <span className="pr-option-content">{o.optionContent}</span>
+<span className="pr-option-content" dangerouslySetInnerHTML={{ __html: o.optionContent }} />
                                             {o.selected && (
                                                 <span className="pr-option-tag pr-tag-you">Bạn chọn</span>
                                             )}
@@ -262,12 +260,11 @@ export default function PracticeResultPage() {
                         )}
 
                         {/* Box giải thích chi tiết lỗi sai truyền thống */}
-                        {d.explanation && (
-                            <div className={`pr-explanation ${d.correct ? "" : "pr-explanation-wrong"}`}>
+{d.questionType && d.questionType === "ESSAY" && (d.score !== null && d.score !== undefined) && (                            <div className={`pr-explanation ${d.correct ? "" : "pr-explanation-wrong"}`}>
                                 <div className="pr-explanation-title">
                                     {d.correct ? "💡 Giải thích / Đáp án" : "🔍 Giải thích chi tiết — lỗi sai ở đâu?"}
                                 </div>
-                                <p>{d.explanation}</p>
+                                <p dangerouslySetInnerHTML={{ __html: d.explanation }} />
                             </div>
                         )}
                     </section>

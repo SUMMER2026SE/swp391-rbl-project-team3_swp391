@@ -170,7 +170,7 @@ export default function TestDoingPage() {
                                 <span className="td-question-no">Câu {idx + 1}</span>
                                 {q.topic && <span className="td-topic-chip">{q.topic}</span>}
                             </div>
-                            <p className="td-question-content">{q.questionContent}</p>
+<p className="td-question-content" dangerouslySetInnerHTML={{ __html: q.questionContent }} />
                             <div className="td-options">
     {(() => {
         // Tự động bắt tất cả các kiểu đặt tên biến có thể xảy ra từ Backend
@@ -221,7 +221,7 @@ export default function TestDoingPage() {
                         onChange={() => choose(q.questionId, o.optionId)}
                     />
                     <span className="td-option-label">{OPTION_LABELS[oi]}</span>
-                    <span className="td-option-content">{o.optionContent}</span>
+<span className="td-option-content" dangerouslySetInnerHTML={{ __html: o.optionContent }} />
                     {selected && <span className="td-option-check">✓</span>}
                 </label>
             );
