@@ -56,7 +56,7 @@ export default function GapDiagnosisPage() {
                                 {data.gaps.map((g, i) => (
                                     <div className="gap-item" key={i}>
                                         <div className="gap-head">
-                                            <span className="gap-subject">{g.subject}</span>
+                                            <span className="gap-subject">{g.subject}{g.topic ? ` - ${g.topic}` : ''}</span>
                                             <span className="gap-severity" style={{ background: g.color }}>{g.severity}</span>
                                         </div>
                                         <div className="gap-bar">
@@ -74,7 +74,7 @@ export default function GapDiagnosisPage() {
                                 <ul>
                                     {data.gaps.map((g, i) => (
                                         <li key={i}>
-                                            <strong>{g.subject}:</strong> {g.recommendation}
+                                            <strong>{g.subject}{g.topic ? ` - ${g.topic}` : ''}:</strong> {g.recommendation}
                                         </li>
                                     ))}
                                 </ul>
