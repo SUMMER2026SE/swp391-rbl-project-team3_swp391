@@ -5,7 +5,7 @@ import '../css/AdminDashboardPage.css'; // Reuse dashboard css or create new if 
 const AdminSePayGuide = () => {
     const navigate = useNavigate();
     const [activeMenu] = useState("sepay"); // Định nghĩa trạng thái menu để active sidebar
-    const webhookUrl = "https://<your-domain>/api/payments/sepay/webhook"; // You can replace <your-domain> later when deployed
+    const webhookUrl = `${window.location.protocol}//<your-backend-domain>/api/webhook/sepay`;
 
     const handleLogout = () => {
         localStorage.removeItem("token");
@@ -64,11 +64,14 @@ const AdminSePayGuide = () => {
                         <h4>Bước 2: Cấu hình trên My.SePay.vn</h4>
                         <ul style={{ lineHeight: '2', color: '#334155' }}>
                             <li>Đăng nhập vào tài khoản <a href="https://my.sepay.vn" target="_blank" rel="noreferrer" style={{ color: '#0284c7' }}>my.sepay.vn</a>.</li>
-                            <li>Truy cập menu <strong>Tích hợp (Integrations)</strong> bên tay trái.</li>
-                            <li>Chọn mục <strong>Thêm Webhook (Add Webhook)</strong>.</li>
-                            <li>Dán đường dẫn Webhook vừa sao chép vào ô <strong>URL Webhook</strong>.</li>
+                            <li>Truy cập menu <strong>Tích hợp WebHooks</strong> bên tay trái.</li>
+                            <li>Chọn mục <strong>Thêm webhook</strong> (hoặc nhấn nút <strong>Thêm webhook</strong> màu xanh).</li>
+                            <li>Dán đường dẫn Webhook vừa sao chép ở Bước 1 vào ô <strong>URL Webhook</strong>.</li>
+                            <li>Chọn <strong>Tài khoản ngân hàng</strong> tương ứng của bạn (ví dụ: tài khoản TPBank).</li>
+                            <li>Trong mục <strong>Bảo mật (Xác thực Webhook)</strong>, chọn phương thức xác thực là <strong>API Key</strong>.</li>
+                            <li>Nhập API Key trùng khớp với cấu hình trong dự án (ví dụ: <code>5Q5XJOSGR4HQW9ZPMIJYZSABBT4UYLXEJ03RIFA8RXPC3FUN2THCMCDSPOLKO71Z</code>).</li>
                             <li>Trong mục <strong>Sự kiện kích hoạt (Events)</strong>, chọn <code>Giao dịch nhận tiền (Money In)</code>.</li>
-                            <li>Nhấn <strong>Lưu cài đặt (Save)</strong>.</li>
+                            <li>Nhấn <strong>Thêm mới (Save)</strong>.</li>
                         </ul>
                     </div>
 

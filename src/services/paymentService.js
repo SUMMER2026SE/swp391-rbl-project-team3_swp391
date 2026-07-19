@@ -76,6 +76,12 @@ const paymentService = {
         axiosClient
             .post(`/payments/admin/confirm/${transactionCode}`)
             .then(r => r.data),
+
+    // Lấy trạng thái giao dịch
+    paymentStatus: (transactionCode) =>
+        axiosClient
+            .get(`/payments/status/${transactionCode}`)
+            .then(r => r.data),
 };
 
 const getAdminPaymentDashboard = async () => {
