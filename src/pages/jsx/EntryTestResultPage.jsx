@@ -83,7 +83,7 @@ export default function EntryTestResultPage() {
                         <button className="pr-btn pr-btn-primary" onClick={() => navigate("/adaptive-path")}>
                             🚀 Xem lộ trình học cá nhân hóa
                         </button>
-                        <button className="pr-btn" onClick={() => navigate("/entry-test")}>Làm bài khác</button>
+                        <button className="pr-btn" onClick={() => navigate("/tests")}>Làm bài khác</button>
                     </div>
                 </div>
             </header>

@@ -195,7 +195,6 @@ export default function HomePage() {
                 <ul className="menu">
                     <li onClick={() => navigate("/home")}><span>🏠</span> Trang chủ</li>
                     <li onClick={() => navigate("/courses")}><span>📚</span> Khóa học</li>
-                    <li onClick={() => navigate("/entry-test")}><span>📝</span> Kiểm tra đầu vào</li>
                     <li onClick={() => navigate("/tests")}><span>📄</span> Luyện đề</li>
                     <li onClick={() => navigate("/adaptive-path")}><span>🧠</span> Lộ trình AI</li>
                     <li onClick={() => navigate("/ai/gap-diagnosis")}><span>📈</span> Lỗ hổng kiến thức</li>

@@ -97,12 +97,13 @@ const saveTimeoutRef = useRef(null);
         try {
             const token = localStorage.getItem("token");
 
-            await fetch(`http://localhost:8080/api/tests/${sessionsId}/submit`, {
-                method: 'POST',
+            await fetch(`/api/tests/${sessionsId}/submit`, {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify(answers)
             });
             localStorage.removeItem(`test_time_${sessionsId}`);
             alert(auto ? "Hết giờ! Bài thi đã được tự động nộp." : "Nộp bài thành công!");
