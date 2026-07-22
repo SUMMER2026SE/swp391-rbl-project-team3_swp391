@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
-import "../css/AdminUsersPage.css"; // Dùng chung layout css admin có sẵn
+import "../css/AdminUsersPage.css";
 
 export default function AdminCategoriesPage() {
     const navigate = useNavigate();
-    const [activeMenu] = useState("categories"); // Định nghĩa trạng thái menu để active sidebar
+    const [activeMenu] = useState("categories");
     const [categories, setCategories] = useState([]);
     const [newCategoryName, setNewCategoryName] = useState("");
     const [error, setError] = useState("");
@@ -34,19 +34,27 @@ export default function AdminCategoriesPage() {
             fetchCategories();
             alert("🎉 Thêm danh mục môn học thành công!");
         } catch (err) {
-            // Hiển thị lỗi E-01 nếu trùng tên danh mục
             setError(err.response?.data?.message || "Có lỗi xảy ra.");
         }
     };
 
-    const handleDeleteOrHide = async (id) => {
-        if (!window.confirm("Bạn có chắc chắn muốn xóa hoặc ẩn danh mục này?")) return;
+    const handleDeleteOrHide = async (cat) => {
+        const catId = cat.id || cat.categoryId;
+        const catName = cat.categoryName || `Danh mục #${catId}`;
+
+        if (!catId) {
+            alert("❌ Lỗi: Không xác định được ID danh mục.");
+            return;
+        }
+
+        if (!window.confirm(`Bạn có chắc chắn muốn xóa hoặc ẩn danh mục "${catName}"?`)) return;
+
         try {
-            const res = await axiosClient.delete(`/admin/categories/${id}`);
+            const res = await axiosClient.delete(`/admin/categories/${catId}`);
             alert(res.data.message);
             fetchCategories();
         } catch (err) {
-            alert("Xử lý thất bại!");
+            alert("❌ Lỗi khi thực hiện xóa/ẩn danh mục: " + (err.response?.data?.message || err.message));
         }
     };
 
@@ -59,7 +67,6 @@ export default function AdminCategoriesPage() {
     return (
         <div className="admin-layout" style={{ fontFamily: "'Inter', 'Segoe UI', Tahoma, sans-serif" }}>
             
-            {/* SIDEBAR TÍCH HỢP HOÀN CHỈNH */}
             <aside className="admin-sidebar">
                 <div className="admin-brand" onClick={() => navigate("/admin")}>
                     <h2>PrepAce <span>Admin</span></h2>
@@ -79,7 +86,6 @@ export default function AdminCategoriesPage() {
                 </div>
             </aside>
 
-            {/* MAIN CONTENT VÙNG HIỂN THỊ ĐƯỢC CHUẨN HÓA LAYOUT */}
             <main className="admin-main">
                 <div className="admin-content" style={{ padding: "30px", textAlign: "left" }}>
                     <div className="header-title" style={{ marginBottom: "20px" }}>
@@ -112,25 +118,28 @@ export default function AdminCategoriesPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {categories.map((cat) => (
-                                    <tr key={cat.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
-                                        <td style={{ padding: "12px" }}>#{cat.id}</td>
-                                        <td style={{ padding: "12px" }}><strong>{cat.categoryName}</strong></td>
-                                        <td style={{ padding: "12px" }}>
-                                            <span className={`status-badge ${cat.isHidden ? 'deactivated' : 'success'}`}>
-                                                {cat.isHidden ? '⛔ Đã ẩn (Khóa học cũ vẫn chạy)' : '🟢 Đang hiển thị công khai'}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: "12px" }}>
-                                            <button 
-                                                onClick={() => handleDeleteOrHide(cat.id)}
-                                                style={{ backgroundColor: "#ef4444", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer" }}
-                                            >
-                                                Xóa / Ẩn quy chế
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {categories.map((cat, idx) => {
+                                    const currentId = cat.id || cat.categoryId || idx + 1;
+                                    return (
+                                        <tr key={currentId} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                                            <td style={{ padding: "12px" }}>#{currentId}</td>
+                                            <td style={{ padding: "12px" }}><strong>{cat.categoryName}</strong></td>
+                                            <td style={{ padding: "12px" }}>
+                                                <span className={`status-badge ${cat.isHidden ? 'deactivated' : 'success'}`}>
+                                                    {cat.isHidden ? '⛔ Đã ẩn (Khóa học cũ vẫn chạy)' : '🟢 Đang hiển thị công khai'}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: "12px" }}>
+                                                <button 
+                                                    onClick={() => handleDeleteOrHide(cat)}
+                                                    style={{ backgroundColor: "#ef4444", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer" }}
+                                                >
+                                                    Xóa / Ẩn quy chế
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>

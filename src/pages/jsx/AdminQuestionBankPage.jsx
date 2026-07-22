@@ -5,16 +5,15 @@ import '../css/AdminDashboardPage.css';
 
 const AdminQuestionBankPage = () => {
     const navigate = useNavigate();
-    const [activeMenu] = useState("question-bank"); // Định nghĩa trạng thái menu hiện tại
+    const [activeMenu] = useState("question-bank");
     const [quizzes, setQuizzes] = useState([]);
-    const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Modal state for quiz
+    // Modal state for quiz (Đã loại bỏ courseId)
     const [showQuizModal, setShowQuizModal] = useState(false);
     const [editQuiz, setEditQuiz] = useState(null);
-    const [quizForm, setQuizForm] = useState({ quizTitle: '', durationMinutes: 60, courseId: '' });
+    const [quizForm, setQuizForm] = useState({ quizTitle: '', durationMinutes: 60 });
 
     // State for viewing questions of a quiz
     const [selectedQuiz, setSelectedQuiz] = useState(null);
@@ -34,7 +33,6 @@ const AdminQuestionBankPage = () => {
         const initData = async () => {
             try {
                 setLoading(true);
-                await fetchCourses();
                 await fetchQuizzes();
             } catch (err) {
                 console.error("Lỗi khởi tạo trang:", err);
@@ -63,45 +61,12 @@ const AdminQuestionBankPage = () => {
         }
     };
 
-    const fetchCourses = async () => {
-        try {
-            const res = await axiosClient.get('/admin/courses');
-            if (res.data && Array.isArray(res.data)) {
-                setCourses(res.data);
-            } else if (res.data && Array.isArray(res.data.content)) {
-                setCourses(res.data.content);
-            } else {
-                setFallbackCourses();
-            }
-        } catch (err) {
-            setFallbackCourses();
-        }
-    };
-
-    const setFallbackCourses = () => {
-        setCourses([
-            { courseId: 1, courseTitle: "Mastering Mathematics 12" },
-            { courseId: 2, courseTitle: "Phương pháp giải nhanh bài tập Vật Lý" },
-            { courseId: 3, courseTitle: "Ngữ pháp & Từ vựng Tiếng Anh chuyên sâu" }
-        ]);
-    };
-
     const handleOpenEditModal = (q) => {
         if (!q) return;
-        let targetCourseId = '';
-        if (q.course && q.course.courseId) {
-            targetCourseId = q.course.courseId;
-        } else if (q.courseId) {
-            targetCourseId = q.courseId;
-        } else if (courses && courses.length > 0) {
-            targetCourseId = courses[0].courseId;
-        }
-
         setEditQuiz(q);
         setQuizForm({
             quizTitle: q.quizTitle || '',
-            durationMinutes: q.durationMinutes || 60,
-            courseId: targetCourseId
+            durationMinutes: q.durationMinutes || 60
         });
         setShowQuizModal(true);
     };
@@ -112,17 +77,11 @@ const AdminQuestionBankPage = () => {
                 alert("⚠️ Vui lòng nhập Tên đề thi!");
                 return;
             }
-            if (!quizForm.courseId) {
-                alert("⚠️ Vui lòng chọn Khóa học!");
-                return;
-            }
 
+            // Payload đã loại bỏ thông tin khóa học
             const payload = {
                 quizTitle: quizForm.quizTitle.trim(),
-                durationMinutes: Number(quizForm.durationMinutes),
-                course: {
-                    courseId: Number(quizForm.courseId)
-                }
+                durationMinutes: Number(quizForm.durationMinutes)
             };
 
             if (editQuiz) {
@@ -253,7 +212,7 @@ const AdminQuestionBankPage = () => {
                     <div style={{ flex: 1, background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                             <h3>Danh sách Đề thi (Quizzes)</h3>
-                            <button onClick={() => { setEditQuiz(null); setQuizForm({ quizTitle: '', durationMinutes: 60, courseId: courses[0]?.courseId || '' }); setShowQuizModal(true); }} style={st.btnPrimary}>+ Tạo Đề thi</button>
+                            <button onClick={() => { setEditQuiz(null); setQuizForm({ quizTitle: '', durationMinutes: 60 }); setShowQuizModal(true); }} style={st.btnPrimary}>+ Tạo Đề thi</button>
                         </div>
 
                         {loading ? <p>Đang tải...</p> : error ? <p style={{ color: 'red' }}>{error}</p> : (
@@ -342,7 +301,7 @@ const AdminQuestionBankPage = () => {
                 </div>
             </main>
 
-            {/* Modal Quiz */}
+            {/* Modal Quiz (Đã bỏ mục Chọn Khóa học) */}
             {showQuizModal && (
                 <div style={st.modalOverlay}>
                     <div style={st.modalContent}>
@@ -350,14 +309,6 @@ const AdminQuestionBankPage = () => {
 
                         <label style={{ display: 'block', marginTop: '10px', fontWeight: '600' }}>Tên đề thi:</label>
                         <input value={quizForm.quizTitle} onChange={e => setQuizForm({ ...quizForm, quizTitle: e.target.value })} style={st.input} placeholder="(Ví dụ: Kiểm tra đầu vào Toán học)" required />
-
-                        <label style={{ display: 'block', fontWeight: '600' }}>Khóa học áp dụng:</label>
-                        <select value={quizForm.courseId} onChange={e => setQuizForm({ ...quizForm, courseId: e.target.value })} style={st.input} required>
-                            <option value="">-- Chọn khóa học liên kết --</option>
-                            {courses.map(c => (
-                                <option key={c?.courseId} value={c?.courseId}>{c?.courseTitle}</option>
-                            ))}
-                        </select>
 
                         <label style={{ display: 'block', fontWeight: '600' }}>Thời gian làm bài (phút):</label>
                         <input type="number" value={quizForm.durationMinutes} onChange={e => setQuizForm({ ...quizForm, durationMinutes: e.target.value })} style={st.input} min="1" />
