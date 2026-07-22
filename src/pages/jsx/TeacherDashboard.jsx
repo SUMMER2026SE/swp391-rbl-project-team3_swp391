@@ -4,6 +4,7 @@ import "../css/TeacherDashboard.css";
 import axiosClient from "../../api/axiosClient";
 import { logout } from "../../services/authService";
 import wordImportService from "../../services/wordImportService";
+import TeacherProfileEdit from "./TeacherProfileEdit";
 
 export default function TeacherDashboard() {
     const navigate = useNavigate();
@@ -270,6 +271,9 @@ export default function TeacherDashboard() {
                     </li>
                     <li className={activeTab === "WORD_IMPORT" ? "active" : ""} onClick={() => setActiveTab("WORD_IMPORT")}>
                         📄 Tạo Đề Từ File Word
+                    </li>
+                    <li className={activeTab === "PROFILE" ? "active" : ""} onClick={() => setActiveTab("PROFILE")}>
+                        👤 Hồ sơ giảng viên
                     </li>
                     <li onClick={() => navigate("/teacher/grading")}>
                         ✍️ Chấm điểm Tự luận
@@ -997,6 +1001,10 @@ của biểu thức...
                             </div>
                         )}
                     </div>
+                )}
+
+                {activeTab === "PROFILE" && (
+                    <TeacherProfileEdit user={user} setUser={setUser} />
                 )}
             </main>
 
