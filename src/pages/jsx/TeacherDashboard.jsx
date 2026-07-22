@@ -14,6 +14,7 @@ export default function TeacherDashboard() {
     const [myCourses, setMyCourses] = useState([]);
     const [qaList, setQaList] = useState([]);
     const [subjects, setSubjects] = useState([]);
+    const [categories, setCategories] = useState([]); // 🔥 State lưu danh sách Danh mục
     const [activeTab, setActiveTab] = useState("COURSES");
 
     // Modal Báo cáo
@@ -27,12 +28,12 @@ export default function TeacherDashboard() {
     const [selectedQa, setSelectedQa] = useState(null);
     const [replyContent, setReplyContent] = useState("");
 
-    // Modal Tạo khóa học (nếu dùng form đầy đủ)
+    // Modal Tạo khóa học (có thêm chọn danh mục optional)
     const [createCourseModalOpen, setCreateCourseModalOpen] = useState(false);
     const [newCourseData, setNewCourseData] = useState({
         title: "",
         subjectId: "1",
-        categoryId: "1",
+        categoryId: "", // 🔥 Mặc định rỗng (Optional)
         price: ""
     });
 
@@ -52,8 +53,6 @@ export default function TeacherDashboard() {
         courseId: ""
     });
     const wiFileInputRef = useRef(null);
-
-
 
     // Kiểm tra quyền truy cập và load dữ liệu ban đầu
     useEffect(() => {
@@ -77,6 +76,13 @@ export default function TeacherDashboard() {
         
         // Lấy danh sách môn học cho dropdown
         axiosClient.get("/public/subjects").then(res => setSubjects(res.data)).catch(() => {});
+
+        // 🔥 Lấy danh sách danh mục cho dropdown
+        axiosClient.get("/public/categories")
+            .then(res => setCategories(res.data))
+            .catch(() => {
+                axiosClient.get("/categories").then(res => setCategories(res.data)).catch(() => {});
+            });
     }, [navigate]);
 
     // Load danh sách Q&A khi chuyển tab
@@ -116,15 +122,22 @@ export default function TeacherDashboard() {
         if (!newCourseData.title.trim()) return alert("Vui lòng nhập tên khóa học!");
 
         try {
-            const response = await axiosClient.post("/courses", {
+            const payload = {
                 title: newCourseData.title,
                 teacher_id: user?.id,
-                categoryId: parseInt(newCourseData.categoryId) || 1,
                 subjectId: parseInt(newCourseData.subjectId) || 1,
                 price: parseFloat(newCourseData.price) || 0
-            });
+            };
+
+            // 🔥 Chỉ truyền categoryId nếu người dùng chọn
+            if (newCourseData.categoryId) {
+                payload.categoryId = parseInt(newCourseData.categoryId);
+            }
+
+            const response = await axiosClient.post("/courses", payload);
             alert("✅ Tạo khóa học thành công!");
             setCreateCourseModalOpen(false);
+            setNewCourseData({ title: "", subjectId: "1", categoryId: "", price: "" });
             // Chuyển sang trang biên soạn
             navigate(`/teacher/course/${response.data.id || response.data.courseId}/edit`);
             fetchCourses(user); // Refresh danh sách
@@ -207,17 +220,14 @@ export default function TeacherDashboard() {
     };
 
     const handleLogout = async () => {
-            try {
-                await logout();
-            } catch (err) {
-                console.error(err);
-            }
-            setShowLogoutModal(false);
-            navigate("/auth");
-        };
-    
-
-
+        try {
+            await logout();
+        } catch (err) {
+            console.error(err);
+        }
+        setShowLogoutModal(false);
+        navigate("/auth");
+    };
 
     const handleDeleteCourse = async (courseId) => {
         if (!window.confirm("Bạn có chắc chắn muốn xóa khóa học này không? Hành động này không thể hoàn tác!")) return;
@@ -277,6 +287,10 @@ export default function TeacherDashboard() {
                     </li>
                     <li onClick={() => navigate("/teacher/grading")}>
                         ✍️ Chấm điểm Tự luận
+                    </li>
+                    {/* 🔥 THÊM MỤC THÔNG BÁO Ở SIDEBAR */}
+                    <li onClick={() => navigate("/notifications")}>
+                        🔔 Thông báo
                     </li>
                     <li style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.1)' }} onClick={handleLogout}>
                         🚪 Đăng xuất
@@ -466,13 +480,9 @@ export default function TeacherDashboard() {
                     </div>
                 )}
 
-                {/* ═══════════════════════════════════════════════════════════════
-                    TAB: TẠO ĐỀ TỪ FILE WORD
-                ═══════════════════════════════════════════════════════════════ */}
+                {/* TAB: TẠO ĐỀ TỪ FILE WORD */}
                 {activeTab === "WORD_IMPORT" && (
                     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-
-                        {/* Tiêu đề */}
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
                             <div>
                                 <h2 style={{ fontSize: "24px", fontWeight: "700", color: "#0f172a", margin: 0 }}>
@@ -491,10 +501,9 @@ export default function TeacherDashboard() {
 
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", alignItems: "start" }}>
 
-                            {/* ─── Cột trái: Upload + Form ─── */}
+                            {/* Cột trái: Upload + Form */}
                             <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
 
-                                {/* Khu vực kéo thả / chọn file */}
                                 <div
                                     id="wi-dropzone"
                                     onClick={() => wiFileInputRef.current?.click()}
@@ -630,7 +639,6 @@ export default function TeacherDashboard() {
                                         </div>
                                     </div>
 
-                                    {/* Nút Phân tích */}
                                     <button
                                         id="wi-btn-preview"
                                         disabled={!wiFile || !wiMeta.quizTitle.trim() || wiPreviewing || wiSaving}
@@ -673,7 +681,6 @@ export default function TeacherDashboard() {
                                         {wiPreviewing ? "⏳ Đang phân tích..." : "🔍 Phân tích File"}
                                     </button>
 
-                                    {/* Error message */}
                                     {wiError && (
                                         <div style={{ marginTop: "12px", padding: "12px", background: "#fef2f2", borderRadius: "8px", color: "#b91c1c", fontSize: "14px", border: "1px solid #fecaca" }}>
                                             ❌ {wiError}
@@ -682,7 +689,7 @@ export default function TeacherDashboard() {
                                 </div>
                             </div>
 
-                            {/* ─── Cột phải: Kết quả Preview ─── */}
+                            {/* Cột phải: Kết quả Preview */}
                             <div>
                                 {!wiPreview ? (
                                     <div style={{
@@ -698,7 +705,6 @@ export default function TeacherDashboard() {
                                 ) : (
                                     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 
-                                        {/* Thống kê tổng quan */}
                                         <div style={{ background: "#fff", borderRadius: "16px", padding: "20px", boxShadow: "0 4px 16px rgba(0,0,0,0.06)", border: "1px solid #e2e8f0" }}>
                                             <h3 style={{ margin: "0 0 16px", fontSize: "16px", fontWeight: "700", color: "#0f172a" }}>📊 Kết quả phân tích</h3>
                                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
@@ -720,7 +726,6 @@ export default function TeacherDashboard() {
                                                 </div>
                                             </div>
 
-                                            {/* Warnings */}
                                             {wiPreview.warnings && wiPreview.warnings.length > 0 && (
                                                 <div style={{ marginTop: "14px", padding: "12px", background: "#fffbeb", borderRadius: "8px", border: "1px solid #fde68a" }}>
                                                     {wiPreview.warnings.map((w, i) => (
@@ -730,7 +735,6 @@ export default function TeacherDashboard() {
                                             )}
                                         </div>
 
-                                        {/* Preview tất cả câu hỏi */}
                                         {wiPreview.previewQuestions && wiPreview.previewQuestions.length > 0 && (
                                             <div style={{ background: "#fff", borderRadius: "16px", padding: "20px", boxShadow: "0 4px 16px rgba(0,0,0,0.06)", border: "1px solid #e2e8f0", textAlign: "center" }}>
                                                 <h3 style={{ margin: "0 0 14px", fontSize: "16px", fontWeight: "700", color: "#0f172a" }}>👁️ Xem trước toàn bộ đề</h3>
@@ -760,7 +764,6 @@ export default function TeacherDashboard() {
                                             </div>
                                         )}
 
-                                        {/* Nút xác nhận lưu */}
                                         {wiPreview.totalQuestions > 0 && !wiSaved && (
                                             <button
                                                 id="wi-btn-confirm"
@@ -869,7 +872,6 @@ của biểu thức...
                                     boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
                                     overflow: "hidden"
                                 }}>
-                                    {/* Header */}
                                     <div style={{
                                         padding: "20px 24px", borderBottom: "1px solid #e2e8f0",
                                         display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -896,7 +898,6 @@ của biểu thức...
                                         </button>
                                     </div>
 
-                                    {/* Body */}
                                     <div style={{ padding: "24px", overflowY: "auto", flex: 1, background: "#f1f5f9" }}>
                                         <div style={{ display: "grid", gap: "16px" }}>
                                             {wiPreview.previewQuestions.map((q, idx) => (
@@ -919,7 +920,6 @@ của biểu thức...
                                                         dangerouslySetInnerHTML={{ __html: q.content }}
                                                     />
 
-                                                    {/* Options or Correct Answer */}
                                                     {q.options && q.options.length > 0 ? (
                                                         <div style={{ marginTop: "16px", display: "grid", gridTemplateColumns: "1fr", gap: "8px" }}>
                                                             {q.options.map((opt) => {
@@ -984,7 +984,6 @@ của biểu thức...
                                         </div>
                                     </div>
 
-                                    {/* Footer */}
                                     <div style={{ padding: "16px 24px", borderTop: "1px solid #e2e8f0", background: "#fff", display: "flex", justifyContent: "flex-end" }}>
                                         <button
                                             onClick={() => setWiPreviewModalOpen(false)}
@@ -1008,8 +1007,7 @@ của biểu thức...
                 )}
             </main>
 
-
-            {/* MODAL KHỞI TẠO KHÓA HỌC (TÊN + DANH MỤC + MÔN HỌC) */}
+            {/* MODAL KHỞI TẠO KHÓA HỌC (TÊN + MÔN HỌC + DANH MỤC TÙY CHỌN + GIÁ) */}
             {createCourseModalOpen && (
                 <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100 }}>
                     <div style={{ background: "#fff", width: "500px", borderRadius: "16px", padding: "30px", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}>
@@ -1017,7 +1015,7 @@ của biểu thức...
                         
                         <form onSubmit={handleCreateCourseSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                             <div style={{ display: "flex", flexDirection: "column", gap: "6px", textAlign: "left" }}>
-                                <label style={{ fontWeight: "600", fontSize: "14px", color: "#334155" }}>Tên khóa học:</label>
+                                <label style={{ fontWeight: "600", fontSize: "14px", color: "#334155" }}>Tên khóa học *:</label>
                                 <input 
                                     type="text"
                                     required
@@ -1027,8 +1025,9 @@ của biểu thức...
                                     style={{ padding: "11px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px" }}
                                 />
                             </div>
+
                             <div style={{ display: "flex", flexDirection: "column", gap: "6px", textAlign: "left" }}>
-                                <label style={{ fontWeight: "600", fontSize: "14px", color: "#334155" }}>Môn học:</label>
+                                <label style={{ fontWeight: "600", fontSize: "14px", color: "#334155" }}>Môn học *:</label>
                                 <select 
                                     value={newCourseData.subjectId}
                                     onChange={(e) => setNewCourseData({ ...newCourseData, subjectId: e.target.value })}
@@ -1041,6 +1040,26 @@ của biểu thức...
                                     ))}
                                 </select>
                             </div>
+
+                            {/* 🔥 FIELD CHỌN DANH MỤC KHÓA HỌC (OPTIONAL) */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: "6px", textAlign: "left" }}>
+                                <label style={{ fontWeight: "600", fontSize: "14px", color: "#334155" }}>
+                                    Danh mục khóa học <span style={{ color: "#94a3b8", fontWeight: "normal" }}>(Không bắt buộc)</span>:
+                                </label>
+                                <select 
+                                    value={newCourseData.categoryId}
+                                    onChange={(e) => setNewCourseData({ ...newCourseData, categoryId: e.target.value })}
+                                    style={{ padding: "11px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px", background: "#fff" }}
+                                >
+                                    <option value="">-- Chọn danh mục (Tùy chọn) --</option>
+                                    {categories.map(cat => (
+                                        <option key={cat.id || cat.categoryId} value={cat.id || cat.categoryId}>
+                                            {cat.name || cat.categoryName || cat.title || `Danh mục ${cat.id || cat.categoryId}`}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
                             <div style={{ display: "flex", flexDirection: "column", gap: "6px", textAlign: "left" }}>
                                 <label style={{ fontWeight: "600", fontSize: "14px", color: "#334155" }}>Giá tiền (VNĐ):</label>
                                 <input 
@@ -1052,10 +1071,11 @@ của biểu thức...
                                     style={{ padding: "11px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px" }}
                                 />
                             </div>
+
                             <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "15px" }}>
                                 <button 
                                     type="button" 
-                                    onClick={() => { setCreateCourseModalOpen(false); setNewCourseData({ title: "", subjectId: "1", categoryId: "1", price: "" }); }}
+                                    onClick={() => { setCreateCourseModalOpen(false); setNewCourseData({ title: "", subjectId: "1", categoryId: "", price: "" }); }}
                                     style={{ padding: "10px 16px", background: "#f1f5f9", color: "#475569", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}
                                 >
                                     Hủy bỏ
@@ -1071,7 +1091,6 @@ của biểu thức...
                     </div>
                 </div>
             )}
-
 
             {/* MODAL BÁO CÁO TIẾN ĐỘ */}
             {reportModalOpen && selectedCourseForReport && (

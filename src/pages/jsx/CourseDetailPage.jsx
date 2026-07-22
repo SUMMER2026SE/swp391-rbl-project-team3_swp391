@@ -36,6 +36,14 @@ export default function CourseDetailPage() {
     const [loading, setLoading] = useState(true);
     const [isEnrolled, setIsEnrolled] = useState(false);
 
+    // Lấy thông tin user hiện tại
+    const [currentUser, setCurrentUser] = useState(() => {
+        const stored = localStorage.getItem("user");
+        return stored ? JSON.parse(stored) : null;
+    });
+
+    const isAdmin = currentUser?.role === "ADMIN" || currentUser?.roleName === "ADMIN" || currentUser?.roleId === 1;
+
     const [evaluation, setEvaluation] = useState({
         averageRating: 0,
         totalReviews: 0,
@@ -64,7 +72,6 @@ export default function CourseDetailPage() {
         return Math.round((count / total) * 100);
     };
 
-    // 🔥 HÀM XỬ LÝ GHI LOG KHI HỌC SINH ẤN NÚT HỌC THỬ
     const handleFreeTrialLog = async () => {
         try {
             const userObj = JSON.parse(localStorage.getItem("user") || "{}");
@@ -89,7 +96,6 @@ export default function CourseDetailPage() {
                     let cleanPrice = Number(String(data.price || data.Price || data.course_price || data.coursePrice || 0).replace(/[^0-9]/g, ''));
                     let cleanOriginal = Number(String(data.original_price || data.originalPrice || 0).replace(/[^0-9]/g, ''));
 
-                    // FALLBACK: Lấy dữ liệu còn thiếu từ danh sách tổng /courses
                     try {
                         const listRes = await axiosClient.get('/courses');
                         const rawList = Array.isArray(listRes.data) ? listRes.data : (listRes.data?.courses || []);
@@ -100,7 +106,6 @@ export default function CourseDetailPage() {
                                 cleanPrice = Number(String(found.price).replace(/[^0-9]/g, ''));
                             }
                             data.teacher_name = data.teacher_name || found.teacherName || found.teacher;
-                            // 🔥 QUAN TRỌNG: API detail đang thiếu subjectName, lấy từ API list
                             data.subjectName = data.subjectName || found.subjectName || found.subject?.subjectName || "Chung";
                         }
                     } catch (e) { console.log("Fallback list fetch failed"); }
@@ -136,9 +141,7 @@ export default function CourseDetailPage() {
                         title: data.course_title || data.title || "Khóa học không tên",
                         description: data.description || data.course_desc || "",
                         teacher: data.teacher_name || data.teacher || "Giáo viên",
-                        
                         subjectName: data.subjectName,
-
                         price: cleanPrice > 0 ? `${cleanPrice.toLocaleString('vi-VN')}đ` : "Miễn phí",
                         originalPrice: cleanOriginal > 0 ? `${cleanOriginal.toLocaleString('vi-VN')}đ` : "",
                         rating: data.rating || 5.0,
@@ -168,17 +171,24 @@ export default function CourseDetailPage() {
                     setEvaluation(reviewRes.data);
                 }
 
-                // KIỂM TRA TRẠNG THÁI MUA KHÓA HỌC
-                try {
-                    const token = localStorage.getItem("token");
-                    if (token) {
-                        const enrollRes = await axiosClient.get(`/courses/${id}/check-enrollment`);
-                        if (enrollRes.data && enrollRes.data.isEnrolled) {
-                            setIsEnrolled(true);
+                // 🔥 TÍNH NĂNG ADMIN: ĐẶC QUYỀN MỞ KHÓA KHÔNG CẦN MUA
+                const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+                const isAdminUser = userObj?.role === "ADMIN" || userObj?.roleName === "ADMIN" || userObj?.roleId === 1;
+
+                if (isAdminUser) {
+                    setIsEnrolled(true); // Admin luôn coi như đã sở hữu khóa học
+                } else {
+                    try {
+                        const token = localStorage.getItem("token");
+                        if (token) {
+                            const enrollRes = await axiosClient.get(`/courses/${id}/check-enrollment`);
+                            if (enrollRes.data && enrollRes.data.isEnrolled) {
+                                setIsEnrolled(true);
+                            }
                         }
+                    } catch (e) {
+                        console.log("Chưa đăng nhập hoặc lỗi check enrollment");
                     }
-                } catch (e) {
-                    console.log("Chưa đăng nhập hoặc lỗi check enrollment");
                 }
 
             } catch (error) {
@@ -545,9 +555,10 @@ export default function CourseDetailPage() {
                             {course.originalPrice && <div className="original-price">{course.originalPrice}</div>}
                         </div>
 
+                        {/* 🔥 HIỂN THỊ NÚT VÀO HỌC CHO CẢ ADMIN VÀ HỌC VIÊN ĐÃ MUA */}
                         {isEnrolled ? (
                             <button className="enroll-btn" onClick={() => navigate(`/learn/${course.id}`)}>
-                                Vào Học
+                                Vào Học {isAdmin && "(Quyền Admin)"}
                             </button>
                         ) : (
                             <>

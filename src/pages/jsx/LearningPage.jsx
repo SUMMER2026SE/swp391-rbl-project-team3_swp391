@@ -11,10 +11,17 @@ export default function LearningPage() {
     const [currentLesson, setCurrentLesson] = useState(null);
     const [activeTab, setActiveTab] = useState("overview");
     const [expandedChapter, setExpandedChapter] = useState(0);
-    const [resumePrompt, setResumePrompt] = useState(null); // Quản lý popup xem tiếp video
+    const [resumePrompt, setResumePrompt] = useState(null);
     const [showSummaryPopup, setShowSummaryPopup] = useState(false);
     const [completedChapterId, setCompletedChapterId] = useState(null);
 
+    // 🔥 LẤY THÔNG TIN NGƯỜI DÙNG HIỆN TẠI
+    const [currentUser, setCurrentUser] = useState(() => {
+        const stored = localStorage.getItem("user");
+        return stored ? JSON.parse(stored) : null;
+    });
+
+    const isAdmin = currentUser?.role === "ADMIN" || currentUser?.roleName === "ADMIN" || currentUser?.roleId === 1;
 
     // State quản lý danh sách câu hỏi QnA
     const [questions, setQuestions] = useState([]);
@@ -44,7 +51,7 @@ export default function LearningPage() {
             try {
                 const res = await axiosClient.get(`/outlines/lessons/${currentLesson.id}/in-video-questions`);
                 setInVideoQuestions(res.data || []);
-                setAnsweredQuizzes(new Set()); // Reset khi đổi bài
+                setAnsweredQuizzes(new Set());
                 setCurrentQuiz(null);
             } catch (err) {
                 console.error("Lỗi lấy câu hỏi popup", err);
@@ -58,7 +65,6 @@ export default function LearningPage() {
         const answered = answeredQuizzesRef.current;
         if (!questions || questions.length === 0) return;
         
-        // Bắt chính xác hơn: Nếu thời gian hiện tại đã vượt qua mốc thời gian cài đặt và chưa trả lời
         const quiz = questions.find(q => currentTime >= Number(q.timestampSeconds) && !answered.has(q.id));
         
         if (quiz && !currentQuiz) {
@@ -99,39 +105,44 @@ export default function LearningPage() {
     };
 
     const [completedLessonIds, setCompletedLessonIds] = useState([]);
-    const [isEnrolled, setIsEnrolled] = useState(false); // Thêm state kiểm tra Mua Khóa Học
+    const [isEnrolled, setIsEnrolled] = useState(false);
 
-    // 1. GỌI API LẤY DỮ LIỆU KHÓA HỌC THẬT VÀ TIẾN ĐỘ
+    // 1. GỌI API LẤY DỮ LIỆU KHÓA HỌC VÀ MỞ KHÓA CHO ADMIN
     useEffect(() => {
         const fetchCourseData = async () => {
             try {
                 const response = await axiosClient.get(`/courses/${courseId}`);
                 let fetchedCourse = response.data;
                 
-                // KIỂM TRA BẢO MẬT: XEM ĐÃ MUA KHÓA HỌC CHƯA
                 let userIsEnrolled = false;
-                try {
-                    const token = localStorage.getItem("token");
-                    if (token) {
+
+                // 🔥 ĐẶC QUYỀN ADMIN: Luôn mở khóa 100% không cần check mua
+                const token = localStorage.getItem("token");
+                const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+                const isAdminUser = userObj?.role === "ADMIN" || userObj?.roleName === "ADMIN" || userObj?.roleId === 1;
+
+                if (isAdminUser) {
+                    userIsEnrolled = true;
+                    setIsEnrolled(true);
+                } else if (token) {
+                    try {
                         const enrollRes = await axiosClient.get(`/courses/${courseId}/check-enrollment`);
                         if (enrollRes.data && enrollRes.data.isEnrolled) {
                             userIsEnrolled = true;
                             setIsEnrolled(true);
                         }
+                    } catch (e) {
+                        console.log("Lỗi check enrollment", e);
                     }
-                } catch (e) {
-                    console.log("Lỗi check enrollment", e);
                 }
 
-                // NẾU KHÓA HỌC MIỄN PHÍ -> TỰ ĐỘNG XEM NHƯ ĐÃ ĐĂNG KÝ
                 const cleanPrice = Number(String(fetchedCourse.price || fetchedCourse.Price || 0).replace(/[^0-9]/g, ''));
-                if (cleanPrice === 0 && localStorage.getItem("token")) {
+                if (cleanPrice === 0 && token) {
                     userIsEnrolled = true;
                     setIsEnrolled(true);
                 }
 
-                // NẾU CHƯA MUA HOẶC CHƯA ĐĂNG NHẬP: CHỈ HIỂN THỊ CÁC VIDEO ĐƯỢC GIÁO VIÊN CHỌN HỌC THỬ (isPreview = true)
-                // NẾU KHÔNG CÓ VIDEO NÀO, MẶC ĐỊNH LẤY VIDEO ĐẦU TIÊN
+                // Nếu chưa mua và không phải Admin -> lọc bớt bài
                 if (!userIsEnrolled && fetchedCourse.chapters) {
                     let hasPreview = false;
                     const filteredChapters = fetchedCourse.chapters.map(chapter => {
@@ -163,7 +174,6 @@ export default function LearningPage() {
                     setCurrentLesson(fetchedCourse.chapters[0].lessons[0]);
                 }
 
-                // Lấy tiến độ (chỉ lấy nếu đã mua để tránh lỗi API)
                 if (userIsEnrolled) {
                     try {
                         const progressRes = await axiosClient.get(`/reports/progress/course/${courseId}/completed`);
@@ -219,11 +229,10 @@ export default function LearningPage() {
                     }).catch(() => {});
                 }
             }
-        }, 10000); // 10s lưu 1 lần
+        }, 10000);
         return () => clearInterval(syncInterval);
     }, [currentLesson]);
 
-    // Tự động tua video về mốc cũ (DÀNH CHO VIDEO THƯỜNG - TẢI LÊN MP4)
     useEffect(() => {
         if (!currentLesson) return;
         
@@ -274,28 +283,18 @@ export default function LearningPage() {
             if (newStatus) {
                 setCompletedLessonIds(prev => [...prev, lessonId]);
 
-                // ===== HIỆN POPUP AI SUMMARY =====
-                if (
-                    res.data.chapterCompleted &&
-                    res.data.chapterId
-                ) {
-
-                    setCompletedChapterId(
-                        res.data.chapterId
-                    );
+                if (res.data.chapterCompleted && res.data.chapterId) {
+                    setCompletedChapterId(res.data.chapterId);
                     setShowSummaryPopup(true);
                 }
             } else {
-                setCompletedLessonIds(prev =>
-                    prev.filter(id => id !== lessonId)
-                );
+                setCompletedLessonIds(prev => prev.filter(id => id !== lessonId));
             }
         } catch (error) {
             console.error(error);
         }
     };
 
-    // XỬ LÝ RIÊNG CHO YOUTUBE: Tích hợp API của YouTube để theo dõi tiến độ và hỏi người dùng
     useEffect(() => {
         if (!currentLesson || !currentLesson.videoUrl || !isYouTube(currentLesson.videoUrl)) return;
 
@@ -310,7 +309,6 @@ export default function LearningPage() {
             const videoId = embedUrl.includes('/embed/') ? embedUrl.split('/embed/')[1].split('?')[0] : "";
             if (!videoId) return;
             
-            // Xử lý hỏi xem tiếp hay không trước khi load iframe bằng Backend
             let startSeconds = 0;
             try {
                 const token = localStorage.getItem("token");
@@ -328,13 +326,10 @@ export default function LearningPage() {
 
             player = new window.YT.Player('youtube-player-container', {
                 videoId: videoId,
-                playerVars: {
-                    rel: 0
-                },
+                playerVars: { rel: 0 },
                 events: {
                     onReady: (event) => {
                         youtubePlayerRef.current = event.target;
-                        // Nhảy đến đúng số giây đang xem dở một cách chính xác
                         if (startSeconds > 0) {
                             event.target.seekTo(startSeconds, true);
                         }
@@ -373,14 +368,12 @@ export default function LearningPage() {
     }, [currentLesson]);
 
     const handleTimeUpdate = () => {
-        // Hàm này chỉ chạy cho video thường (MP4) để popup quiz
         if (videoRef.current && currentLesson && !isYouTube(currentLesson.videoUrl)) {
             const currentTime = videoRef.current.currentTime;
             checkQuiz(currentTime, () => videoRef.current.pause());
         }
     };
 
-    // Hàm nhận diện YouTube
     const isYouTube = (url) => url && typeof url === "string" && (url.includes("youtube.com") || url.includes("youtu.be"));
     const getYouTubeEmbedUrl = (url) => {
         if (!url || typeof url !== "string") return "";
@@ -403,7 +396,6 @@ export default function LearningPage() {
         }
 
         try {
-            // Tải file về dạng Blob
             const response = await fetch(pathUrl);
             if (!response.ok) throw new Error("Lỗi mạng khi tải file");
 
@@ -427,7 +419,6 @@ export default function LearningPage() {
 
             const blob = await response.blob();
             
-            // 1. Thử trích xuất từ URL (chính xác nhất cho các file mới tải lên)
             if (!extension) {
                 const urlWithoutQuery = pathUrl.split('?')[0];
                 const lastPart = urlWithoutQuery.split('/').pop();
@@ -436,7 +427,6 @@ export default function LearningPage() {
                 }
             }
 
-            // 2. Thử xem tên tài liệu (title) do giáo viên đặt có chứa đuôi file không (vd: baitap.xlsx)
             if (!extension && material.title && material.title.includes('.')) {
                  const possibleExt = material.title.substring(material.title.lastIndexOf('.'));
                  if (possibleExt.length >= 2 && possibleExt.length <= 6 && /^\.[a-zA-Z0-9]+$/.test(possibleExt)) {
@@ -444,18 +434,14 @@ export default function LearningPage() {
                  }
             }
             
-            // 3. Nếu Content-Type là octet-stream, URL không có đuôi, Tên cũng không có đuôi
-            // Dùng "Magic Bytes" để đoán định dạng (Fallback cuối cùng)
             if (!extension) {
                 try {
                     const arr = (new Uint8Array(await blob.slice(0, 4).arrayBuffer())).reduce((a, b) => a + b.toString(16).padStart(2, '0'), '');
                     if (arr === '25504446') {
                         extension = ".pdf";
                     } else if (arr === '504b0304') { 
-                        // ZIP archive - Thường là DOCX, XLSX, PPTX
-                        extension = ".docx"; // Mặc định DOCX cho file học liệu
+                        extension = ".docx";
                     } else if (arr === 'd0cf11e0') { 
-                        // OLE file - DOC, XLS, PPT cũ
                         extension = ".doc";
                     }
                 } catch (e) {
@@ -463,21 +449,17 @@ export default function LearningPage() {
                 }
             }
 
-            // Cuối cùng nếu vẫn không có, gán mặc định là .pdf cho an toàn (vì tài liệu học liệu 90% là PDF)
             if (!extension) {
                 extension = ".pdf";
             }
 
-            // Tạo tên file
             let downloadName = material.title || "TaiLieu";
-            // Bỏ ký tự đặc biệt có thể gây lỗi hệ điều hành
             downloadName = downloadName.replace(/[\\/:*?"<>|]/g, ''); 
             
             if (extension && !downloadName.toLowerCase().endsWith(extension.toLowerCase())) {
                 downloadName += extension;
             }
 
-            // Chuyển Data thành URL và tải xuống
             const blobUrl = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.style.display = "none";
@@ -486,7 +468,6 @@ export default function LearningPage() {
             document.body.appendChild(a);
             a.click();
             
-            // Dọn dẹp memory
             setTimeout(() => {
                 window.URL.revokeObjectURL(blobUrl);
                 a.remove();
@@ -494,8 +475,6 @@ export default function LearningPage() {
 
         } catch (error) {
             console.error("Lỗi khi tải trực tiếp qua blob, dùng cách dự phòng mở tab mới:", error);
-            
-            // Cách dự phòng nếu fetch bị chặn CORS
             let finalUrl = pathUrl;
             if (pathUrl.includes("res.cloudinary.com") && pathUrl.includes("/upload/")) {
                 let safeTitle = material.title ? material.title.replace(/[^a-zA-Z0-9.\-_]/g, '_') : "TaiLieu";
@@ -520,19 +499,56 @@ export default function LearningPage() {
             }
             const response = await axiosClient.post("/questions", payload);
             
-            // Ensure the new question has a unique ID to avoid issues with replyingTo
             const newQuestion = response.data;
             newQuestion.id = newQuestion.id || newQuestion.questionId;
             if (!newQuestion.id) {
                 newQuestion.id = `temp_q_${Date.now()}`;
             }
 
-            // Bổ sung mảng answers rỗng cho câu hỏi mới
             setQuestions([{ ...newQuestion, answers: [] }, ...questions]);
             setNewQuestionContent("");
             setQnaTimestamp(null);
         } catch (error) {
             console.error("Lỗi khi đăng câu hỏi:", error);
+        }
+    };
+
+    // 🔥 ADMIN TÍNH NĂNG: Xóa câu hỏi thảo luận gốc
+    const handleDeleteQuestion = async (questionId) => {
+        if (!questionId) return;
+        if (!window.confirm("Bảo mật hệ thống: Bạn có chắc chắn muốn xóa vĩnh viễn câu hỏi thảo luận này cùng tất cả các câu trả lời liên quan không?")) return;
+
+        try {
+            await axiosClient.delete(`/questions/${questionId}`);
+            setQuestions(prev => prev.filter(q => (q.id || q.questionId) !== questionId));
+            alert("Đã gỡ bỏ câu hỏi thành công.");
+        } catch (error) {
+            console.error("Lỗi xóa câu hỏi:", error);
+            alert("Xóa thất bại hoặc không có quyền.");
+        }
+    };
+
+    // 🔥 ADMIN TÍNH NĂNG: Xóa bình luận / phản hồi con
+    const handleDeleteAnswer = async (questionId, answerId) => {
+        if (!answerId) return;
+        if (!window.confirm("Bạn có chắc chắn muốn xóa phản hồi này không?")) return;
+
+        try {
+            await axiosClient.delete(`/questions/answers/${answerId}`);
+            setQuestions(prev => prev.map(q => {
+                const currentQId = q.id || q.questionId;
+                if (currentQId === questionId) {
+                    return {
+                        ...q,
+                        answers: (q.answers || []).filter(ans => ans.id !== answerId)
+                    };
+                }
+                return q;
+            }));
+            alert("Đã xóa phản hồi thành công.");
+        } catch (error) {
+            console.error("Lỗi xóa phản hồi:", error);
+            alert("Xóa phản hồi thất bại.");
         }
     };
 
@@ -574,15 +590,14 @@ export default function LearningPage() {
                 content: replyContent
             });
             
-            // Ensure the new answer has a unique ID
             const newAnswer = response.data;
             if (!newAnswer.id) {
                 newAnswer.id = `temp_a_${Date.now()}`;
             }
             
-            // Cập nhật lại danh sách questions
             setQuestions(questions.map(q => {
-                if (q.id === questionId) {
+                const qId = q.id || q.questionId;
+                if (qId === questionId) {
                     return {
                         ...q,
                         answers: [...(q.answers || []), newAnswer]
@@ -624,136 +639,133 @@ export default function LearningPage() {
 
             <div className="learning-workspace">
                 <div className="learning-main">
-    {/* KHỐI VIDEO CONTAINER ĐÃ ĐƯỢC LÀM SẠCH CÚ PHÁP */}
-    <div className="video-container" style={{ position: "relative", width: "100%", aspectRatio: "16/9", backgroundColor: "#000", borderRadius: "8px", overflow: "hidden" }}>
-        <div key={currentLesson.id} style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}>
-            {!isEnrolled && !currentLesson.isPreview && !currentLesson.is_preview ? (
-                <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", backgroundColor: "#fef3c7", color: "#b45309", padding: "20px", textAlign: "center", zIndex: 10 }}>
-                    <span style={{ fontSize: "48px", marginBottom: "15px" }}>🔒</span>
-                    <h3 style={{ margin: "0 0 10px 0", fontSize: "22px", fontWeight: "700" }}>Video này đã bị khóa</h3>
-                    <p style={{ margin: 0, fontSize: "16px", maxWidth: "450px", lineHeight: "1.5" }}>Bạn cần <strong>Mua khóa học</strong> để xem được video bài giảng này. Hãy đăng ký ngay để mở khóa toàn bộ lộ trình học tập nhé!</p>
-                </div>
-            ) : currentLesson.videoUrl ? (
-                <>
-                    {resumePrompt && (
-                        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.7)", zIndex: 50 }}>
-                            <div style={{ backgroundColor: "#1e293b", padding: "24px", borderRadius: "12px", textAlign: "center", maxWidth: "400px", color: "#f8fafc", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}>
-                                <div style={{ fontSize: "36px", marginBottom: "12px" }}>⏱️</div>
-                                <h3 style={{ margin: "0 0 12px 0", fontSize: "18px", fontWeight: "600" }}>Tiếp tục bài học?</h3>
-                                <p style={{ margin: "0 0 20px 0", fontSize: "14px", color: "#cbd5e1", lineHeight: "1.5" }}>
-                                    Hệ thống ghi nhận bạn đang xem dở bài học này. Bạn có muốn tiếp tục xem từ vị trí đã lưu không?
-                                </p>
-                                <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
-                                    <button 
-                                        onClick={() => {
-                                            if (videoRef.current) {
-                                                videoRef.current.currentTime = resumePrompt.savedTime;
-                                                videoRef.current.play().catch(e => console.log("Auto-play blocked:", e));
-                                            }
-                                            setResumePrompt(null);
-                                        }}
-                                        style={{ padding: "8px 20px", borderRadius: "6px", border: "none", backgroundColor: "#3b82f6", color: "white", fontWeight: "600", cursor: "pointer", transition: "all 0.2s" }}
-                                    >
-                                        Xem tiếp
-                                    </button>
-                                    <button 
-                                        onClick={() => setResumePrompt(null)}
-                                        style={{ padding: "8px 20px", borderRadius: "6px", border: "1px solid #475569", backgroundColor: "transparent", color: "#cbd5e1", fontWeight: "600", cursor: "pointer", transition: "all 0.2s" }}
-                                    >
-                                        Từ đầu
-                                    </button>
+                    <div className="video-container" style={{ position: "relative", width: "100%", aspectRatio: "16/9", backgroundColor: "#000", borderRadius: "8px", overflow: "hidden" }}>
+                        <div key={currentLesson.id} style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}>
+                            {!isEnrolled && !currentLesson.isPreview && !currentLesson.is_preview ? (
+                                <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", backgroundColor: "#fef3c7", color: "#b45309", padding: "20px", textAlign: "center", zIndex: 10 }}>
+                                    <span style={{ fontSize: "48px", marginBottom: "15px" }}>🔒</span>
+                                    <h3 style={{ margin: "0 0 10px 0", fontSize: "22px", fontWeight: "700" }}>Video này đã bị khóa</h3>
+                                    <p style={{ margin: 0, fontSize: "16px", maxWidth: "450px", lineHeight: "1.5" }}>Bạn cần <strong>Mua khóa học</strong> để xem được video bài giảng này. Hãy đăng ký ngay để mở khóa toàn bộ lộ trình học tập nhé!</p>
+                                </div>
+                            ) : currentLesson.videoUrl ? (
+                                <>
+                                    {resumePrompt && (
+                                        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.7)", zIndex: 50 }}>
+                                            <div style={{ backgroundColor: "#1e293b", padding: "24px", borderRadius: "12px", textAlign: "center", maxWidth: "400px", color: "#f8fafc", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}>
+                                                <div style={{ fontSize: "36px", marginBottom: "12px" }}>⏱️</div>
+                                                <h3 style={{ margin: "0 0 12px 0", fontSize: "18px", fontWeight: "600" }}>Tiếp tục bài học?</h3>
+                                                <p style={{ margin: "0 0 20px 0", fontSize: "14px", color: "#cbd5e1", lineHeight: "1.5" }}>
+                                                    Hệ thống ghi nhận bạn đang xem dở bài học này. Bạn có muốn tiếp tục xem từ vị trí đã lưu không?
+                                                </p>
+                                                <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+                                                    <button 
+                                                        onClick={() => {
+                                                            if (videoRef.current) {
+                                                                videoRef.current.currentTime = resumePrompt.savedTime;
+                                                                videoRef.current.play().catch(e => console.log("Auto-play blocked:", e));
+                                                            }
+                                                            setResumePrompt(null);
+                                                        }}
+                                                        style={{ padding: "8px 20px", borderRadius: "6px", border: "none", backgroundColor: "#3b82f6", color: "white", fontWeight: "600", cursor: "pointer" }}
+                                                    >
+                                                        Xem tiếp
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => setResumePrompt(null)}
+                                                        style={{ padding: "8px 20px", borderRadius: "6px", border: "1px solid #475569", backgroundColor: "transparent", color: "#cbd5e1", fontWeight: "600", cursor: "pointer" }}
+                                                    >
+                                                        Từ đầu
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {isYouTube(currentLesson.videoUrl) ? (
+                                        <div id="youtube-player-container" style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}></div>
+                                    ) : (
+                                        <video
+                                            ref={videoRef}
+                                            src={currentLesson.videoUrl.startsWith("http") ? currentLesson.videoUrl : `http://localhost:8080${currentLesson.videoUrl}`}
+                                            controls
+                                            onTimeUpdate={handleTimeUpdate}
+                                            style={{ width: "100%", height: "100%", display: "block", position: "absolute", top: 0, left: 0 }}
+                                        />
+                                    )}
+                                </>
+                            ) : (
+                                <div className="video-placeholder" style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>
+                                    <div className="play-button-large" style={{ fontSize: "40px", marginBottom: "10px" }}>▶</div>
+                                    <p style={{ margin: 0, color: "#fff" }}>Chưa có video: {currentLesson.title}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* POP-UP QUIZ OVERLAY */}
+                        {currentQuiz && (
+                            <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.85)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 50 }}>
+                                <div style={{ background: "#fff", padding: "30px", borderRadius: "12px", width: "80%", maxWidth: "550px", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "10px", borderBottom: "2px solid #fde68a", paddingBottom: "10px", marginBottom: "20px" }}>
+                                        <span style={{ fontSize: "24px" }}>🧠</span>
+                                        <h3 style={{ margin: 0, color: "#b45309", fontSize: "18px", fontWeight: "700" }}>Câu hỏi tương tác</h3>
+                                    </div>
+                                    <p style={{ fontSize: "16px", fontWeight: "600", marginBottom: "20px", color: "#1e293b", lineHeight: "1.5" }}>{currentQuiz.questionText}</p>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                        {['A', 'B', 'C', 'D'].map(opt => (
+                                            <button 
+                                                key={opt}
+                                                onClick={() => setQuizSelectedOption(opt)}
+                                                style={{ 
+                                                    padding: "12px 15px", 
+                                                    textAlign: "left", 
+                                                    background: quizSelectedOption === opt ? "#eff6ff" : "#f8fafc", 
+                                                    border: `2px solid ${quizSelectedOption === opt ? "#3b82f6" : "#e2e8f0"}`, 
+                                                    borderRadius: "8px", 
+                                                    cursor: "pointer",
+                                                    fontSize: "14px",
+                                                    fontWeight: quizSelectedOption === opt ? "600" : "500",
+                                                    color: quizSelectedOption === opt ? "#1d4ed8" : "#334155"
+                                                }}
+                                            >
+                                                <strong style={{ display: "inline-block", width: "25px", color: quizSelectedOption === opt ? "#2563eb" : "#64748b" }}>{opt}.</strong> {currentQuiz[`option${opt}`]}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div style={{ marginTop: "25px", display: "flex", justifyContent: "flex-end" }}>
+                                        <button 
+                                            onClick={() => {
+                                                if (!quizSelectedOption) return alert("Vui lòng chọn 1 đáp án!");
+                                                if (quizSelectedOption === currentQuiz.correctOption) {
+                                                    alert("Chính xác! Mời bạn tiếp tục xem bài giảng.");
+                                                    
+                                                    setAnsweredQuizzes(prev => {
+                                                        const newSet = new Set(prev);
+                                                        newSet.add(currentQuiz.id);
+                                                        return newSet;
+                                                    });
+                                                    
+                                                    setCurrentQuiz(null);
+                                                    
+                                                    if (isYouTube(currentLesson.videoUrl)) {
+                                                        const iframe = document.getElementById('youtube-player-container');
+                                                        if (iframe && iframe.contentWindow) {
+                                                            iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+                                                        }
+                                                    } else {
+                                                        if (videoRef.current) videoRef.current.play();
+                                                    }
+                                                } else {
+                                                    alert("Sai rồi! Hãy suy nghĩ lại để được học tiếp nhé.");
+                                                }
+                                            }}
+                                            style={{ padding: "12px 25px", background: "#f59e0b", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "15px" }}
+                                        >
+                                            Trả lời & Xem tiếp
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    )}
-                    {isYouTube(currentLesson.videoUrl) ? (
-                    // Phải dùng thẻ div rỗng để YouTube API tự động nhúng iframe vào đây một cách chính xác
-                    <div id="youtube-player-container" style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}></div>
-                ) : (
-                    <video
-                        ref={videoRef}
-                        src={currentLesson.videoUrl.startsWith("http") ? currentLesson.videoUrl : `http://localhost:8080${currentLesson.videoUrl}`}
-                        controls
-                        onTimeUpdate={handleTimeUpdate}
-                        style={{ width: "100%", height: "100%", display: "block", position: "absolute", top: 0, left: 0 }}
-                    />
-                )}
-                </>
-            ) : (
-                <div className="video-placeholder" style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>
-                    <div className="play-button-large" style={{ fontSize: "40px", marginBottom: "10px" }}>▶</div>
-                    <p style={{ margin: 0, color: "#fff" }}>Chưa có video: {currentLesson.title}</p>
-                </div>
-            )}
-        </div>
-
-        {/* POP-UP QUIZ OVERLAY */}
-        {currentQuiz && (
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.85)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 50, fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
-                <div style={{ background: "#fff", padding: "30px", borderRadius: "12px", width: "80%", maxWidth: "550px", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", borderBottom: "2px solid #fde68a", paddingBottom: "10px", marginBottom: "20px" }}>
-                        <span style={{ fontSize: "24px" }}>🧠</span>
-                        <h3 style={{ margin: 0, color: "#b45309", fontSize: "18px", fontWeight: "700" }}>Câu hỏi tương tác</h3>
+                        )}
                     </div>
-                    <p style={{ fontSize: "16px", fontWeight: "600", marginBottom: "20px", color: "#1e293b", lineHeight: "1.5" }}>{currentQuiz.questionText}</p>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                        {['A', 'B', 'C', 'D'].map(opt => (
-                            <button 
-                                key={opt}
-                                onClick={() => setQuizSelectedOption(opt)}
-                                style={{ 
-                                    padding: "12px 15px", 
-                                    textAlign: "left", 
-                                    background: quizSelectedOption === opt ? "#eff6ff" : "#f8fafc", 
-                                    border: `2px solid ${quizSelectedOption === opt ? "#3b82f6" : "#e2e8f0"}`, 
-                                    borderRadius: "8px", 
-                                    cursor: "pointer",
-                                    fontSize: "14px",
-                                    fontWeight: quizSelectedOption === opt ? "600" : "500",
-                                    color: quizSelectedOption === opt ? "#1d4ed8" : "#334155",
-                                    transition: "all 0.2s ease"
-                                }}
-                            >
-                                <strong style={{ display: "inline-block", width: "25px", color: quizSelectedOption === opt ? "#2563eb" : "#64748b" }}>{opt}.</strong> {currentQuiz[`option${opt}`]}
-                            </button>
-                        ))}
-                    </div>
-                    <div style={{ marginTop: "25px", display: "flex", justifyContent: "flex-end" }}>
-                        <button 
-                            onClick={() => {
-                                if (!quizSelectedOption) return alert("Vui lòng chọn 1 đáp án!");
-                                if (quizSelectedOption === currentQuiz.correctOption) {
-                                    alert("Chính xác! Mời bạn tiếp tục xem bài giảng.");
-                                    
-                                    setAnsweredQuizzes(prev => {
-                                        const newSet = new Set(prev);
-                                        newSet.add(currentQuiz.id);
-                                        return newSet;
-                                    });
-                                    
-                                    setCurrentQuiz(null);
-                                    
-                                    if (isYouTube(currentLesson.videoUrl)) {
-                                        const iframe = document.getElementById('youtube-player-container');
-                                        if (iframe && iframe.contentWindow) {
-                                            iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-                                        }
-                                    } else {
-                                        if (videoRef.current) videoRef.current.play();
-                                    }
-                                } else {
-                                    alert("Sai rồi! Hãy suy nghĩ lại và chọn đáp án chính xác để được học tiếp nhé.");
-                                }
-                            }}
-                            style={{ padding: "12px 25px", background: "#f59e0b", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", cursor: "pointer", fontSize: "15px", boxShadow: "0 4px 6px rgba(245, 158, 11, 0.2)" }}
-                        >
-                            Trả lời & Xem tiếp
-                        </button>
-                    </div>
-                </div>
-            </div>
-        )}
-    </div>
 
                     <div className="learning-content">
                         <h1 className="current-lesson-title">{currentLesson.title}</h1>
@@ -782,7 +794,6 @@ export default function LearningPage() {
                                             currentLesson.materials.map((material) => (
                                                 <div className="material-file" key={material.id}>
                                                     📄 <span>{material.title}</span>
-                                                    {/* 🔥 CHUẨN XÁC: Truyền trọn vẹn object material vào hàm xử lý mới */}
                                                     <button
                                                         onClick={() => handleDownload(material)}
                                                         className="download-btn"
@@ -846,126 +857,150 @@ export default function LearningPage() {
 
                                     <div className="questions-list" style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
                                         {questions.length > 0 ? (
-                                            questions.map((q) => (
-                                                <div key={q.id} className="question-thread" style={{ marginBottom: "15px" }}>
-                                                    <div className="question-item" style={{ display: "flex", gap: "12px", padding: "12px", backgroundColor: "#f8f9fa", borderRadius: "8px" }}>
-                                                        <img
-                                                            src={
-                                                                q.userAvatarUrl && q.userAvatarUrl !== "null" && q.userAvatarUrl.trim() !== ""
-                                                                    ? (q.userAvatarUrl.startsWith("http") ? q.userAvatarUrl : `http://localhost:8080${q.userAvatarUrl}`)
-                                                                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(q.userFullName || "User")}&background=64748b&color=fff`
-                                                            }
-                                                            onError={(e) => {
-                                                                e.target.onerror = null; 
-                                                                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(q.userFullName || "User")}&background=64748b&color=fff`;
-                                                            }}
-                                                            alt="Avatar"
-                                                            style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover" }}
-                                                        />
-                                                        <div className="question-body" style={{ flex: 1 }}>
-                                                            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "5px" }}>
-                                                                <h5 style={{ margin: 0, fontSize: "14px", color: "#333", display: "flex", alignItems: "center", gap: "6px" }}>
-                                                                    {q.userFullName}
-                                                                    {q.userRoleId === 2 && <span style={{ backgroundColor: "#28a745", color: "#fff", fontSize: "10px", padding: "2px 6px", borderRadius: "4px" }}>Giáo viên</span>}
-                                                                    {q.userRoleId === 3 && <span style={{ backgroundColor: "#6c757d", color: "#fff", fontSize: "10px", padding: "2px 6px", borderRadius: "4px" }}>Học sinh</span>}
-                                                                </h5>
-                                                                {q.timestampSeconds != null && (
+                                            questions.map((q) => {
+                                                const qId = q.id || q.questionId;
+                                                return (
+                                                    <div key={qId} className="question-thread" style={{ marginBottom: "15px" }}>
+                                                        <div className="question-item" style={{ display: "flex", gap: "12px", padding: "12px", backgroundColor: "#f8f9fa", borderRadius: "8px" }}>
+                                                            <img
+                                                                src={
+                                                                    q.userAvatarUrl && q.userAvatarUrl !== "null" && q.userAvatarUrl.trim() !== ""
+                                                                        ? (q.userAvatarUrl.startsWith("http") ? q.userAvatarUrl : `http://localhost:8080${q.userAvatarUrl}`)
+                                                                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(q.userFullName || "User")}&background=64748b&color=fff`
+                                                                }
+                                                                onError={(e) => {
+                                                                    e.target.onerror = null; 
+                                                                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(q.userFullName || "User")}&background=64748b&color=fff`;
+                                                                }}
+                                                                alt="Avatar"
+                                                                style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover" }}
+                                                            />
+                                                            <div className="question-body" style={{ flex: 1 }}>
+                                                                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "5px" }}>
+                                                                    <h5 style={{ margin: 0, fontSize: "14px", color: "#333", display: "flex", alignItems: "center", gap: "6px" }}>
+                                                                        {q.userFullName}
+                                                                        {q.userRoleId === 2 && <span style={{ backgroundColor: "#28a745", color: "#fff", fontSize: "10px", padding: "2px 6px", borderRadius: "4px" }}>Giáo viên</span>}
+                                                                        {q.userRoleId === 3 && <span style={{ backgroundColor: "#6c757d", color: "#fff", fontSize: "10px", padding: "2px 6px", borderRadius: "4px" }}>Học sinh</span>}
+                                                                    </h5>
+                                                                    {q.timestampSeconds != null && (
+                                                                        <button 
+                                                                            onClick={() => seekToTime(q.timestampSeconds)}
+                                                                            className="timestamp-badge"
+                                                                            style={{ margin: 0 }}
+                                                                        >
+                                                                            {formatTime(q.timestampSeconds)}
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                                <p style={{ margin: "0 0 5px 0", fontSize: "15px", color: "#444" }}>{q.content}</p>
+                                                                <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
+                                                                    <span style={{ fontSize: "12px", color: "#888" }}>{new Date(q.createdAt).toLocaleString("vi-VN")}</span>
                                                                     <button 
-                                                                        onClick={() => seekToTime(q.timestampSeconds)}
-                                                                        className="timestamp-badge"
-                                                                        style={{ margin: 0 }}
+                                                                        onClick={() => {
+                                                                            if (replyingTo === qId) {
+                                                                                setReplyingTo(null);
+                                                                            } else {
+                                                                                setReplyingTo(qId);
+                                                                                setReplyContent(`@${q.userFullName}: `);
+                                                                            }
+                                                                        }} 
+                                                                        style={{ fontSize: "12px", color: "#007bff", background: "none", border: "none", cursor: "pointer", fontWeight: "600", padding: 0 }}
                                                                     >
-                                                                        {formatTime(q.timestampSeconds)}
+                                                                        Trả lời
                                                                     </button>
-                                                                )}
-                                                            </div>
-                                                            <p style={{ margin: "0 0 5px 0", fontSize: "15px", color: "#444" }}>{q.content}</p>
-                                                            <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
-                                                                <span style={{ fontSize: "12px", color: "#888" }}>{new Date(q.createdAt).toLocaleString("vi-VN")}</span>
-                                                                <button 
-                                                                    onClick={() => {
-                                                                        if (replyingTo === q.id) {
-                                                                            setReplyingTo(null);
-                                                                        } else {
-                                                                            setReplyingTo(q.id);
-                                                                            setReplyContent(`@${q.userFullName}: `);
-                                                                        }
-                                                                    }} 
-                                                                    style={{ fontSize: "12px", color: "#007bff", background: "none", border: "none", cursor: "pointer", fontWeight: "600", padding: 0 }}
-                                                                >
-                                                                    Trả lời
-                                                                </button>
+
+                                                                    {/* 🔥 ADMIN THÊM NÚT XÓA CÂU HỎI */}
+                                                                    {isAdmin && (
+                                                                        <button 
+                                                                            onClick={() => handleDeleteQuestion(qId)} 
+                                                                            style={{ fontSize: "12px", color: "#dc3545", background: "none", border: "none", cursor: "pointer", fontWeight: "600", padding: 0 }}
+                                                                        >
+                                                                            🗑️ Gỡ câu hỏi
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
 
-                                                    {q.answers && q.answers.length > 0 && (
-                                                        <div className="answers-list" style={{ marginLeft: "52px", marginTop: "10px", display: "flex", flexDirection: "column", gap: "10px" }}>
-                                                            {q.answers.map(ans => (
-                                                                <div key={ans.id} className="answer-item" style={{ display: "flex", gap: "12px", padding: "10px", backgroundColor: "#f1f3f5", borderRadius: "8px", borderLeft: "3px solid #dee2e6" }}>
-                                                                    <img
-                                                                        src={
-                                                                            ans.userAvatarUrl && ans.userAvatarUrl !== "null" && ans.userAvatarUrl.trim() !== ""
-                                                                                ? (ans.userAvatarUrl.startsWith("http") ? ans.userAvatarUrl : `http://localhost:8080${ans.userAvatarUrl}`)
-                                                                                : `https://ui-avatars.com/api/?name=${encodeURIComponent(ans.userFullName || "User")}&background=64748b&color=fff`
-                                                                        }
-                                                                        onError={(e) => {
-                                                                            e.target.onerror = null; 
-                                                                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ans.userFullName || "User")}&background=64748b&color=fff`;
-                                                                        }}
-                                                                        alt="Avatar"
-                                                                        style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }}
-                                                                    />
-                                                                    <div className="answer-body" style={{ flex: 1 }}>
-                                                                        <h5 style={{ margin: "0 0 5px 0", fontSize: "13px", color: "#333", display: "flex", alignItems: "center", gap: "6px" }}>
-                                                                            {ans.userFullName}
-                                                                            {ans.userRoleId === 2 && <span style={{ backgroundColor: "#28a745", color: "#fff", fontSize: "10px", padding: "2px 6px", borderRadius: "4px" }}>Giáo viên</span>}
-                                                                            {ans.userRoleId === 3 && <span style={{ backgroundColor: "#6c757d", color: "#fff", fontSize: "10px", padding: "2px 6px", borderRadius: "4px" }}>Học sinh</span>}
-                                                                        </h5>
-                                                                        <p style={{ margin: "0 0 5px 0", fontSize: "14px", color: "#444" }}>{ans.content}</p>
-                                                                        <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
-                                                                            <span style={{ fontSize: "12px", color: "#888" }}>{new Date(ans.createdAt).toLocaleString("vi-VN")}</span>
-                                                                            <button 
-                                                                                onClick={() => {
-                                                                                    setReplyingTo(q.id);
-                                                                                    setReplyContent(`@${ans.userFullName}: `);
-                                                                                }} 
-                                                                                style={{ fontSize: "12px", color: "#007bff", background: "none", border: "none", cursor: "pointer", fontWeight: "600", padding: 0 }}
-                                                                            >
-                                                                                Trả lời
-                                                                            </button>
+                                                        {/* BÌNH LUẬN CON */}
+                                                        {q.answers && q.answers.length > 0 && (
+                                                            <div className="answers-list" style={{ marginLeft: "52px", marginTop: "10px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                                                                {q.answers.map(ans => (
+                                                                    <div key={ans.id} className="answer-item" style={{ display: "flex", gap: "12px", padding: "10px", backgroundColor: "#f1f3f5", borderRadius: "8px", borderLeft: "3px solid #dee2e6" }}>
+                                                                        <img
+                                                                            src={
+                                                                                ans.userAvatarUrl && ans.userAvatarUrl !== "null" && ans.userAvatarUrl.trim() !== ""
+                                                                                    ? (ans.userAvatarUrl.startsWith("http") ? ans.userAvatarUrl : `http://localhost:8080${ans.userAvatarUrl}`)
+                                                                                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(ans.userFullName || "User")}&background=64748b&color=fff`
+                                                                            }
+                                                                            onError={(e) => {
+                                                                                e.target.onerror = null; 
+                                                                                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ans.userFullName || "User")}&background=64748b&color=fff`;
+                                                                            }}
+                                                                            alt="Avatar"
+                                                                            style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }}
+                                                                        />
+                                                                        <div className="answer-body" style={{ flex: 1 }}>
+                                                                            <h5 style={{ margin: "0 0 5px 0", fontSize: "13px", color: "#333", display: "flex", alignItems: "center", gap: "6px" }}>
+                                                                                {ans.userFullName}
+                                                                                {ans.userRoleId === 2 && <span style={{ backgroundColor: "#28a745", color: "#fff", fontSize: "10px", padding: "2px 6px", borderRadius: "4px" }}>Giáo viên</span>}
+                                                                                {ans.userRoleId === 3 && <span style={{ backgroundColor: "#6c757d", color: "#fff", fontSize: "10px", padding: "2px 6px", borderRadius: "4px" }}>Học sinh</span>}
+                                                                            </h5>
+                                                                            <p style={{ margin: "0 0 5px 0", fontSize: "14px", color: "#444" }}>{ans.content}</p>
+                                                                            <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
+                                                                                <span style={{ fontSize: "12px", color: "#888" }}>{new Date(ans.createdAt).toLocaleString("vi-VN")}</span>
+                                                                                <button 
+                                                                                    onClick={() => {
+                                                                                        setReplyingTo(qId);
+                                                                                        setReplyContent(`@${ans.userFullName}: `);
+                                                                                    }} 
+                                                                                    style={{ fontSize: "12px", color: "#007bff", background: "none", border: "none", cursor: "pointer", fontWeight: "600", padding: 0 }}
+                                                                                >
+                                                                                    Trả lời
+                                                                                </button>
+
+                                                                                {/* 🔥 ADMIN THÊM NÚT XÓA BÌNH LUẬN */}
+                                                                                {isAdmin && (
+                                                                                    <button 
+                                                                                        onClick={() => handleDeleteAnswer(qId, ans.id)} 
+                                                                                        style={{ fontSize: "12px", color: "#dc3545", background: "none", border: "none", cursor: "pointer", fontWeight: "500", padding: 0 }}
+                                                                                    >
+                                                                                        ❌ Xóa phản hồi
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
                                                                         </div>
                                                                     </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
+                                                                ))}
+                                                            </div>
+                                                        )}
 
-                                                    {replyingTo === q.id && (
-                                                        <div className="reply-form" style={{ marginLeft: "52px", marginTop: "10px", display: "flex", gap: "8px" }}>
-                                                            <input 
-                                                                type="text" 
-                                                                placeholder="Nhập câu trả lời của bạn..." 
-                                                                value={replyContent}
-                                                                onChange={(e) => setReplyContent(e.target.value)}
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === 'Enter') {
-                                                                        e.preventDefault();
-                                                                        handlePostAnswer(q.id);
-                                                                    }
-                                                                }}
-                                                                style={{ flex: 1, padding: "8px 12px", borderRadius: "6px", border: "1px solid #ccc", fontSize: "14px" }}
-                                                            />
-                                                            <button 
-                                                                onClick={() => handlePostAnswer(q.id)}
-                                                                style={{ padding: "8px 16px", borderRadius: "6px", backgroundColor: "#28a745", color: "#fff", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: "bold" }}
-                                                            >
-                                                                Gửi
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))
+                                                        {replyingTo === qId && (
+                                                            <div className="reply-form" style={{ marginLeft: "52px", marginTop: "10px", display: "flex", gap: "8px" }}>
+                                                                <input 
+                                                                    type="text" 
+                                                                    placeholder="Nhập câu trả lời của bạn..." 
+                                                                    value={replyContent}
+                                                                    onChange={(e) => setReplyContent(e.target.value)}
+                                                                    onKeyDown={(e) => {
+                                                                        if (e.key === 'Enter') {
+                                                                            e.preventDefault();
+                                                                            handlePostAnswer(qId);
+                                                                        }
+                                                                    }}
+                                                                    style={{ flex: 1, padding: "8px 12px", borderRadius: "6px", border: "1px solid #ccc", fontSize: "14px" }}
+                                                                />
+                                                                <button 
+                                                                    onClick={() => handlePostAnswer(qId)}
+                                                                    style={{ padding: "8px 16px", borderRadius: "6px", backgroundColor: "#28a745", color: "#fff", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: "bold" }}
+                                                                >
+                                                                    Gửi
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })
                                         ) : (
                                             <p style={{ color: "#888", textAlign: "center", padding: "20px" }}>Chưa có câu hỏi nào. Hãy là người đầu tiên thảo luận!</p>
                                         )}
@@ -1055,7 +1090,7 @@ export default function LearningPage() {
                                                     <input 
                                                         type="checkbox" 
                                                         checked={completedLessonIds.includes(lesson.id)} 
-                                                        onChange={() => {}} // Ngăn chặn React warning
+                                                        onChange={() => {}} 
                                                         style={{ cursor: "pointer" }} 
                                                     />
                                                 </div>

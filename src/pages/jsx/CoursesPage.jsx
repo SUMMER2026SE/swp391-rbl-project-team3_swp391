@@ -71,9 +71,15 @@ export default function CoursesPage() {
         const fetchCoursesFromBackend = async () => {
             try {
                 const response = await axiosClient.get("/courses");
+                const rawCourses = Array.isArray(response.data) ? response.data : [];
                 
-                if (response.data && response.data.length > 0) {
-                    const mappedData = response.data.map(c => {
+                // Lọc khóa học đã xuất bản
+                const publishedCourses = rawCourses.filter(c => 
+                    c.isPublished === true || String(c.status || "").toUpperCase() === "PUBLISHED"
+                );
+
+                if (publishedCourses.length > 0) {
+                    const mappedData = publishedCourses.map(c => {
                         let displayPrice = "Miễn phí";
                         const rawPrice = c.price || c.Price || 0;
                         if (rawPrice && Number(String(rawPrice).replace(/[^0-9]/g, '')) > 0) {
