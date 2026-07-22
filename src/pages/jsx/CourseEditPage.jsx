@@ -510,20 +510,6 @@ export default function CourseEditPage() {
                                             />
                                         </div>
                                         
-                                        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
-                                            <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600, fontFamily: "'Segoe UI', sans-serif" }}>Hoặc gắn link YouTube</span>
-                                            <input 
-                                                type="text" 
-                                                id={`new-lesson-yt-${chapter.id}`} 
-                                                placeholder="https://youtube.com/watch?v=..."
-                                                onChange={(e) => {
-                                                    const fileInput = document.getElementById(`new-lesson-vid-${chapter.id}`);
-                                                    if (fileInput) fileInput.value = ""; 
-                                                    handleYouTubeLinkChange(e, chapter.id);
-                                                }}
-                                                style={{ boxSizing: "border-box", padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontSize: "13px", background: "#fff", fontFamily: "'Segoe UI', sans-serif" }} 
-                                            />
-                                        </div>
                                         
                                         <div style={{ width: "110px", display: "flex", flexDirection: "column", gap: "4px" }}>
                                             <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600, textAlign: "center", fontFamily: "'Segoe UI', sans-serif" }}>Thời lượng</span>

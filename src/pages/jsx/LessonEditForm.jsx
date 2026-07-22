@@ -257,7 +257,6 @@ export default function LessonEditForm({ lesson, initialData, onSave, onCancel }
                         />
                     </div>
                     <div className="form-group" style={{ margin: 0, flex: 1 }}>
-                        <label style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px", fontFamily: "'Segoe UI', sans-serif" }}>Hoặc gắn link YouTube</label>
                         <input 
                             type="text" 
                             value={formData.videoUrl} 

@@ -234,6 +234,7 @@ export default function RegisterPage({ switchToLogin }) {
                 </div>
 
                 <div className="password-wrapper">
+                    <label>Password</label>
                     <input
                         type={showPassword ? "text" : "password"}
                         name="password"

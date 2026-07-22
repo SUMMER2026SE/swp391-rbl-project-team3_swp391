@@ -1,12 +1,14 @@
 import { useState } from "react";
 import "../css/ForgotPasswordPage.css";
 import axiosClient from "../../api/axiosClient";
+import { useNavigate } from "react-router-dom";
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState("");
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -55,7 +57,7 @@ export default function ForgotPasswordPage() {
                     <button disabled={loading}>
                         {loading ? "Sending..." : "Send Reset Link"}
                     </button>
-                    <p style={{marginTop: '15px', color: '#6366f1', cursor: 'pointer', fontWeight: 'bold'}} onClick={() => navigate("/")}>
+                    <p style={{marginTop: '15px', color: '#6366f1', cursor: 'pointer', fontWeight: 'bold'}} onClick={() => navigate("/auth")}>
                         ← Quay lại Đăng nhập
                     </p>
                 </form>
