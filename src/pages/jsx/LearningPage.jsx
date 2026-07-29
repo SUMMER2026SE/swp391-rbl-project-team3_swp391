@@ -13,6 +13,7 @@ export default function LearningPage() {
     const [expandedChapter, setExpandedChapter] = useState(0);
     const [resumePrompt, setResumePrompt] = useState(null);
     const [showSummaryPopup, setShowSummaryPopup] = useState(false);
+    const [summaryLoading, setSummaryLoading] = useState(false);
     const [completedChapterId, setCompletedChapterId] = useState(null);
 
     // 🔥 LẤY THÔNG TIN NGƯỜI DÙNG HIỆN TẠI
@@ -285,7 +286,20 @@ export default function LearningPage() {
 
                 if (res.data.chapterCompleted && res.data.chapterId) {
                     setCompletedChapterId(res.data.chapterId);
+                    // Hiện popup ngay
+                    setSummaryLoading(true);
                     setShowSummaryPopup(true);
+
+                    try {
+                        await axiosClient.post(
+                            `/ai/chapter-summary/${res.data.chapterId}`
+                        );
+
+                        setSummaryLoading(false);
+
+                    } catch (e) {
+                        setSummaryLoading(false);
+                    }
                 }
             } else {
                 setCompletedLessonIds(prev => prev.filter(id => id !== lessonId));
@@ -1109,45 +1123,57 @@ export default function LearningPage() {
                     </div>
                 </div>
             </div>
-            {
-                showSummaryPopup && (
-                    <div className="summary-popup-overlay">
-                        <div className="summary-popup">
-                            <h2>
-                                🎉 Chúc mừng!
-                            </h2>
-                            <p>
-                                Bạn đã hoàn thành chương học.
-                            </p>
-                            <p>
-                                AI đã tạo bản tóm tắt chương dành riêng cho bạn.
-                            </p>
-                            <div className="summary-popup-buttons">
-                                <button
-                                    className="summary-btn-primary"
-                                    onClick={()=>{
-                                        navigate(
-                                            `/chapter-summary/${completedChapterId}`
-                                        );
-                                    }}
-                                >
-                                    Xem AI Summary
-                                </button>
+            {showSummaryPopup && (
+                <div className="summary-popup-overlay">
+                    <div className="summary-popup">
 
-                                <button
-                                    className="summary-btn-secondary"
-                                    onClick={()=>{
-                                        setShowSummaryPopup(false);
-                                    }}
-                                >
-                                    Để sau
-                                </button>
+                        {summaryLoading ? (
+                            <>
+                                <h2>🤖 AI đang tạo Summary</h2>
 
-                            </div>
-                        </div>
+                                <p>
+                                    Vui lòng chờ trong giây lát...
+                                </p>
+
+                                <div className="spinner"></div>
+                            </>
+                        ) : (
+                            <>
+                                <h2>🎉 Chúc mừng!</h2>
+
+                                <p>Bạn đã hoàn thành chương học.</p>
+
+                                <p>
+                                    AI đã tạo bản tóm tắt chương dành riêng cho bạn.
+                                </p>
+
+                                <div className="summary-popup-buttons">
+
+                                    <button
+                                        className="summary-btn-primary"
+                                        onClick={() =>
+                                            navigate(`/chapter-summary/${completedChapterId}`)
+                                        }
+                                    >
+                                        Xem AI Summary
+                                    </button>
+
+                                    <button
+                                        className="summary-btn-secondary"
+                                        onClick={() =>
+                                            setShowSummaryPopup(false)
+                                        }
+                                    >
+                                        Để sau
+                                    </button>
+
+                                </div>
+                            </>
+                        )}
+
                     </div>
-                )
-            }
+                </div>
+            )}
         </div>
     );
 }
