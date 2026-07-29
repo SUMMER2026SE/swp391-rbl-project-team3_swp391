@@ -148,7 +148,7 @@ const currentUserId = decoded.userId || decoded.id;
             localStorage.setItem("token", data.token);
             localStorage.setItem("user", JSON.stringify(data.user));
 
-            setMessage("✅ Google Login Success!");
+            setMessage(" Google Login Success!");
             setMessageType("success");
 
             // 🔥 TỰ ĐỘNG GHI LOG: Đăng nhập bằng tài khoản Google thành công

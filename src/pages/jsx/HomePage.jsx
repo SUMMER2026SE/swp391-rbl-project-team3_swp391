@@ -194,7 +194,13 @@ export default function HomePage() {
                         </div>
                         <div className="user-info">
                             <h4>{user.fullName}</h4>
-                            <span>Student</span>
+                            <span>
+                                {user.role === "TEACHER"
+                                    ? "Teacher"
+                                    : user.role === "ADMIN"
+                                    ? "Admin"
+                                    : "Student"}
+                            </span>
                         </div>
                     </div>
                 )}

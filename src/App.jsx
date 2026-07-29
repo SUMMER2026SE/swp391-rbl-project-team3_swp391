@@ -4,6 +4,7 @@ import GlobalChatbot from './components/GlobalChatbot';
 import AuthPage from './pages/jsx/AuthPage';
 import HomePage from './pages/jsx/HomePage';
 import ProfilePage from './pages/jsx/ProfilePage';
+import RootRedirect from './components/RootRedirect';
 
 import ForgotPasswordPage from './pages/jsx/ForgotPasswordPage';
 import ChangePasswordPage from './pages/jsx/ChangePasswordPage';
@@ -64,9 +65,9 @@ function App() {
         <>
             <GlobalChatbot />
             <Routes>
-                <Route path='/' element={<HomePage />} />
-            <Route path='/auth' element={<AuthPage />} />
-            <Route path='/profile' element={<ProfilePage />} />
+                <Route path="/" element={<RootRedirect />} />
+                <Route path='/auth' element={<AuthPage />} />
+                <Route path='/profile' element={<ProfilePage />} />
 
             {/* Login - Register */}
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
