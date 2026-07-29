@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
 import "../css/CoursesPage.css";
 
 export default function CoursesPage() {
     const navigate = useNavigate();
-    const [searchTerm, setSearchTerm] = useState("");
+    const [searchParams] = useSearchParams(); //SEARCH ALL COURSES
+    const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
     const [activeSubject, setActiveSubject] = useState("all");
     const [subjects, setSubjects] = useState([]); // 🔥 THÊM MỚI: State lưu danh sách môn học cho bộ lọc
     const [allCourses, setAllCourses] = useState([]);
@@ -26,6 +27,9 @@ export default function CoursesPage() {
         };
         return thumbMap[subjectName] || "https://images.unsplash.com/photo-1516321310764-9f1e6e8b0c0a?auto=format&fit=crop&w=400&q=80";
     };
+    useEffect(() => {
+        setSearchTerm(searchParams.get("search") || "");
+    }, [searchParams]);
 
     useEffect(() => {
         // 1. Tải danh sách môn học hoạt động về làm bộ lọc menu sidebar
@@ -117,7 +121,12 @@ export default function CoursesPage() {
                             id: c.course_id || c.courseId || c.id,
                             title: c.course_title || c.courseTitle || c.title || "Khóa học chưa tên",
                             thumbnail: thumbnail,
-                            teacher: c.teacher_name || c.teacherName || c.teacher || "Giáo viên",
+                            teacher: c.teacher_name ||
+                                    c.teacherName ||
+                                    c.teacher?.fullName ||
+                                    c.teacher?.name ||
+                                    c.instructorName ||
+                                    "Giáo viên",
                             subject: sId, // Dùng ID để lọc cho chính xác
                             subjectName: sName,
                             price: displayPrice,

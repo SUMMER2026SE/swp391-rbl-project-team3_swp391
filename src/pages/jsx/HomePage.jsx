@@ -22,6 +22,7 @@ export default function HomePage() {
         btnText: "Bắt đầu ngay"
     });
 
+    const [allCourses, setAllCourses] = useState([]);
     const [featuredCourses, setFeaturedCourses] = useState([]);
 
     const getSubjectThumbnail = (subjectName) => {
@@ -141,6 +142,7 @@ export default function HomePage() {
                             userId: c.teacher_id || c.teacherId || c.userId || 2
                         };
                     });
+                    setAllCourses(mappedData)
                     setFeaturedCourses(mappedData.slice(0, 3));
                 } else {
                     setFeaturedCourses([]);
@@ -284,22 +286,68 @@ export default function HomePage() {
                                 {(() => {
                                     const normalizeText = (text) => String(text || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
                                     const searchNorm = normalizeText(searchQuery);
-                                    const filtered = featuredCourses.filter(c => normalizeText(c.title).includes(searchNorm));
+                                    const filtered = allCourses.filter(course => {
+                                        const keyword = normalizeText(searchQuery);
+
+                                        return (
+                                            normalizeText(course.title).includes(keyword) ||
+                                            normalizeText(course.teacher).includes(keyword) ||
+                                            normalizeText(course.subject).includes(keyword)
+                                        );
+                                    });
                                     
                                     return filtered.length > 0 ? (
                                         <ul style={{ listStyle: "none", margin: 0, padding: "8px 0" }}>
                                             {filtered.slice(0, 5).map(course => (
-                                                <li 
-                                                    key={course.id} 
-                                                    style={{ padding: "12px 20px", display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", transition: "background 0.2s" }}
-                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#334155"}
-                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                                                <li
+                                                    key={course.id}
+                                                    style={{
+                                                        padding: "12px 20px",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        gap: "12px",
+                                                        cursor: "pointer"
+                                                    }}
                                                     onMouseDown={() => navigate(`/course/${course.id}`)}
                                                 >
-                                                    <img src={course.thumbnail} alt={course.title} style={{ width: "40px", height: "40px", borderRadius: "8px", objectFit: "cover" }} />
-                                                    <div style={{ display: "flex", flexDirection: "column" }}>
-                                                        <span style={{ color: "#fff", fontWeight: "600", fontSize: "14px" }}>{course.title}</span>
-                                                        <span style={{ color: "#94a3b8", fontSize: "12px" }}>{course.subjectName || course.subject}</span>
+                                                    <img
+                                                        src={course.thumbnail}
+                                                        alt={course.title}
+                                                        style={{
+                                                            width: "42px",
+                                                            height: "42px",
+                                                            borderRadius: "8px",
+                                                            objectFit: "cover"
+                                                        }}
+                                                    />
+
+                                                    <div style={{ flex: 1 }}>
+                                                        <div
+                                                            style={{
+                                                                color: "#fff",
+                                                                fontWeight: 600
+                                                            }}
+                                                        >
+                                                            {course.title}
+                                                        </div>
+
+                                                        <div
+                                                            style={{
+                                                                color: "#94a3b8",
+                                                                fontSize: "13px"
+                                                            }}
+                                                        >
+                                                            👨‍🏫 {course.teacher}
+                                                        </div>
+
+                                                        <div
+                                                            style={{
+                                                                color: "#64748b",
+                                                                fontSize: "12px"
+                                                            }}
+                                                        >
+                                                            📚 {course.subject}
+                                                        </div>
                                                     </div>
                                                 </li>
                                             ))}

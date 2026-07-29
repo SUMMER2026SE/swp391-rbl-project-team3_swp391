@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
+import Swal from "sweetalert2";
 import "../css/AdminUsersPage.css";
 
 export default function AdminCoursesPage() {
@@ -42,8 +43,14 @@ export default function AdminCoursesPage() {
 
         const userObj = JSON.parse(storedUser);
         if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
-            alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
-            navigate("/home");
+            Swal.fire({
+                icon: "warning",
+                title: "Không có quyền truy cập",
+                text: "Bạn không được phép sử dụng chức năng này.",
+                confirmButtonColor: "#2563eb"
+            }).then(() => {
+                navigate("/home");
+            });
             return;
         }
 
@@ -62,7 +69,12 @@ export default function AdminCoursesPage() {
             }
         } catch (error) {
             console.error("❌ Lỗi khi tải danh sách khóa học:", error);
-            alert("Không thể tải danh sách khóa học từ server.");
+            Swal.fire({
+                icon: "error",
+                title: "Không thể tải dữ liệu",
+                text: "Vui lòng thử lại sau.",
+                confirmButtonColor: "#2563eb"
+            });
             setCourses([]);
         } finally {
             setLoading(false);
@@ -74,7 +86,27 @@ export default function AdminCoursesPage() {
         const courseId = course.id || course.courseId;
         const courseTitle = course.title || course.courseTitle || `Khóa học #${courseId}`;
 
-        if (!courseId || !window.confirm(`Bạn có chắc chắn muốn duyệt và xuất bản khóa học "${courseTitle}"?`)) return;
+        const result = await Swal.fire({
+            title: "Xuất bản khóa học?",
+            html: `
+                <b>${courseTitle}</b><br/><br/>
+                Khóa học sẽ được xuất bản và gửi thông báo tới giảng viên.
+            `,
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "✅ Duyệt",
+            cancelButtonText: "Hủy",
+            confirmButtonColor: "#2563eb",
+            cancelButtonColor: "#9ca3af"
+        });
+
+        if (!result.isConfirmed) return;
+        await Swal.fire({
+            icon: "success",
+            title: "Đã xuất bản!",
+            text: "Khóa học đã được duyệt và thông báo đã gửi tới giảng viên.",
+            confirmButtonColor: "#2563eb"
+        });
 
         try {
             await axiosClient.patch(`/admin/courses/${courseId}/status`, { 
@@ -98,11 +130,35 @@ export default function AdminCoursesPage() {
         const courseTitle = course.title || course.courseTitle || `Khóa học #${courseId}`;
 
         if (!courseId) return;
-        const reason = prompt(`Nhập lý do yêu cầu giảng viên chỉnh sửa khóa học "${courseTitle}":`);
+        const { value: reason } = await Swal.fire({
+            title: "Yêu cầu chỉnh sửa",
+            input: "textarea",
+            inputPlaceholder: "Nhập lý do cần chỉnh sửa...",
+            inputAttributes: {
+                rows: 5
+            },
+            showCancelButton: true,
+            confirmButtonText: "Gửi yêu cầu",
+            cancelButtonText: "Hủy",
+            confirmButtonColor: "#f59e0b",
+            inputValidator: (value) => {
+                if (!value) {
+                    return "Bạn phải nhập lý do.";
+                }
+            }
+        });
+
         if (!reason || !reason.trim()) {
             alert("⚠️ Bạn cần phải nhập lý do yêu cầu chỉnh sửa!");
             return;
         }
+
+        await Swal.fire({
+            icon: "success",
+            title: "Đã gửi!",
+            text: "Giảng viên đã nhận được yêu cầu chỉnh sửa.",
+            confirmButtonColor: "#2563eb"
+        });
 
         try {
             await axiosClient.patch(`/admin/courses/${courseId}/status`, {
@@ -128,11 +184,31 @@ export default function AdminCoursesPage() {
 
         if (!courseId) return;
 
-        const reason = prompt(`Nhập lý do hạ khóa học "${courseTitle}" xuống trạng thái Chờ duyệt:`);
+        const { value: reason } = await Swal.fire({
+            title: "Hạ khóa học",
+            text: "Khóa học sẽ quay về trạng thái Chờ duyệt.",
+            input: "textarea",
+            inputPlaceholder: "Nhập lý do...",
+            showCancelButton: true,
+            confirmButtonText: "Hạ khóa học",
+            cancelButtonText: "Hủy",
+            confirmButtonColor: "#ea580c",
+            inputValidator: (value) => {
+                if (!value) return "Bạn phải nhập lý do.";
+            }
+        });
+
         if (!reason || !reason.trim()) {
             alert("⚠️ Bạn phải nhập lý do để hạ khóa học!");
             return;
         }
+
+        await Swal.fire({
+            icon: "success",
+            title: "Đã chuyển trạng thái",
+            text: "Khóa học đã quay về Chờ duyệt.",
+            confirmButtonColor: "#2563eb"
+        });
 
         try {
             await axiosClient.patch(`/admin/courses/${courseId}/status`, {
@@ -158,11 +234,37 @@ export default function AdminCoursesPage() {
 
         if (!courseId) return;
 
-        const reason = prompt(`🚨 CẢNH BÁO: Xóa vĩnh viễn khóa học "${courseTitle}".\nNhập lý do xóa để gửi thông báo tới giảng viên:`);
+        const { value: reason } = await Swal.fire({
+            title: "Xóa khóa học?",
+            html: `
+                <b style="color:#dc2626">${courseTitle}</b><br><br>
+                Hành động này không thể hoàn tác.
+            `,
+            icon: "warning",
+            input: "textarea",
+            inputPlaceholder: "Nhập lý do xóa...",
+            showCancelButton: true,
+            confirmButtonText: "🗑️ Xóa",
+            cancelButtonText: "Hủy",
+            confirmButtonColor: "#dc2626",
+            cancelButtonColor: "#9ca3af",
+            inputValidator: (value) => {
+                if (!value) return "Bạn phải nhập lý do.";
+            }
+        });
+
+
         if (!reason || !reason.trim()) {
             alert("⚠️ Bạn phải nhập lý do xóa khóa học!");
             return;
         }
+
+        await Swal.fire({
+            icon: "success",
+            title: "Đã xóa",
+            text: "Khóa học đã bị xóa khỏi hệ thống.",
+            confirmButtonColor: "#2563eb"
+        });
 
         try {
             await axiosClient.delete(`/admin/courses/${courseId}`, {
