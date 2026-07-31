@@ -60,13 +60,53 @@
     background: white; border-radius: 16px; padding: 20px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.04); border-left: 5px solid #3b82f6;
 }
-.gap-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.gap-subject { font-weight: 700; color: #0f172a; font-size: 16px; }
-.gap-severity { color: white; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 10px; }
-.gap-bar { height: 9px; background: #e2e8f0; border-radius: 8px; overflow: hidden; }
-.gap-bar-fill { height: 100%; border-radius: 8px; transition: width 1s ease; }
-.gap-acc { color: #64748b; font-size: 13px; margin: 8px 0; }
-.gap-rec { color: #334155; font-size: 14px; line-height: 1.5; margin: 0; }
+/* ===== GAP DIAGNOSIS GRID ===== */
+.gap-subjects-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+.gap-subject-card {
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.05);
+}
+.gap-subject-heading {
+    font-size: 18px; font-weight: 800; color: #4c1d95; margin: 0 0 20px;
+    border-bottom: 2px solid rgba(139, 92, 246, 0.15);
+    padding-bottom: 12px;
+}
+.gap-item {
+    margin-bottom: 12px;
+}
+.gap-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.gap-topic { font-weight: 700; color: #1e1b4b; font-size: 15px; }
+.gap-severity { color: white; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 999px; }
+.gap-bar { height: 10px; background: rgba(255,255,255,0.9); border: 1px solid #ddd6fe; border-radius: 999px; overflow: hidden; }
+.gap-bar-fill { height: 100%; border-radius: 999px; transition: width 0.6s ease; }
+.gap-acc { color: #b91c1c; font-size: 12px; font-weight: 700; margin-top: 6px; }
+
+.gap-recommendation {
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: rgba(239, 246, 255, 0.7);
+    border-left: 4px solid #3b82f6;
+    border-radius: 8px;
+    font-size: 13.5px;
+    color: #334155;
+    line-height: 1.5;
+}
+.gap-recommendation strong {
+    color: #1e40af;
+}
+
+@media (max-width: 768px) {
+    .gap-subject-card { padding: 16px; }
+}
 
 /* ===== SCORE FORECAST ===== */
 .forecast-top { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }

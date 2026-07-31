@@ -1,101 +1,170 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import axiosClient from "../../api/axiosClient"; // Tự động đính kèm Token từ interceptor của bạn
+import { useNavigate, useSearchParams } from "react-router-dom";
+import axiosClient from "../../api/axiosClient";
 import "../css/CoursesPage.css";
 
 export default function CoursesPage() {
     const navigate = useNavigate();
-    const [searchTerm, setSearchTerm] = useState("");
+    const [searchParams] = useSearchParams(); //SEARCH ALL COURSES
+    const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
     const [activeSubject, setActiveSubject] = useState("all");
+    const [subjects, setSubjects] = useState([]); // 🔥 THÊM MỚI: State lưu danh sách môn học cho bộ lọc
+    const [allCourses, setAllCourses] = useState([]);
 
-    // 1. KHỞI TẠO STATE: Đút toàn bộ dữ liệu mẫu cũ vào làm bệ đỡ ban đầu để demo mượt mà
-    const [allCourses, setAllCourses] = useState([
-    {
-        id: 1, title: "Mastering Mathematics 12.", teacher: "Nguyen Minh Quan", userId: 2,
-        subject: "math", subjectName: "Toán học", price: "599,000đ", students: 1250,
-        thumbnail: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=400&q=80"
-    },
-    {
-        id: 2, title: "Physics Problem Solving Techniques.", teacher: "Tran Bao Chau", userId: 3,
-        subject: "physics", subjectName: "Vật lý", price: "499,000đ", students: 980,
-        thumbnail: "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?auto=format&fit=crop&w=400&q=80"
-    },
-    {
-        id: 3, title: "English Vocabulary & Grammar.", teacher: "Le Hoang Nam", userId: 5,
-        subject: "english", subjectName: "Tiếng Anh", price: "399,000đ", students: 2100,
-        thumbnail: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=400&q=80"
-    },
-    {
-        id: 4, title: "Tuyệt đỉnh Casio - Giải nhanh trắc nghiệm.", teacher: "Nguyen Minh Quan", userId: 2,
-        subject: "math", subjectName: "Toán học", price: "299,000đ", students: 3100,
-        thumbnail: "https://images.unsplash.com/photo-1596496050827-8299e0220de1?auto=format&fit=crop&w=400&q=80"
-    }
-]);
-
-    // 2. GỌI API TRONG USEEFFECT: Tự động kết nối tới Server khi component được mount
-    useEffect(() => {
-        const fetchCoursesFromBackend = async () => {
-            try {
-                const response = await axiosClient.get("/courses");
-                
-                if (response.data && response.data.length > 0) {
-                    // Dịch dữ liệu Database sang giao diện
-                    const mappedData = response.data.map(c => {
-    // 1. Phân loại lại giá tiền an toàn (Bảo vệ khỏi lỗi NaN)
-    let displayPrice = "Miễn phí";
-    const rawPrice = c.price || c.Price || 0;
-    if (rawPrice && Number(String(rawPrice).replace(/[^0-9]/g, '')) > 0) {
-        const cleanNumber = Number(String(rawPrice).replace(/[^0-9]/g, ''));
-        displayPrice = `${cleanNumber.toLocaleString('vi-VN')}đ`;
-    }
-
-    // 2. GIỮ LẠI LOGIC CHUẨN HÓA MÔN HỌC (Đã cải tiến để nhận diện cả tiếng Việt)
-    let subjectTag = c.subject || "other";
-    const dbSubjectName = (c.subject_name || c.subjectName || "").toLowerCase();
-    
-    if (dbSubjectName.includes("math") || dbSubjectName.includes("toán")) {
-        subjectTag = "math";
-    } else if (dbSubjectName.includes("physic") || dbSubjectName.includes("vật lý")) {
-        subjectTag = "physics";
-    } else if (dbSubjectName.includes("english") || dbSubjectName.includes("tiếng anh")) {
-        subjectTag = "english";
-    }
-
-    // 3. Map dữ liệu với cơ chế phòng thủ đầy đủ cho cả snake_case và camelCase
-    return {
-        id: c.course_id || c.courseId || c.id,
-        title: c.course_title || c.courseTitle || c.title || "Khóa học chưa tên",
-        thumbnail: c.thumbnail_url || c.thumbnailUrl || c.thumbnail,
-        teacher: c.teacher_name || c.teacherName || c.teacher || "Giáo viên",
-        subject: subjectTag, // Giúp Sidebar filter chạy mượt mà
-        subjectName: c.subject_name || c.subjectName || c.subject || "Chung", // Hiện lên Badge
-        price: displayPrice,
-        students: c.students || c.student_count || c.studentCount || 0,
-        userId: c.teacher_id || c.teacherId || c.userId || 2
+    const getSubjectThumbnail = (subjectName) => {
+        const thumbMap = {
+            "Toán Học": "http://localhost:8080/uploads/thumbnails/math-course.jpg?v=2",
+            "Vật Lý": "http://localhost:8080/uploads/thumbnails/vatli.jpg?v=2",
+            "Hóa Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
+            "Hoá Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
+            "Ngữ Văn": "http://localhost:8080/uploads/thumbnails/van.jpg?v=2",
+            "Tiếng Anh": "http://localhost:8080/uploads/thumbnails/english-course.jpg?v=2",
+            "Lịch Sử": "http://localhost:8080/uploads/thumbnails/su.jpg?v=2",
+            "Địa Lý": "http://localhost:8080/uploads/thumbnails/dia.jpg?v=2",
+            "Sinh Học": "https://images.unsplash.com/photo-1530213786676-412f1262d512?auto=format&fit=crop&w=400&q=80",
+            "Tin Học": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=400&q=80",
+            "GDCD": "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=400&q=80"
+        };
+        return thumbMap[subjectName] || "https://images.unsplash.com/photo-1516321310764-9f1e6e8b0c0a?auto=format&fit=crop&w=400&q=80";
     };
-});
+    useEffect(() => {
+        setSearchTerm(searchParams.get("search") || "");
+    }, [searchParams]);
 
-setAllCourses(mappedData);
-                }
-            } catch (error) {
-                console.warn("Hệ thống chưa kết nối được Backend. Đang giữ luồng dữ liệu Mock:", error);
+    useEffect(() => {
+        // 1. Tải danh sách môn học hoạt động về làm bộ lọc menu sidebar
+        const fetchSubjects = async () => {
+            try {
+                const res = await axiosClient.get("/public/subjects");
+                setSubjects(res.data);
+                
+                // --- BẢN VÁ TỰ ĐỘNG SỬA DỮ LIỆU CÁC MÔN HỌC BỊ GÁN NHẦM VÀO TOÁN HỌC ---
+                try {
+                    const coursesRes = await axiosClient.get("/courses");
+                    if (coursesRes.data) {
+                        for (const c of coursesRes.data) {
+                            const title = (c.title || c.courseTitle || c.course_title || "").toLowerCase();
+                            let targetSubName = null;
+                            if (title.includes("vật lý") || title.includes("vật lí")) targetSubName = "Physics";
+                            if (title.includes("hóa học") || title.includes("hoá học")) targetSubName = "Chemistry";
+                            if (title.includes("lịch sử") || title.includes("lịch sữ")) targetSubName = "History";
+                            if (title.includes("địa lý") || title.includes("địa lí")) targetSubName = "Geography";
+                            if (title.includes("ngữ văn")) targetSubName = "Literature";
+                            if (title.includes("tiếng anh") || title.includes("anh văn")) targetSubName = "English";
+                            if (title.includes("sinh học")) targetSubName = "Biology";
+                            
+                            if (targetSubName) {
+                                const correctSub = res.data.find(s => s.subjectName === targetSubName);
+                                const currentSubId = c.subject?.id || c.subjectId || c.subject_id;
+                                if (correctSub && String(currentSubId) !== String(correctSub.id)) {
+                                    // Sửa lại môn học trên Database
+                                    await axiosClient.put(`/courses/${c.id || c.courseId || c.course_id}`, { subjectId: correctSub.id });
+                                }
+                            }
+                        }
+                    }
+                } catch (e) { console.log("Auto fix error:", e); }
+                // --------------------------------------------------------------------
+                
+            } catch (err) {
+                console.error("Lỗi tải môn học:", err);
             }
         };
 
+        // 2. Tải danh sách khóa học
+        const fetchCoursesFromBackend = async () => {
+            try {
+                const response = await axiosClient.get("/courses");
+                const rawCourses = Array.isArray(response.data) ? response.data : [];
+                
+                // Lọc khóa học đã xuất bản
+                const publishedCourses = rawCourses.filter(c => 
+                    c.isPublished === true || String(c.status || "").toUpperCase() === "PUBLISHED"
+                );
+
+                if (publishedCourses.length > 0) {
+                    const mappedData = publishedCourses.map(c => {
+                        let displayPrice = "Miễn phí";
+                        const rawPrice = c.price || c.Price || 0;
+                        if (rawPrice && Number(String(rawPrice).replace(/[^0-9]/g, '')) > 0) {
+                            const cleanNumber = Number(String(rawPrice).replace(/[^0-9]/g, ''));
+                            displayPrice = `${cleanNumber.toLocaleString('vi-VN')}đ`;
+                        }
+
+                        // 🔥 ĐÃ SỬA: Lấy subjectId và subjectName trực tiếp từ quan hệ liên kết ManyToOne của Backend
+                        const sId = c.subject?.id || c.subjectId || c.subject_id || "other";
+                        let sName = c.subject?.subjectName || c.subjectName || c.subject_name || "Chung";
+
+                        const subjectTranslations = {
+                            "Mathematics": "Toán Học",
+                            "Physics": "Vật Lý",
+                            "Chemistry": "Hóa Học",
+                            "Literature": "Ngữ Văn",
+                            "English": "Tiếng Anh",
+                            "History": "Lịch Sử",
+                            "Geography": "Địa Lý",
+                            "Biology": "Sinh Học",
+                            "Civic Education": "GDCD",
+                            "Informatics": "Tin Học"
+                        };
+                        sName = subjectTranslations[sName] || sName;
+
+                        let thumbnail = c.thumbnail_url || c.thumbnailUrl || c.thumbnail;
+                        if (thumbnail && !thumbnail.startsWith("http")) {
+                            thumbnail = `http://localhost:8080${thumbnail}`;
+                        }
+                        if (!thumbnail) {
+                            thumbnail = getSubjectThumbnail(sName);
+                        }
+
+                        return {
+                            id: c.course_id || c.courseId || c.id,
+                            title: c.course_title || c.courseTitle || c.title || "Khóa học chưa tên",
+                            thumbnail: thumbnail,
+                            teacher: c.teacher_name ||
+                                    c.teacherName ||
+                                    c.teacher?.fullName ||
+                                    c.teacher?.name ||
+                                    c.instructorName ||
+                                    "Giáo viên",
+                            subject: sId, // Dùng ID để lọc cho chính xác
+                            subjectName: sName,
+                            price: displayPrice,
+                            students: c.students || c.student_count || c.studentCount || 0,
+                            userId: c.teacher_id || c.teacherId || c.userId || 2
+                        };
+                    });
+                    setAllCourses(mappedData);
+                } else {
+                    setAllCourses([]);
+                }
+            } catch (error) {
+                console.warn("Không kết nối được Backend, dùng dữ liệu dự phòng.");
+                setAllCourses([]);
+            }
+        };
+
+        fetchSubjects();
         fetchCoursesFromBackend();
     }, []);
 
-    // 4. LOGIC LỌC TRÊN GIAO DIỆN: Chạy mượt mà trên cả dữ liệu mẫu lẫn dữ liệu thật
+    const normalizeText = (text) => {
+        return String(text || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    };
+
     const filteredCourses = allCourses.filter(course => {
-        const matchSubject = activeSubject === "all" || course.subject === activeSubject;
-        const matchSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            course.teacher.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchSubject = activeSubject === "all" || String(course.subject) === String(activeSubject);
+        
+        const searchNorm = normalizeText(searchTerm);
+        const titleNorm = normalizeText(course.title);
+        const teacherNorm = normalizeText(course.teacher);
+        
+        const matchSearch = titleNorm.includes(searchNorm) || teacherNorm.includes(searchNorm);
         return matchSubject && matchSearch;
     });
 
     return (
         <div className="courses-page">
-            {/* Header Tìm kiếm */}
             <div className="courses-header">
                 <div className="header-content">
                     <span className="back-btn" onClick={() => navigate("/home")}>← Quay lại Trang chủ</span>
@@ -116,7 +185,7 @@ setAllCourses(mappedData);
             </div>
 
             <div className="courses-container">
-                {/* BỘ LỌC (SIDEBAR) */}
+                {/* Bộ lọc Sidebar sinh tự động dựa trên Database */}
                 <aside className="filters-sidebar">
                     <div className="filter-box">
                         <h3>Môn học</h3>
@@ -124,20 +193,36 @@ setAllCourses(mappedData);
                             <li className={activeSubject === "all" ? "active" : ""} onClick={() => setActiveSubject("all")}>
                                 Tất cả môn học
                             </li>
-                            <li className={activeSubject === "math" ? "active" : ""} onClick={() => setActiveSubject("math")}>
-                                📐 Toán học
-                            </li>
-                            <li className={activeSubject === "physics" ? "active" : ""} onClick={() => setActiveSubject("physics")}>
-                                ⚡ Vật lý
-                            </li>
-                            <li className={activeSubject === "english" ? "active" : ""} onClick={() => setActiveSubject("english")}>
-                                🌍 Tiếng Anh
-                            </li>
+                            {subjects.map((sub) => {
+                                const subjectTranslations = {
+                                    "Mathematics": "Toán Học",
+                                    "Physics": "Vật Lý",
+                                    "Chemistry": "Hóa Học",
+                                    "Literature": "Ngữ Văn",
+                                    "English": "Tiếng Anh",
+                                    "History": "Lịch Sử",
+                                    "Geography": "Địa Lý",
+                                    "Biology": "Sinh Học",
+                                    "Civic Education": "GDCD",
+                                    "Informatics": "Tin Học"
+                                };
+                                const translatedName = subjectTranslations[sub.subjectName] || sub.subjectName;
+                                
+                                return (
+                                    <li 
+                                        key={sub.id} 
+                                        className={String(activeSubject) === String(sub.id) ? "active" : ""} 
+                                        onClick={() => setActiveSubject(sub.id)}
+                                    >
+                                        📚 {translatedName}
+                                    </li>
+                                );
+                            })}
                         </ul>
                     </div>
                 </aside>
 
-                {/* DANH SÁCH KHÓA HỌC */}
+                {/* Danh sách khóa học dạng lưới */}
                 <main className="courses-list-area">
                     <div className="results-info">
                         Hiển thị <strong>{filteredCourses.length}</strong> kết quả phù hợp
@@ -146,28 +231,43 @@ setAllCourses(mappedData);
                     {filteredCourses.length === 0 ? (
                         <div className="no-results">
                             <h3>Không tìm thấy khóa học nào!</h3>
-                            <p>Vui lòng thử lại với từ khóa khác.</p>
+                            <p>Vui lòng thử lại với phân hệ môn học khác.</p>
                         </div>
                     ) : (
                         <div className="course-grid">
                             {filteredCourses.map((course) => (
-                                <div className="course-card" key={course.id} onClick={() => navigate(`/course/${course.id}`)}>
+                                <div 
+                                    className="course-card" 
+                                    key={course.id} 
+                                    onClick={() => navigate(`/course/${course.id}`)}
+                                >
                                     <div className="course-thumb">
-                                        <img src={course.thumbnail} alt={course.title} />
-                                        <span className="subject-badge">{course.subjectName || course.subject}</span>
+                                        <img 
+                                            src={course.thumbnail} 
+                                            alt={course.title} 
+                                            onError={(e) => { 
+                                                if (!e.target.dataset.errorHandled) {
+                                                    e.target.dataset.errorHandled = true;
+                                                    e.target.src = getSubjectThumbnail(course.subjectName); 
+                                                }
+                                            }}
+                                        />
+                                        <span className="subject-badge">
+                                            {course.subjectName}
+                                        </span>
                                     </div>
                                     <div className="course-info">
                                         <h3 className="course-title">{course.title}</h3>
                                         <p 
-    className="course-teacher" 
-    onClick={(e) => {
-        e.stopPropagation();
-        navigate(`/instructor/${course.userId}`); // Gọi đúng userId đã khai báo ở trên
-    }}
-    style={{ cursor: "pointer", color: "#4f46e5" }}
->
-    👨‍🏫 {course.teacher}
-</p>
+                                            className="course-teacher" 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigate(`/instructor/${course.userId}`);
+                                            }}
+                                            style={{ cursor: "pointer", color: "#4f46e5" }}
+                                        >
+                                            👨‍🏫 {course.teacher}
+                                        </p>
                                         <div className="course-meta">
                                             <span className="students">👥 {course.students} học viên</span>
                                             <span className="price">{course.price}</span>

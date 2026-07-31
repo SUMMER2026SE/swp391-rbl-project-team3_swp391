@@ -11,6 +11,8 @@ export default function ChangePasswordPage() {
     const [message, setMessage] = useState("");
     const [isSuccess, setIsSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [showOldPassword, setShowOldPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -63,30 +65,50 @@ export default function ChangePasswordPage() {
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label>Password Hiện Tại</label>
+                        <div className="password-wrapper">
+                            <input
+                                type={showOldPassword ? "text" : "password"}
+                                placeholder="Enter current password"
+                                value={oldPassword}
+                                onChange={(e) =>
+                                    setOldPassword(e.target.value)
+                                }
+                                required
+                            />
 
-                        <input
-                            type="password"
-                            placeholder="Enter current password"
-                            value={oldPassword}
-                            onChange={(e) =>
-                                setOldPassword(e.target.value)
-                            }
-                            required
-                        />
+                            <span
+                                className="password-toggle"
+                                onClick={() =>
+                                    setShowOldPassword(!showOldPassword)
+                                }
+                            >
+                                {showOldPassword ? "🙈" : "👁️"}
+                            </span>
+                        </div>
                     </div>
 
                     <div className="form-group">
                         <label>Password Mới</label>
+                        <div className="password-wrapper">
+                            <input
+                                type={showNewPassword ? "text" : "password"}
+                                placeholder="Enter new password"
+                                value={newPassword}
+                                onChange={(e) =>
+                                    setNewPassword(e.target.value)
+                                }
+                                required
+                            />
 
-                        <input
-                            type="password"
-                            placeholder="Enter new password"
-                            value={newPassword}
-                            onChange={(e) =>
-                                setNewPassword(e.target.value)
-                            }
-                            required
-                        />
+                            <span
+                                className="password-toggle"
+                                onClick={() =>
+                                    setShowNewPassword(!showNewPassword)
+                                }
+                            >
+                                {showNewPassword ? "🙈" : "👁️"}
+                            </span>
+                        </div>
                     </div>
 
                     <div className="password-actions">

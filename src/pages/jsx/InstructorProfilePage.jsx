@@ -6,28 +6,51 @@ import "../css/InstructorProfilePage.css";
 export default function InstructorProfilePage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     // Dữ liệu mẫu (Fallback) để trang luôn có cái hiển thị nếu API chưa sẵn sàng
     const [data, setData] = useState({
         info: {
-            name: "Nguyễn Minh Quân",
-            subject: "Toán học",
-            avatar: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&w=400&q=80",
-            bio: "Tốt nghiệp Xuất sắc khoa Toán trường Đại học Sư phạm Hà Nội. Có hơn 5 năm kinh nghiệm luyện thi THPT Quốc gia...",
-            stats: { students: "5.2K+", courses: 4, rating: 4.9, reviews: 1250 },
-            social: { facebook: "#", youtube: "#" }
+            name: "Đang tải...",
+            subject: "",
+            avatar: "https://ui-avatars.com/api/?name=Teacher&background=64748b&color=fff",
+            bio: "",
+            school: "",
+            stats: { students: 0, courses: 0, rating: 0, reviews: 0 }
         },
-        courses: [
-            { id: 1, title: "Mastering Mathematics 12 - Ôn thi THPT QG", price: "599,000đ", students: 1250, thumbnail: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=400&q=80" },
-            { id: 4, title: "Tuyệt đỉnh Casio - Giải nhanh trắc nghiệm Toán", price: "299,000đ", students: 2100, thumbnail: "https://images.unsplash.com/photo-1596496050827-8299e0220de1?auto=format&fit=crop&w=400&q=80" }
-        ]
+        courses: []
     });
 
     useEffect(() => {
+        setLoading(true);
+        setError(null);
         axiosClient.get(`/users/instructor/${id}`)
-            .then(res => setData({ info: res.data.info, courses: res.data.courses }))
-            .catch(() => console.warn("Đang dùng dữ liệu mẫu cho giảng viên ID:", id));
+            .then(res => {
+                setData({ info: res.data.info, courses: res.data.courses });
+            })
+            .catch((err) => {
+                console.warn("Lỗi tải hồ sơ giảng viên ID:", id, err);
+                setError("Không thể tải thông tin giảng viên.");
+            })
+            .finally(() => setLoading(false));
     }, [id]);
+
+    if (loading) {
+        return (
+            <div className="instructor-page">
+                <div className="top-nav">
+                    <span className="back-btn" onClick={() => navigate(-1)}>← Quay lại</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
+                    <div style={{ textAlign: "center", color: "#64748b" }}>
+                        <div style={{ fontSize: "40px", marginBottom: "12px" }}>⏳</div>
+                        <div style={{ fontWeight: "600" }}>Đang tải hồ sơ giảng viên...</div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="instructor-page">
@@ -38,13 +61,30 @@ export default function InstructorProfilePage() {
             <div className="instructor-header">
                 <div className="instructor-card">
                     <div className="instructor-avatar-box">
-                        <img src={data.info.avatar} alt={data.info.name} className="instructor-avatar" />
-                        <span className="subject-tag">{data.info.subject}</span>
+                        <img
+                            src={data.info.avatar}
+                            alt={data.info.name}
+                            className="instructor-avatar"
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.info.name || "Teacher")}&background=64748b&color=fff`;
+                            }}
+                        />
+                        {data.info.subject && (
+                            <span className="subject-tag">{data.info.subject}</span>
+                        )}
                     </div>
                     
                     <div className="instructor-info">
-                        <h1>Thầy {data.info.name}</h1>
-                        <p className="bio">{data.info.bio}</p>
+                        <h1>{data.info.name}</h1>
+
+                        {data.info.school && (
+                            <p style={{ color: "#2563eb", fontWeight: "600", fontSize: "14px", margin: "0 0 10px 0" }}>
+                                🏫 {data.info.school}
+                            </p>
+                        )}
+
+                        <p className="bio">{data.info.bio || "Chưa có thông tin giới thiệu."}</p>
                         
                         <div className="stats-container">
                             <div className="stat-item">
@@ -55,40 +95,69 @@ export default function InstructorProfilePage() {
                                 <span className="stat-value">{data.info.stats.courses}</span>
                                 <span className="stat-label">Khóa học</span>
                             </div>
-                            <div className="stat-item">
-                                <span className="stat-value">⭐ {data.info.stats.rating}</span>
-                                <span className="stat-label">{data.info.stats.reviews} đánh giá</span>
-                            </div>
+                            {data.info.stats.rating > 0 && (
+                                <div className="stat-item">
+                                    <span className="stat-value">⭐ {data.info.stats.rating}</span>
+                                    <span className="stat-label">{data.info.stats.reviews} đánh giá</span>
+                                </div>
+                            )}
                         </div>
 
-                        <div className="social-links">
-                            <button className="follow-btn">Theo dõi giảng viên</button>
-                            <a href={data.info.social.facebook} className="social-icon">FB</a>
-                            <a href={data.info.social.youtube} className="social-icon">YT</a>
-                        </div>
+
                     </div>
                 </div>
             </div>
 
             <div className="instructor-body">
-                <h2>Khóa học giảng dạy bởi Thầy {data.info.name}</h2>
-                <div className="course-grid">
-                    {data.courses.map((course) => (
-                        <div className="course-card" key={course.id} onClick={() => navigate(`/course/${course.id}`)}>
-                            <div className="course-thumb">
-                                <img src={course.thumbnail} alt={course.title} />
-                            </div>
-                            <div className="course-content">
-                                <h3 className="course-title">{course.title}</h3>
-                                <div className="course-meta">
-                                    <span className="students">👥 {course.students} học viên</span>
-                                    <span className="price">{course.price}</span>
+                <h2>Khóa học giảng dạy bởi {data.info.name}</h2>
+                {data.courses.length > 0 ? (
+                    <div className="course-grid">
+                        {data.courses.map((course) => (
+                            <div className="course-card" key={course.id} onClick={() => navigate(`/course/${course.id}`)}>
+                                <div className="course-thumb">
+                                    <img
+                                        src={course.thumbnail || "https://placehold.co/600x400?text=PrepAce"}
+                                        alt={course.title}
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = "https://placehold.co/600x400?text=PrepAce";
+                                        }}
+                                    />
+                                </div>
+                                <div className="course-content">
+                                    <h3 className="course-title">{course.title}</h3>
+                                    <div className="course-meta">
+                                        <span className="students">👥 {course.students} học viên</span>
+                                        <span className="price">{course.price}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
+                        <div style={{ fontSize: "48px", marginBottom: "12px", opacity: 0.3 }}>📚</div>
+                        <p>Giảng viên chưa có khóa học nào.</p>
+                    </div>
+                )}
             </div>
+
+            {error && (
+                <div style={{
+                    position: "fixed",
+                    bottom: "20px",
+                    right: "20px",
+                    background: "#fef2f2",
+                    color: "#b91c1c",
+                    padding: "12px 20px",
+                    borderRadius: "10px",
+                    border: "1px solid #fecaca",
+                    fontSize: "14px",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+                }}>
+                    ❌ {error}
+                </div>
+            )}
         </div>
     );
 }

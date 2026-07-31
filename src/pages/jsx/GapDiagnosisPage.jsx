@@ -45,27 +45,43 @@ export default function GapDiagnosisPage() {
                         </div>
                     </div>
 
-                    <h2 className="ai-section-title">
+                    <h2 className="ai-section-title" style={{ marginTop: '20px' }}>
                         {data.gaps.length === 0 ? "Không phát hiện lỗ hổng đáng kể 🎉" : `Phát hiện ${data.gaps.length} điểm yếu`}
                     </h2>
 
-                    <div className="gap-list">
-                        {data.gaps.map((g, i) => (
-                            <div className="gap-item" key={i} style={{ borderLeftColor: g.color }}>
-                                <div className="gap-head">
-                                    <span className="gap-subject">{g.subject}</span>
-                                    <span className="gap-severity" style={{ background: g.color }}>{g.severity}</span>
-                                </div>
-                                <div className="gap-bar">
-                                    <div className="gap-bar-fill" style={{ width: `${g.accuracy}%`, background: g.color }} />
-                                </div>
-                                <div className="gap-acc">Độ chính xác: {g.accuracy}%</div>
-                                <p className="gap-rec">💡 {g.recommendation}</p>
+                    <div className="gap-grid">
+                        <div className="gap-col">
+                            <h3 className="gap-col-title">📉 Lỗ hổng phát hiện được</h3>
+                            <div className="gap-list">
+                                {data.gaps.map((g, i) => (
+                                    <div className="gap-item" key={i}>
+                                        <div className="gap-head">
+                                            <span className="gap-subject">{g.subject}{g.topic ? ` - ${g.topic}` : ''}</span>
+                                            <span className="gap-severity" style={{ background: g.color }}>{g.severity}</span>
+                                        </div>
+                                        <div className="gap-bar">
+                                            <div className="gap-bar-fill" style={{ width: `${g.accuracy}%`, background: g.color }} />
+                                        </div>
+                                        <div className="gap-acc">Độ chính xác: {g.accuracy}%</div>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
+                        </div>
+
+                        <div className="gap-col">
+                            <h3 className="gap-col-title">🗺️ Lộ trình khắc phục & Giải pháp</h3>
+                            <div className="gap-roadmap">
+                                    {data.gaps.map((g, i) => (
+                                        <li key={i}>
+                                            <strong>{g.subject}{g.topic ? ` - ${g.topic}` : ''}:</strong> {g.recommendation}
+                                        </li>
+                                    ))}
+                                </div>
+                            </div>
+                        ))
                     </div>
 
-                    <div className="ai-cta">
+                    <div className="ai-cta" style={{ marginTop: '30px' }}>
                         <button onClick={() => navigate("/adaptive-path")}>Xem lộ trình khắc phục →</button>
                     </div>
                 </div>

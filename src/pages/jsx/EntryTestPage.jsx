@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import entryTestService from "../../services/entryTestService";
+import practiceService from "../../services/practiceService";
+import ConfirmModal from "../../components/ConfirmModal";
 import "../css/EntryTestPage.css";
 
 export default function EntryTestPage() {
@@ -68,14 +70,13 @@ export default function EntryTestPage() {
     const choose = (questionId, optionContent) =>
         setAnswers((prev) => ({ ...prev, [questionId]: optionContent }));
 
-    const handleSubmit = async (auto = false) => {
-        if (submitting) return;
-        const total = questions.length;
-        if (!auto && Object.keys(answers).length < total) {
-            if (!window.confirm("Bạn còn câu chưa trả lời. Vẫn nộp bài?")) return;
-        }
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [confirmMsg, setConfirmMsg] = useState("");
+
+    const doSubmit = async () => {
+        setSubmitting(true);
+        setShowConfirm(false);
         try {
-            setSubmitting(true);
             const result = await entryTestService.submit(sessionsId, answers);
             localStorage.setItem("entryTestAttempt", result.attemptId || result.sessionsId);
             navigate(`/entry-test/result/${result.attemptId || result.sessionsId}`, { state: result });
@@ -83,6 +84,21 @@ export default function EntryTestPage() {
             alert("Không thể nộp bài: " + (e.response?.data?.message || e.message));
             setSubmitting(false);
         }
+    };
+
+    const handleSubmit = async (auto = false) => {
+        if (submitting) return;
+        const total = questions.length;
+        if (Object.keys(answers).length === 0) {
+            alert("Vui lòng chọn ít nhất một đáp án trước khi nộp bài.");
+            return;
+        }
+        if (!auto && Object.keys(answers).length < total) {
+            setConfirmMsg(`Bạn còn ${total - Object.keys(answers).length} câu chưa trả lời. Vẫn nộp bài?`);
+            setShowConfirm(true);
+            return;
+        }
+        doSubmit();
     };
 
     const fmtTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -111,25 +127,59 @@ export default function EntryTestPage() {
                     </p>
                 </header>
 
-                <div className="entry-quiz">
+                <div className="entry-quiz" style={{ gap: '24px', display: 'flex', flexDirection: 'column' }}>
                     {questions.map((q, idx) => (
-                        <div className="etq-card" key={q.questionId}>
-                            <h3 className="etq-title">Câu {idx + 1}. {q.content}</h3>
-                            <div className="etq-options">
-                                {q.options && q.options.map((o) => (
+                        <div className="etq-card" key={q.questionId} style={{ background: '#ffffff', borderRadius: '12px', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)', border: '1px solid #f1f5f9', transition: 'all 0.3s ease' }}>
+                            <h3 className="etq-title" style={{ fontSize: '18px', color: '#1e293b', marginBottom: '16px', lineHeight: '1.5' }}>
+                                <span style={{ background: '#eff6ff', color: '#2563eb', padding: '4px 10px', borderRadius: '6px', fontSize: '14px', marginRight: '8px', fontWeight: 'bold' }}>Câu {idx + 1}</span> 
+                                {q.questionContent}
+                            </h3>
+
+                            <div className="etq-options" style={{ marginTop: '16px' }}>
+                                {(!q.questionType || q.questionType === "CHOICE" || q.questionType === "TRUE_FALSE") && q.options?.map((o) => (
                                     <label
                                         key={o.optionId}
-                                        className={`etq-option ${answers[q.questionId] === o.content ? "selected" : ""}`}
+                                        className={`etq-option ${
+                                            answers[q.questionId] === o.optionContent ? "selected" : ""
+                                        }`}
+                                        style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', border: answers[q.questionId] === o.optionContent ? '2px solid #3b82f6' : '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer', marginBottom: '10px', background: answers[q.questionId] === o.optionContent ? '#eff6ff' : '#fff', transition: 'all 0.2s' }}
                                     >
                                         <input
                                             type="radio"
                                             name={`q-${q.questionId}`}
-                                            checked={answers[q.questionId] === o.content}
-                                            onChange={() => choose(q.questionId, o.content)}
+                                            checked={answers[q.questionId] === o.optionContent}
+                                            onChange={() => choose(q.questionId, o.optionContent)}
+                                            style={{ marginRight: '12px', accentColor: '#3b82f6', transform: 'scale(1.2)' }}
                                         />
-                                        <span>{o.content}</span>
+                                        <span style={{ color: answers[q.questionId] === o.optionContent ? '#1e40af' : '#475569', fontWeight: answers[q.questionId] === o.optionContent ? '500' : 'normal' }}>{o.optionContent}</span>
                                     </label>
                                 ))}
+
+                                {q.questionType === "SHORT_ANSWER" && (
+                                    <div style={{ marginTop: '12px' }}>
+                                        <input
+                                            type="text"
+                                            placeholder="Nhập câu trả lời ngắn của bạn vào đây..."
+                                            value={answers[q.questionId] || ""}
+                                            onChange={(e) => choose(q.questionId, e.target.value)}
+                                            style={{ 
+                                                width: '100%', 
+                                                padding: '14px 16px', 
+                                                fontSize: '16px',
+                                                borderRadius: '8px', 
+                                                border: answers[q.questionId] ? '2px solid #3b82f6' : '1px solid #cbd5e1', 
+                                                background: answers[q.questionId] ? '#eff6ff' : '#f8fafc',
+                                                color: '#1e293b',
+                                                outline: 'none',
+                                                transition: 'all 0.2s ease',
+                                                boxShadow: answers[q.questionId] ? '0 0 0 3px rgba(59, 130, 246, 0.2)' : 'none'
+                                            }}
+                                        />
+                                        <div style={{ marginTop: '8px', fontSize: '13px', color: '#64748b', fontStyle: 'italic' }}>
+                                            * Câu trả lời tự luận ngắn (1-2 từ hoặc con số).
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -140,6 +190,14 @@ export default function EntryTestPage() {
                         {submitting ? "Đang chấm điểm..." : "Nộp bài & xem đánh giá"}
                     </button>
                 </div>
+                <ConfirmModal
+                    isOpen={showConfirm}
+                    title="Xác nhận nộp bài"
+                    message={confirmMsg}
+                    onConfirm={doSubmit}
+                    onCancel={() => setShowConfirm(false)}
+                    confirmText="Vẫn nộp bài"
+                />
             </div>
         );
     }

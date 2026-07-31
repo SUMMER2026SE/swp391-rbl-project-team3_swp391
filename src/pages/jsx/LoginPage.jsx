@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../css/LoginPage.css";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 
@@ -9,9 +8,29 @@ function LoginPage({ switchToRegister }) {
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+
+    const [rememberMe, setRememberMe] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
     const navigate = useNavigate();
+
+    // 🔥 HÀM HELPER: Gửi yêu cầu lưu log hoạt động xuống cơ sở dữ liệu
+    const sendActivityLog = async (userId, token, actionText) => {
+        try {
+            await fetch(`http://localhost:8080/api/admin/users/${userId}/activity`, {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ action: actionText })
+            });
+        } catch (err) {
+            console.error("❌ Không thể ghi nhận nhật ký hoạt động:", err);
+        }
+    };
 
     // NORMAL LOGIN - ĐÃ SỬA
     const handleLogin = async (e) => {
@@ -26,12 +45,14 @@ function LoginPage({ switchToRegister }) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
                     email: email.trim(), 
-                    password 
-                })
+                    password,
+                    rememberMe 
+                }),
+                credentials: "include" // 🔥 Gửi cookie httpOnly
             });
 
             const data = await response.json();
-            console.log("🔍 Full Response từ backend:", data);   // Debug
+            console.log("🔍 Full Response từ backend:", data);
 
             if (!response.ok) {
                 setMessage(data.message || "Đăng nhập thất bại");
@@ -39,83 +60,61 @@ function LoginPage({ switchToRegister }) {
                 return;
             }
 
-            // Lưu token
-            // if (data.token) {
-            //     localStorage.setItem("token", data.token);
-            // }
-
-            // // Lưu user (xử lý nhiều trường hợp backend trả về)
-            // if (data.user) {
-            //     localStorage.setItem("user", JSON.stringify(data.user));
-            // } else if (data.data && data.data.user) {
-            //     localStorage.setItem("user", JSON.stringify(data.data.user));
-            // } else {
-            //     // Tạo user tạm từ email (vì backend chưa trả user)
-            //     const tempUser = {
-            //         fullName: email.split('@')[0] || "Người dùng",
-            //         email: email,
-            //         role: "STUDENT"
-            //     };
-            //     localStorage.setItem("user", JSON.stringify(tempUser));
-            // }
-
-            // setMessage("✅ Đăng nhập thành công!");
-            // setMessageType("success");
-
-            // // Redirect về trang chủ
-            // setTimeout(() => {
-            //     const user = JSON.parse(localStorage.getItem("user"));
-
-            //     if (user?.role === "ADMIN") {
-            //         navigate("/admin");
-            //     }
-            //     else if (user?.role === "TEACHER") {
-            //         navigate("/teacher/dashboard");
-            //     }
-            //     else {
-            //         navigate("/home");
-            //     }
-
-            // }, 700);
             if (data.token) {
-                // Lưu token
                 localStorage.setItem("token", data.token);
 
                 // Giải mã JWT
                 const decoded = jwtDecode(data.token);
+                console.log("🔍 Decoded JWT:", decoded);   // ← Debug quan trọng
 
+                // Xử lý role an toàn (phòng trường hợp backend chưa có role hoặc tên field khác)
+                let role = "STUDENT"; // Mặc định
+
+                if (decoded.role) {
+                    role = decoded.role.replace("ROLE_", "");
+                } else if (decoded.roles) {
+                    role = Array.isArray(decoded.roles) ? decoded.roles[0].replace("ROLE_", "") : "STUDENT";
+                } else if (decoded.authorities) {
+                    role = decoded.authorities[0]?.replace("ROLE_", "") || "STUDENT";
+                }
+const currentUserId = decoded.userId || decoded.id;
                 const user = {
-                    id: decoded.userId,
-                    fullName: decoded.fullName,
-                    email: decoded.sub,
-                    role: decoded.role.replace("ROLE_", "")
+                    id: currentUserId,
+                    fullName: decoded.fullName || decoded.name || email.split('@')[0] || "Người dùng", 
+                    email: decoded.sub || decoded.email || email,
+                    role: role
                 };
-                // Lưu user
-                localStorage.setItem(
-                    "user",
-                    JSON.stringify(user)
-                );
-                console.log("User:", user);
+
+                localStorage.setItem("user", JSON.stringify(user));
+                console.log("✅ User đã lưu:", user);
+
+                // 🔥 TỰ ĐỘNG GHI LOG: Đăng nhập thường thành công
+                if (currentUserId) {
+                    await sendActivityLog(currentUserId, data.token, "Đăng nhập vào hệ thống PrepAce");
+                }
 
                 // Điều hướng theo role
-                switch (user.role) {
-                    case "ADMIN":
+                setTimeout(() => {
+                    if (role === "ADMIN") {
                         navigate("/admin");
-                        break;
-                    case "TEACHER":
+                    } else if (role === "TEACHER") {
                         navigate("/teacher/dashboard");
-                        break;
-                    default:
+                    } else {
                         navigate("/home");
-                }
+                    }
+                }, 800);
             } else {
-                setError("Đăng nhập thất bại!");
+                setMessage("Đăng nhập thất bại! (Không nhận được thông tin User)");
+                setMessageType("error");
             }
-
         } catch (error) {
             console.error("Login error:", error);
-            setMessage("❌ Lỗi kết nối với server");
-            setMessageType("error");
+
+            if (error instanceof TypeError) {
+                setMessage("Không thể kết nối tới backend.");
+            } else {
+                setMessage(error.message);
+            }
         } finally {
             setLoading(false);
         }
@@ -133,7 +132,8 @@ function LoginPage({ switchToRegister }) {
                     },
                     body: JSON.stringify({
                         credential: credentialResponse.credential
-                    })
+                    }),
+                    credentials: "include" // 🔥
                 }
             );
 
@@ -148,20 +148,35 @@ function LoginPage({ switchToRegister }) {
             localStorage.setItem("token", data.token);
             localStorage.setItem("user", JSON.stringify(data.user));
 
-            setMessage("✅ Google Login Success!");
+            setMessage(" Google Login Success!");
             setMessageType("success");
-                    navigate("/home");
+
+            // 🔥 TỰ ĐỘNG GHI LOG: Đăng nhập bằng tài khoản Google thành công
+             const currentUserId = data.user?.id || data.user?.userId;
+             if (currentUserId) {
+                await sendActivityLog(currentUserId, data.token, "Đăng nhập hệ thống thông qua tài khoản Google");
+             }
 
             // setTimeout(() => {
-            //     if (data.user?.role === "TEACHER") {
-            //         navigate("/teacher/dashboard");
-            //     } else if (data.user?.role === "ADMIN") {
+            //     if (data.user?.role === "TEACHER" || data.user?.roleId === 2) {
+//         navigate("/teacher/dashboard");
+            //     } else if (data.user?.role === "ADMIN" || data.user?.roleId === 1) {
             //         navigate("/admin/courses");
             //     } else {
             //         navigate("/home");
             //     }
             // }, 800);
 
+            const role = data.user.roleName || data.user.role || "STUDENT";
+                setTimeout(() => {
+                    if (role === "ADMIN") {
+                        navigate("/admin");
+                    } else if (role === "TEACHER") {
+                        navigate("/teacher/dashboard");
+                    } else {
+                        navigate("/home");
+                    }
+                }, 800);
         } catch (error) {
             console.error(error);
             setMessage("❌ Google Login Error");
@@ -172,127 +187,93 @@ function LoginPage({ switchToRegister }) {
     };
 
     return (
-        <div className="login-container">
-            <div className="login-card">
-
-                {/* LEFT SIDE */}
-                <div className="login-left">
-                    <div className="overlay-circle top"></div>
-                    <div className="overlay-circle bottom"></div>
-
-                    <div className="left-content">
-                        <h1>
-                            Welcome Back <br />
-                            to PrepAce
-                        </h1>
-
-                        <p>
-                            Continue your learning journey with AI-powered
-                            university preparation, quizzes, assignments,
-                            and smart learning tools.
-                        </p>
-
-                        <div className="feature-list">
-                            <div className="feature-item">
-                                <span className="dot"></span>
-                                <p>AI Learning Assistant</p>
-                            </div>
-                            <div className="feature-item">
-                                <span className="dot"></span>
-                                <p>Track Study Progress</p>
-                            </div>
-                            <div className="feature-item">
-                                <span className="dot"></span>
-                                <p>Practice Exams & Quizzes</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* RIGHT SIDE */}
-                <div className="login-right">
-                    <div className="login-header">
-                        <h2>Login</h2>
-                        <p>Login to continue learning with PrepAce.</p>
-                    </div>
-
-                    {message && (
-                        <div className={`message-box ${messageType}`}>
-                            {message}
-                        </div>
-                    )}
-
-                    {/* FORM */}
-                    <form className="login-form" onSubmit={handleLogin}>
-
-                        {/* EMAIL */}
-                        <div className="input-group">
-                            <label>Email</label>
-                            <input
-                                type="email"
-                                placeholder="Enter your email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        {/* PASSWORD */}
-                        <div className="input-group">
-                            <label>Password</label>
-                            <input
-                                type="password"
-                                placeholder="Enter your password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div className="forgot-password">
-                            <span onClick={() => navigate("/forgot-password")}>
-                                Forgot Password?
-                            </span>
-                        </div>
-
-                        {/* LOGIN BUTTON */}
-                        <button
-                            type="submit"
-                            className="login-btn"
-                            disabled={loading}
-                        >
-                            {loading ? "Logging In..." : "Login"}
-                        </button>
-
-                        {/* DIVIDER */}
-                        <div className="divider">
-                            <span>OR</span>
-                        </div>
-
-                        {/* GOOGLE LOGIN */}
-                        <div className="google-login">
-                            <GoogleLogin
-                                onSuccess={handleGoogleLogin}
-                                onError={() => {
-                                    setMessage("❌ Google Login Failed");
-                                }}
-                            />
-                        </div>
-
-                    </form>
-
-                    {/* REGISTER LINK */}
-                    <div className="register-link">
-                        <p>
-                            Don't have an account?
-                            <span onClick={switchToRegister}>
-                                Register
-                            </span>
-                        </p>
-                    </div>
-
-                </div>
+        <>
+            <div className="auth-form-header">
+                <h2>Welcome Back</h2>
+                <p>Login to continue learning with PrepAce.</p>
             </div>
-        </div>
+
+            {message && (
+                <div className={`auth-message ${messageType}`}>
+                    {messageType === "success" ? "✅" : "⚠️"} {message}
+                </div>
+            )}
+
+            <form onSubmit={handleLogin}>
+                <div className="auth-form-group">
+                    <label>Email Address</label>
+                    <input
+                        type="email"
+                        className="auth-form-input"
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
+                </div>
+
+                <div className="auth-form-group">
+                    <label>Password</label>
+                    <div className="password-wrapper">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            className="auth-form-input"
+                            placeholder="Enter your password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+
+                        <span
+                            className="password-toggle"
+                            onClick={() => setShowPassword(!showPassword)}
+                        >
+                            {showPassword ? "🙈" : "👁️"}
+                        </span>
+                    </div>
+                </div>
+
+                <div className="auth-form-options">
+                    <label className="auth-checkbox-label">
+                        <input
+                            type="checkbox"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                        />
+                        Remember me
+                    </label>
+                    <span onClick={() => navigate("/forgot-password")} className="auth-forgot-link">
+                        Forgot Password?
+                    </span>
+                </div>
+<button type="submit" className="auth-submit-btn" disabled={loading}>
+                    {loading ? "Logging In..." : "Login"}
+                </button>
+
+                <div className="auth-divider">
+                    <span>OR CONTINUE WITH</span>
+                </div>
+
+                <div className="auth-google-btn-wrapper">
+                    <GoogleLogin
+                        onSuccess={handleGoogleLogin}
+                        onError={() => {
+                            setMessage("Google Login Failed");
+                            setMessageType("error");
+                        }}
+                        theme="filled_blue"
+                        shape="pill"
+                    />
+                </div>
+            </form>
+
+            <div className="auth-switch-text">
+                Don't have an account?
+                <span onClick={switchToRegister} className="auth-switch-link">
+                    Create an account
+                </span>
+            </div>
+        </>
     );
 }
 
