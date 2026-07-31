@@ -148,7 +148,6 @@ function ProfilePage() {
                             📚 Khóa học của tôi
                         </li>
 
-                        <li onClick={() => navigate("/change-password")}>🔐 Bảo mật</li>
                         <li onClick={() => navigate("/entry-test")}>📝 Kiểm tra đầu vào</li>
                         <li onClick={() => navigate("/adaptive-path")}>🗺️ Lộ trình AI</li>
                     </ul>

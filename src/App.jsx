@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import GlobalChatbot from './components/GlobalChatbot';
 
 import AuthPage from './pages/jsx/AuthPage';
 import HomePage from './pages/jsx/HomePage';
 import ProfilePage from './pages/jsx/ProfilePage';
+import RootRedirect from './components/RootRedirect';
 
 import ForgotPasswordPage from './pages/jsx/ForgotPasswordPage';
 import ChangePasswordPage from './pages/jsx/ChangePasswordPage';
@@ -61,10 +63,11 @@ function App() {
 
     return (
         <>
-        <Routes>
-            <Route path='/' element={<HomePage />} />
-            <Route path='/auth' element={<AuthPage />} />
-            <Route path='/profile' element={<ProfilePage />} />
+            <GlobalChatbot />
+            <Routes>
+                <Route path="/" element={<RootRedirect />} />
+                <Route path='/auth' element={<AuthPage />} />
+                <Route path='/profile' element={<ProfilePage />} />
 
             {/* Login - Register */}
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -219,8 +222,7 @@ function App() {
 
             {/* Fallback: route lạ -> về trang chủ */}
             <Route path="*" element={<HomePage />} />
-        </Routes>
-        <GlobalChatbotWidget />
+            </Routes>
         </>
     );
 }

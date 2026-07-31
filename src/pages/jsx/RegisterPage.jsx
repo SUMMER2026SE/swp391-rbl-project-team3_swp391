@@ -31,7 +31,7 @@ export default function RegisterPage({ switchToLogin }) {
         });
     };
 
-    const handleResendOtp = async () => {
+     const handleResendOtp = async () => {
         try {
             if(otpResendCount >= 3){
                 return;
@@ -233,25 +233,24 @@ export default function RegisterPage({ switchToLogin }) {
                     />
                 </div>
 
-                <div className="auth-form-group">
+                <div className="password-wrapper">
                     <label>Password</label>
-                    <div className="password-wrapper">
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            className="auth-form-input"
-                            placeholder="Enter your password"
-                            value={formData.password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
+                    <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        className="auth-form-input"
+                        placeholder="Enter your password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                    />
 
-                        <span
-                            className="password-toggle"
-                            onClick={() => setShowPassword(!showPassword)}
-                        >
-                            {showPassword ? "🙈" : "👁️"}
-                        </span>
-                    </div>
+                    <span
+                        className="password-toggle"
+                        onClick={() => setShowPassword(!showPassword)}
+                    >
+                        {showPassword ? "🙈" : "👁️"}
+                    </span>
                 </div>
 
                 <div className="auth-form-group">

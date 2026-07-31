@@ -99,7 +99,7 @@ const QuestionCard = ({ question, selectedOption, onAnswer, index }) => {
                                 <span className="option-label">
                                     {String.fromCharCode(65 + idx)}
                                 </span>
-                                <span className="option-text">{option.content}</span>
+                                <span className="option-text">{option.optionContent}</span>
                             </div>
                         );
                     })

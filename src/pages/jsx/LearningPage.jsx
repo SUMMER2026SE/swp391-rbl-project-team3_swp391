@@ -11,8 +11,9 @@ export default function LearningPage() {
     const [currentLesson, setCurrentLesson] = useState(null);
     const [activeTab, setActiveTab] = useState("overview");
     const [expandedChapter, setExpandedChapter] = useState(0);
-    const [resumePrompt, setResumePrompt] = useState(null); // Quản lý popup xem tiếp video
+    const [resumePrompt, setResumePrompt] = useState(null);
     const [showSummaryPopup, setShowSummaryPopup] = useState(false);
+    const [summaryLoading, setSummaryLoading] = useState(false);
     const [completedChapterId, setCompletedChapterId] = useState(null);
 
     // Xác định quyền người dùng hiện tại để hiển thị chức năng quản trị
@@ -49,7 +50,7 @@ export default function LearningPage() {
             try {
                 const res = await axiosClient.get(`/outlines/lessons/${currentLesson.id}/in-video-questions`);
                 setInVideoQuestions(res.data || []);
-                setAnsweredQuizzes(new Set()); // Reset khi đổi bài
+                setAnsweredQuizzes(new Set());
                 setCurrentQuiz(null);
             } catch (err) {
                 console.error("Lỗi lấy câu hỏi popup", err);
@@ -105,7 +106,7 @@ export default function LearningPage() {
     const [completedLessonIds, setCompletedLessonIds] = useState([]);
     const [isEnrolled, setIsEnrolled] = useState(false);
 
-    // 1. GỌI API LẤY DỮ LIỆU KHÓA HỌC THẬT VÀ TIẾN ĐỘ
+    // 1. GỌI API LẤY DỮ LIỆU KHÓA HỌC VÀ MỞ KHÓA CHO ADMIN
     useEffect(() => {
         const fetchCourseData = async () => {
             try {
@@ -113,21 +114,29 @@ export default function LearningPage() {
                 let fetchedCourse = response.data;
 
                 let userIsEnrolled = false;
-                try {
-                    const token = localStorage.getItem("token");
-                    if (token) {
+
+                // 🔥 ĐẶC QUYỀN ADMIN: Luôn mở khóa 100% không cần check mua
+                const token = localStorage.getItem("token");
+                const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+                const isAdminUser = userObj?.role === "ADMIN" || userObj?.roleName === "ADMIN" || userObj?.roleId === 1;
+
+                if (isAdminUser) {
+                    userIsEnrolled = true;
+                    setIsEnrolled(true);
+                } else if (token) {
+                    try {
                         const enrollRes = await axiosClient.get(`/courses/${courseId}/check-enrollment`);
                         if (enrollRes.data && enrollRes.data.isEnrolled) {
                             userIsEnrolled = true;
                             setIsEnrolled(true);
                         }
+                    } catch (e) {
+                        console.log("Lỗi check enrollment", e);
                     }
-                } catch (e) {
-                    console.log("Lỗi check enrollment", e);
                 }
 
                 const cleanPrice = Number(String(fetchedCourse.price || fetchedCourse.Price || 0).replace(/[^0-9]/g, ''));
-                if (cleanPrice === 0 && localStorage.getItem("token")) {
+                if (cleanPrice === 0 && token) {
                     userIsEnrolled = true;
                     setIsEnrolled(true);
                 }
@@ -222,7 +231,6 @@ export default function LearningPage() {
         return () => clearInterval(syncInterval);
     }, [currentLesson]);
 
-    // Tự động tua video về mốc cũ (DÀNH CHO VIDEO THƯỜNG - TẢI LÊN MP4)
     useEffect(() => {
         if (!currentLesson) return;
 
@@ -276,6 +284,17 @@ export default function LearningPage() {
                 if (res.data.chapterCompleted && res.data.chapterId) {
                     setCompletedChapterId(res.data.chapterId);
                     setShowSummaryPopup(true);
+
+                    try {
+                        await axiosClient.post(
+                            `/ai/chapter-summary/${res.data.chapterId}`
+                        );
+
+                        setSummaryLoading(false);
+
+                    } catch (e) {
+                        setSummaryLoading(false);
+                    }
                 }
             } else {
                 setCompletedLessonIds(prev => prev.filter(id => id !== lessonId));
@@ -489,20 +508,14 @@ export default function LearningPage() {
                 payload.timestampSeconds = qnaTimestamp;
             }
             const response = await axiosClient.post("/questions", payload);
-<<<<<<< HEAD
             
-            // Ensure the new question has a unique ID to avoid issues with replyingTo
             const newQuestion = response.data;
             newQuestion.id = newQuestion.id || newQuestion.questionId;
             if (!newQuestion.id) {
                 newQuestion.id = `temp_q_${Date.now()}`;
             }
 
-            // Bổ sung mảng answers rỗng cho câu hỏi mới
             setQuestions([{ ...newQuestion, answers: [] }, ...questions]);
-=======
-            setQuestions([{ ...response.data, answers: [] }, ...questions]);
->>>>>>> 699ea35 (comment)
             setNewQuestionContent("");
             setQnaTimestamp(null);
         } catch (error) {
@@ -570,22 +583,21 @@ export default function LearningPage() {
             const response = await axiosClient.post(`/questions/${targetQuestionId}/answers`, {
                 content: replyContent
             });
-<<<<<<< HEAD
             
-            // Ensure the new answer has a unique ID
             const newAnswer = response.data;
             if (!newAnswer.id) {
                 newAnswer.id = `temp_a_${Date.now()}`;
             }
             
             // Cập nhật lại danh sách questions
-=======
-
-            // Cập nhật lại danh sách questions mượt mà dựa trên trường ID tìm được
->>>>>>> 699ea35 (comment)
             setQuestions(questions.map(q => {
                 const currentQId = q.id || q.questionId || q.question_id;
                 if (currentQId === targetQuestionId) {
+
+            setQuestions(questions.map(q => {
+                const qId = q.id || q.questionId;
+                if (qId === questionId) {
+
                     return {
                         ...q,
                         answers: [...(q.answers || []), newAnswer]
@@ -890,7 +902,17 @@ export default function LearningPage() {
                                                                     <button onClick={() => seekToTime(q.timestampSeconds)} className="timestamp-badge" style={{ margin: 0, padding: "2px 8px", fontSize: "12px" }}>
                                                                         {formatTime(q.timestampSeconds)}
                                                                     </button>
-                                                                )}
+
+                                                                    {/* 🔥 ADMIN THÊM NÚT XÓA CÂU HỎI */}
+                                                                    {isAdmin && (
+                                                                        <button 
+                                                                            onClick={() => handleDeleteQuestion(qId)} 
+                                                                            style={{ fontSize: "12px", color: "#dc3545", background: "none", border: "none", cursor: "pointer", fontWeight: "600", padding: 0 }}
+                                                                        >
+                                                                            🗑️ Gỡ câu hỏi
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                             <p style={{ margin: "0 0 5px 0", fontSize: "15px", color: "#444" }}>{q.content}</p>
                                                             <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
@@ -908,7 +930,7 @@ export default function LearningPage() {
                                                                     }}
                                                                     style={{ fontSize: "12px", color: "#007bff", background: "none", border: "none", cursor: "pointer", fontWeight: "600", padding: 0 }}
                                                                 >
-                                                                    Trả lời
+                                                                    Gửi
                                                                 </button>
 
                                                                 {/* Tìm đoạn này trong qna-tab và sửa lại */}
@@ -922,7 +944,7 @@ export default function LearningPage() {
                                                                     </button>
                                                                 )}
                                                             </div>
-                                                        </div>
+                                                        )}
                                                     </div>
 
                                                     {/* Câu trả lời con */}

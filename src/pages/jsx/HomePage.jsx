@@ -22,29 +22,30 @@ export default function HomePage() {
         btnText: "Bắt đầu ngay"
     });
 
+    const [allCourses, setAllCourses] = useState([]);
     const [featuredCourses, setFeaturedCourses] = useState([]);
 
     const getSubjectThumbnail = (subjectName) => {
-                                const thumbMap = {
-                                    "Toán Học": "http://localhost:8080/uploads/thumbnails/math-course.jpg?v=2",
-                                    "Vật Lý": "http://localhost:8080/uploads/thumbnails/vatli.jpg?v=2",
-                                    "Hóa Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
-                                    "Hoá Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
-                                    "Ngữ Văn": "http://localhost:8080/uploads/thumbnails/van.jpg?v=2",
-                                    "Tiếng Anh": "http://localhost:8080/uploads/thumbnails/english-course.jpg?v=2",
-                                    "Lịch Sử": "http://localhost:8080/uploads/thumbnails/su.jpg?v=2",
-                                    "Địa Lý": "http://localhost:8080/uploads/thumbnails/dia.jpg?v=2",
-                                    "Sinh Học": "https://images.unsplash.com/photo-1530213786676-412f1262d512?auto=format&fit=crop&w=400&q=80",
-                                    "Tin Học": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=400&q=80",
-                                    "GDCD": "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=400&q=80"
-                                };
-                                const translatedName = {
-                                    "Mathematics": "Toán Học", "Physics": "Vật Lý", "Chemistry": "Hóa Học",
-                                    "Literature": "Ngữ Văn", "English": "Tiếng Anh", "Biology": "Sinh Học",
-                                    "History": "Lịch Sử", "Geography": "Địa Lý"
-                                }[subjectName] || subjectName;
-                                return thumbMap[translatedName] || "https://images.unsplash.com/photo-1516321310764-9f1e6e8b0c0a?auto=format&fit=crop&w=400&q=80";
-                            };
+        const thumbMap = {
+            "Toán Học": "http://localhost:8080/uploads/thumbnails/math-course.jpg?v=2",
+            "Vật Lý": "http://localhost:8080/uploads/thumbnails/vatli.jpg?v=2",
+            "Hóa Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
+            "Hoá Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
+            "Ngữ Văn": "http://localhost:8080/uploads/thumbnails/van.jpg?v=2",
+            "Tiếng Anh": "http://localhost:8080/uploads/thumbnails/english-course.jpg?v=2",
+            "Lịch Sử": "http://localhost:8080/uploads/thumbnails/su.jpg?v=2",
+            "Địa Lý": "http://localhost:8080/uploads/thumbnails/dia.jpg?v=2",
+            "Sinh Học": "https://images.unsplash.com/photo-1530213786676-412f1262d512?auto=format&fit=crop&w=400&q=80",
+            "Tin Học": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=400&q=80",
+            "GDCD": "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=400&q=80"
+        };
+        const translatedName = {
+            "Mathematics": "Toán Học", "Physics": "Vật Lý", "Chemistry": "Hóa Học",
+            "Literature": "Ngữ Văn", "English": "Tiếng Anh", "Biology": "Sinh Học",
+            "History": "Lịch Sử", "Geography": "Địa Lý"
+        }[subjectName] || subjectName;
+        return thumbMap[translatedName] || "https://images.unsplash.com/photo-1516321310764-9f1e6e8b0c0a?auto=format&fit=crop&w=400&q=80";
+    };
 
     const currentAvatar = user?.avatarUrl || user?.avatar_url || null;
 
@@ -108,8 +109,13 @@ export default function HomePage() {
                 console.log(">>> DỮ LIỆU KHÓA HỌC CHUẨN:", res.data);
                 const rawCourses = Array.isArray(res.data) ? res.data : (res.data.courses || []);
 
-                if (rawCourses.length > 0) {
-                    const mappedData = rawCourses.map(c => {
+                // 🔥 Lọc chính xác các khóa học có isPublished = true hoặc status = PUBLISHED
+                const publishedCourses = rawCourses.filter(c => 
+                    c.isPublished === true || String(c.status || "").toUpperCase() === "PUBLISHED"
+                );
+
+                if (publishedCourses.length > 0) {
+                    const mappedData = publishedCourses.map(c => {
                         const displayPrice = typeof c.price === "number"
                             ? new Intl.NumberFormat("vi-VN").format(c.price) + "đ"
                             : (c.price || "Miễn phí");
@@ -136,7 +142,10 @@ export default function HomePage() {
                             userId: c.teacher_id || c.teacherId || c.userId || 2
                         };
                     });
+                    setAllCourses(mappedData)
                     setFeaturedCourses(mappedData.slice(0, 3));
+                } else {
+                    setFeaturedCourses([]);
                 }
                 setCoursesLoading(false);
             })
@@ -187,7 +196,13 @@ export default function HomePage() {
                         </div>
                         <div className="user-info">
                             <h4>{user.fullName}</h4>
-                            <span>Student</span>
+                            <span>
+                                {user.role === "TEACHER"
+                                    ? "Teacher"
+                                    : user.role === "ADMIN"
+                                    ? "Admin"
+                                    : "Student"}
+                            </span>
                         </div>
                     </div>
                 )}
@@ -195,7 +210,6 @@ export default function HomePage() {
                 <ul className="menu">
                     <li onClick={() => navigate("/home")}><span>🏠</span> Trang chủ</li>
                     <li onClick={() => navigate("/courses")}><span>📚</span> Khóa học</li>
-                    <li onClick={() => navigate("/entry-test")}><span>📝</span> Kiểm tra đầu vào</li>
                     <li onClick={() => navigate("/tests")}><span>📄</span> Luyện đề</li>
                     <li onClick={() => navigate("/adaptive-path")}><span>🧠</span> Lộ trình AI</li>
                     <li onClick={() => navigate("/ai/gap-diagnosis")}><span>📈</span> Lỗ hổng kiến thức</li>
@@ -272,22 +286,68 @@ export default function HomePage() {
                                 {(() => {
                                     const normalizeText = (text) => String(text || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
                                     const searchNorm = normalizeText(searchQuery);
-                                    const filtered = featuredCourses.filter(c => normalizeText(c.title).includes(searchNorm));
+                                    const filtered = allCourses.filter(course => {
+                                        const keyword = normalizeText(searchQuery);
+
+                                        return (
+                                            normalizeText(course.title).includes(keyword) ||
+                                            normalizeText(course.teacher).includes(keyword) ||
+                                            normalizeText(course.subject).includes(keyword)
+                                        );
+                                    });
                                     
                                     return filtered.length > 0 ? (
                                         <ul style={{ listStyle: "none", margin: 0, padding: "8px 0" }}>
                                             {filtered.slice(0, 5).map(course => (
-                                                <li 
-                                                    key={course.id} 
-                                                    style={{ padding: "12px 20px", display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", transition: "background 0.2s" }}
-                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#334155"}
-                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                                                <li
+                                                    key={course.id}
+                                                    style={{
+                                                        padding: "12px 20px",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        gap: "12px",
+                                                        cursor: "pointer"
+                                                    }}
                                                     onMouseDown={() => navigate(`/course/${course.id}`)}
                                                 >
-                                                    <img src={course.thumbnail} alt={course.title} style={{ width: "40px", height: "40px", borderRadius: "8px", objectFit: "cover" }} />
-                                                    <div style={{ display: "flex", flexDirection: "column" }}>
-                                                        <span style={{ color: "#fff", fontWeight: "600", fontSize: "14px" }}>{course.title}</span>
-                                                        <span style={{ color: "#94a3b8", fontSize: "12px" }}>{course.subjectName || course.subject}</span>
+                                                    <img
+                                                        src={course.thumbnail}
+                                                        alt={course.title}
+                                                        style={{
+                                                            width: "42px",
+                                                            height: "42px",
+                                                            borderRadius: "8px",
+                                                            objectFit: "cover"
+                                                        }}
+                                                    />
+
+                                                    <div style={{ flex: 1 }}>
+                                                        <div
+                                                            style={{
+                                                                color: "#fff",
+                                                                fontWeight: 600
+                                                            }}
+                                                        >
+                                                            {course.title}
+                                                        </div>
+
+                                                        <div
+                                                            style={{
+                                                                color: "#94a3b8",
+                                                                fontSize: "13px"
+                                                            }}
+                                                        >
+                                                            👨‍🏫 {course.teacher}
+                                                        </div>
+
+                                                        <div
+                                                            style={{
+                                                                color: "#64748b",
+                                                                fontSize: "12px"
+                                                            }}
+                                                        >
+                                                            📚 {course.subject}
+                                                        </div>
                                                     </div>
                                                 </li>
                                             ))}

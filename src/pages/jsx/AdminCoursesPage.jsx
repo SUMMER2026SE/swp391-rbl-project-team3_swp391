@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
+import Swal from "sweetalert2";
 import "../css/AdminUsersPage.css";
 
 export default function AdminCoursesPage() {
@@ -10,20 +11,16 @@ export default function AdminCoursesPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [loading, setLoading] = useState(true);
 
-    // Lọc khóa học theo từ khóa tìm kiếm
     const filteredCourses = courses.filter(course => {
         const search = (searchTerm || "").toLowerCase();
-        if (!search.trim()) return true; // Nếu ô tìm kiếm trống thì hiện hết
+        if (!search.trim()) return true;
 
-        // Đọc tên khóa học an toàn
         const title = (course.courseName || course.title || course.courseTitle || "").toLowerCase();
 
-        // 🔍 SỬA LỖI TẠI ĐÂY: Trích xuất chuỗi chữ đại diện cho tên giáo viên một cách an toàn
         let teacherText = "";
         if (typeof course.teacherName === "string") {
             teacherText = course.teacherName;
         } else if (course.teacher && typeof course.teacher === "object") {
-            // Nếu course.teacher là một Object từ Backend gửi lên, bốc trường chữ của nó ra
             teacherText = course.teacher.fullName || course.teacher.name || course.teacher.fullNameTeacher || "";
         } else if (typeof course.teacher === "string") {
             teacherText = course.teacher;
@@ -31,11 +28,9 @@ export default function AdminCoursesPage() {
 
         const teacher = teacherText.toLowerCase();
 
-        // So khớp kết quả
         return title.includes(search) || teacher.includes(search);
     });
 
-    // Kiểm tra quyền Admin + Load dữ liệu
     useEffect(() => {
         const token = localStorage.getItem("token");
         const storedUser = localStorage.getItem("user");
@@ -48,8 +43,14 @@ export default function AdminCoursesPage() {
 
         const userObj = JSON.parse(storedUser);
         if (userObj.role !== "ADMIN" && userObj.roleId !== 1) {
-            alert("❌ Bạn không có quyền truy cập vào phân hệ Quản trị!");
-            navigate("/home");
+            Swal.fire({
+                icon: "warning",
+                title: "Không có quyền truy cập",
+                text: "Bạn không được phép sử dụng chức năng này.",
+                confirmButtonColor: "#2563eb"
+            }).then(() => {
+                navigate("/home");
+            });
             return;
         }
 
@@ -60,7 +61,6 @@ export default function AdminCoursesPage() {
         setLoading(true);
         try {
             const response = await axiosClient.get("/admin/courses");
-            console.log("📡 Dữ liệu khóa học từ backend:", response.data);
 
             if (response.data && Array.isArray(response.data)) {
                 setCourses(response.data);
@@ -69,72 +69,208 @@ export default function AdminCoursesPage() {
             }
         } catch (error) {
             console.error("❌ Lỗi khi tải danh sách khóa học:", error);
-            alert("Không thể tải danh sách khóa học từ server.");
+            Swal.fire({
+                icon: "error",
+                title: "Không thể tải dữ liệu",
+                text: "Vui lòng thử lại sau.",
+                confirmButtonColor: "#2563eb"
+            });
             setCourses([]);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleApproveCourse = async (courseId) => {
-        if (!courseId || !window.confirm(`Bạn có chắc chắn muốn duyệt khóa học #${courseId}?`)) return;
+    // 🔥 DUYỆT KHÓA HỌC
+    const handleApproveCourse = async (course) => {
+        const courseId = course.id || course.courseId;
+        const courseTitle = course.title || course.courseTitle || `Khóa học #${courseId}`;
+
+        const result = await Swal.fire({
+            title: "Xuất bản khóa học?",
+            html: `
+                <b>${courseTitle}</b><br/><br/>
+                Khóa học sẽ được xuất bản và gửi thông báo tới giảng viên.
+            `,
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "✅ Duyệt",
+            cancelButtonText: "Hủy",
+            confirmButtonColor: "#2563eb",
+            cancelButtonColor: "#9ca3af"
+        });
+
+        if (!result.isConfirmed) return;
+        await Swal.fire({
+            icon: "success",
+            title: "Đã xuất bản!",
+            text: "Khóa học đã được duyệt và thông báo đã gửi tới giảng viên.",
+            confirmButtonColor: "#2563eb"
+        });
 
         try {
-            await axiosClient.patch(`/admin/courses/${courseId}/status`, { status: "PUBLISHED" });
+            await axiosClient.patch(`/admin/courses/${courseId}/status`, { 
+                status: "PUBLISHED" 
+            });
+
             setCourses(prev => prev.map(c =>
                 (c.id === courseId || c.courseId === courseId)
                     ? { ...c, status: "PUBLISHED" }
                     : c
             ));
-            alert(`✅ Khóa học #${courseId} đã được duyệt và xuất bản!`);
+            alert(`✅ Khóa học #${courseId} đã được duyệt và hệ thống đã gửi thông báo tới giảng viên!`);
         } catch (error) {
             alert("❌ Lỗi khi duyệt khóa học: " + (error.response?.data?.message || error.message));
         }
     };
 
-    const handleRejectCourse = async (courseId) => {
+    // 🔥 TỪ CHỐI / YÊU CẦU SỬA (GỬI LÝ DO QUA API STATUS)
+    const handleRejectCourse = async (course) => {
+        const courseId = course.id || course.courseId;
+        const courseTitle = course.title || course.courseTitle || `Khóa học #${courseId}`;
+
         if (!courseId) return;
-        const reason = prompt("Nhập lý do yêu cầu giảng viên chỉnh sửa lại:");
-        if (!reason) return;
+        const { value: reason } = await Swal.fire({
+            title: "Yêu cầu chỉnh sửa",
+            input: "textarea",
+            inputPlaceholder: "Nhập lý do cần chỉnh sửa...",
+            inputAttributes: {
+                rows: 5
+            },
+            showCancelButton: true,
+            confirmButtonText: "Gửi yêu cầu",
+            cancelButtonText: "Hủy",
+            confirmButtonColor: "#f59e0b",
+            inputValidator: (value) => {
+                if (!value) {
+                    return "Bạn phải nhập lý do.";
+                }
+            }
+        });
+
+        if (!reason || !reason.trim()) {
+            alert("⚠️ Bạn cần phải nhập lý do yêu cầu chỉnh sửa!");
+            return;
+        }
+
+        await Swal.fire({
+            icon: "success",
+            title: "Đã gửi!",
+            text: "Giảng viên đã nhận được yêu cầu chỉnh sửa.",
+            confirmButtonColor: "#2563eb"
+        });
 
         try {
             await axiosClient.patch(`/admin/courses/${courseId}/status`, {
                 status: "REJECTED",
-                note: reason
+                note: reason.trim()
             });
+
             setCourses(prev => prev.map(c =>
                 (c.id === courseId || c.courseId === courseId)
                     ? { ...c, status: "REJECTED" }
                     : c
             ));
-            alert("✅ Đã gửi yêu cầu chỉnh sửa cho giảng viên.");
+            alert("✅ Đã gửi yêu cầu chỉnh sửa và thông báo tới giảng viên!");
         } catch (error) {
             alert("❌ Lỗi khi từ chối khóa học: " + (error.response?.data?.message || error.message));
         }
     };
 
-    const handleRevokeToPending = async (courseId) => {
-        if (!courseId || !window.confirm(`Hạ khóa học #${courseId} xuống trạng thái "Chờ duyệt"?`)) return;
+    // 🔥 HẠ KHÓA HỌC XUỐNG CHỜ DUYỆT
+    const handleRevokeToPending = async (course) => {
+        const courseId = course.id || course.courseId;
+        const courseTitle = course.title || course.courseTitle || `Khóa học #${courseId}`;
+
+        if (!courseId) return;
+
+        const { value: reason } = await Swal.fire({
+            title: "Hạ khóa học",
+            text: "Khóa học sẽ quay về trạng thái Chờ duyệt.",
+            input: "textarea",
+            inputPlaceholder: "Nhập lý do...",
+            showCancelButton: true,
+            confirmButtonText: "Hạ khóa học",
+            cancelButtonText: "Hủy",
+            confirmButtonColor: "#ea580c",
+            inputValidator: (value) => {
+                if (!value) return "Bạn phải nhập lý do.";
+            }
+        });
+
+        if (!reason || !reason.trim()) {
+            alert("⚠️ Bạn phải nhập lý do để hạ khóa học!");
+            return;
+        }
+
+        await Swal.fire({
+            icon: "success",
+            title: "Đã chuyển trạng thái",
+            text: "Khóa học đã quay về Chờ duyệt.",
+            confirmButtonColor: "#2563eb"
+        });
 
         try {
-            await axiosClient.patch(`/admin/courses/${courseId}/status`, { status: "PENDING" });
+            await axiosClient.patch(`/admin/courses/${courseId}/status`, {
+                status: "PENDING",
+                note: reason.trim()
+            });
+
             setCourses(prev => prev.map(c =>
                 (c.id === courseId || c.courseId === courseId)
                     ? { ...c, status: "PENDING" }
                     : c
             ));
-            alert(`🔄 Khóa học #${courseId} đã chuyển về trạng thái Chờ duyệt.`);
+            alert(`🔄 Khóa học #${courseId} đã chuyển về Chờ duyệt và gửi thông báo tới giảng viên!`);
         } catch (error) {
             alert("❌ Lỗi khi hạ trạng thái: " + (error.response?.data?.message || error.message));
         }
     };
 
-    const handleDeleteCourse = async (courseId) => {
-        if (!courseId || !window.confirm(`🚨 CẢNH BÁO: Xóa vĩnh viễn khóa học #${courseId}?`)) return;
+    // 🔥 XÓA KHÓA HỌC
+    const handleDeleteCourse = async (course) => {
+        const courseId = course.id || course.courseId;
+        const courseTitle = course.title || course.courseTitle || `Khóa học #${courseId}`;
+
+        if (!courseId) return;
+
+        const { value: reason } = await Swal.fire({
+            title: "Xóa khóa học?",
+            html: `
+                <b style="color:#dc2626">${courseTitle}</b><br><br>
+                Hành động này không thể hoàn tác.
+            `,
+            icon: "warning",
+            input: "textarea",
+            inputPlaceholder: "Nhập lý do xóa...",
+            showCancelButton: true,
+            confirmButtonText: "🗑️ Xóa",
+            cancelButtonText: "Hủy",
+            confirmButtonColor: "#dc2626",
+            cancelButtonColor: "#9ca3af",
+            inputValidator: (value) => {
+                if (!value) return "Bạn phải nhập lý do.";
+            }
+        });
+
+
+        if (!reason || !reason.trim()) {
+            alert("⚠️ Bạn phải nhập lý do xóa khóa học!");
+            return;
+        }
+
+        await Swal.fire({
+            icon: "success",
+            title: "Đã xóa",
+            text: "Khóa học đã bị xóa khỏi hệ thống.",
+            confirmButtonColor: "#2563eb"
+        });
 
         try {
-            await axiosClient.delete(`/admin/courses/${courseId}`);
-            alert(`🗑️ Đã xóa khóa học #${courseId} thành công!`);
+            await axiosClient.delete(`/admin/courses/${courseId}`, {
+                data: { reason: reason.trim() }
+            });
+            alert(`🗑️ Đã xóa khóa học #${courseId} và gửi thông báo tới giảng viên!`);
             fetchAllCourses();
         } catch (error) {
             alert("❌ Lỗi khi xóa khóa học: " + (error.response?.data?.message || error.message));
@@ -216,6 +352,18 @@ export default function AdminCoursesPage() {
                                                 ? (typeof c.price === "number" ? c.price.toLocaleString() : String(c.price)) + "đ"
                                                 : "0đ";
 
+                                            // 🔥 XỬ LÝ LẤY TÊN GIÁO VIÊN AN TOÀN TRÁNH [object Object]
+                                            let teacherDisplayName = "Chưa có";
+                                            if (typeof c.teacherName === "string" && c.teacherName.trim()) {
+                                                teacherDisplayName = c.teacherName;
+                                            } else if (c.teacher && typeof c.teacher === "object") {
+                                                teacherDisplayName = c.teacher.fullName || c.teacher.name || c.teacher.fullNameTeacher || "Giáo viên";
+                                            } else if (typeof c.teacher === "string" && c.teacher.trim()) {
+                                                teacherDisplayName = c.teacher;
+                                            } else if (c.teacher_id || c.teacherId) {
+                                                teacherDisplayName = `GV #${c.teacher_id || c.teacherId}`;
+                                            }
+
                                             return (
                                                 <tr key={currentId}>
                                                     <td>#{currentId}</td>
@@ -228,9 +376,7 @@ export default function AdminCoursesPage() {
                                                         </strong>
                                                     </td>
                                                     <td>
-                                                        {c.teacherName || c.teacher || c.teacher_id
-                                                            ? `GV: ${c.teacherName || c.teacher || c.teacher_id}`
-                                                            : "Chưa có"}
+                                                        {teacherDisplayName !== "Chưa có" ? `GV: ${teacherDisplayName}` : "Chưa có"}
                                                     </td>
                                                     <td>{formattedPrice}</td>
                                                     <td>
@@ -260,14 +406,14 @@ export default function AdminCoursesPage() {
                                                                 <button
                                                                     className="action-btn approve"
                                                                     style={{ marginLeft: "6px" }}
-                                                                    onClick={() => handleApproveCourse(currentId)}
+                                                                    onClick={() => handleApproveCourse(c)}
                                                                 >
                                                                     ✅ Duyệt
                                                                 </button>
                                                                 <button
                                                                     className="action-btn reject"
                                                                     style={{ marginLeft: "6px" }}
-                                                                    onClick={() => handleRejectCourse(currentId)}
+                                                                    onClick={() => handleRejectCourse(c)}
                                                                 >
                                                                     ❌ Sửa
                                                                 </button>
@@ -279,14 +425,14 @@ export default function AdminCoursesPage() {
                                                                 <button
                                                                     className="action-btn reject"
                                                                     style={{ marginLeft: "6px", backgroundColor: "#ea580c", color: "#fff" }}
-                                                                    onClick={() => handleRevokeToPending(currentId)}
+                                                                    onClick={() => handleRevokeToPending(c)}
                                                                 >
                                                                     ↩️ Hạ
                                                                 </button>
                                                                 <button
                                                                     className="action-btn reject"
                                                                     style={{ marginLeft: "6px", backgroundColor: "#dc2626", color: "#fff" }}
-                                                                    onClick={() => handleDeleteCourse(currentId)}
+                                                                    onClick={() => handleDeleteCourse(c)}
                                                                 >
                                                                     🗑️ Xóa
                                                                 </button>

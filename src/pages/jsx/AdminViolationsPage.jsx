@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
+import { successAlert, errorAlert, warningAlert, confirmAlert, inputAlert } from "../../services/alertService";
 import "../css/AdminUsersPage.css"; // Tái sử dụng CSS layout admin hệ thống
 
 export default function AdminViolationsPage() {
@@ -39,9 +40,14 @@ export default function AdminViolationsPage() {
     const handleProcessViolation = async (reportId, actionStatus) => {
         const actionText = actionStatus === "RESOLVED_BAN" ? "XỬ PHẠT mục tiêu" : "BÁC BỎ đơn tố cáo";
         
-        const adminNote = prompt(`Xác nhận hành động: ${actionText}.\nNhập phản hồi/thông báo gửi lại cho người dùng:`);
-        if (adminNote === null) return; 
+        const { value: adminNote } = await inputAlert(
+            actionStatus === "RESOLVED_BAN"
+                ? "Xử phạt người dùng"
+                : "Bác bỏ báo cáo",
+            "Nhập phản hồi gửi tới người dùng"
+        );
 
+        if (adminNote === undefined) return;
         try {
             await axiosClient.put(`/admin/violations/${reportId}`, { 
                 status: actionStatus,
@@ -54,10 +60,16 @@ export default function AdminViolationsPage() {
                 return currentId === reportId ? { ...r, status: actionStatus, adminNote: adminNote } : r;
             }));
             
-            alert(`✅ Đã đóng đơn #${reportId} và gửi thông báo phản hồi thành công!`);
+            successAlert(
+                "Thành công",
+                "Đơn báo cáo đã được xử lý và người dùng đã nhận được thông báo."
+            );
         } catch (error) {
             console.error("Lỗi chi tiết từ hệ thống khi xử lý vi phạm:", error);
-            alert("❌ Có lỗi xảy ra trong quá trình cập nhật trạng thái đơn vi phạm.");
+            errorAlert(
+                "Xử lý thất bại",
+                error.response?.data?.message || "Có lỗi xảy ra trong quá trình xử lý."
+            );
         }
     };
 
@@ -137,14 +149,34 @@ export default function AdminViolationsPage() {
                                                                 <button 
                                                                     className="action-btn reject" 
                                                                     style={{ backgroundColor: "#dc2626", color: "#fff" }}
-                                                                    onClick={() => handleProcessViolation(currentId, "RESOLVED_BAN")}
+                                                                    onClick={async () => {
+                                                                        const result = await confirmAlert(
+                                                                            "Xử phạt người dùng?",
+                                                                            "Người dùng sẽ nhận thông báo và đơn sẽ được đóng."
+                                                                        );
+
+                                                                        if(result.isConfirmed){
+                                                                            handleProcessViolation(currentId,"RESOLVED_BAN");
+                                                                        }
+
+                                                                    }}
                                                                 >
                                                                     🔨 Xử phạt
                                                                 </button>
                                                                 <button 
                                                                     className="action-btn disable" 
                                                                     style={{ marginLeft: "8px", backgroundColor: "#6b7280", color: "#fff" }}
-                                                                    onClick={() => handleProcessViolation(currentId, "DISMISSED")}
+                                                                    onClick={async ()=>{
+                                                                        const result = await confirmAlert(
+                                                                            "Bác bỏ báo cáo?",
+                                                                            "Đơn tố cáo sẽ bị đóng."
+                                                                        );
+
+                                                                        if(result.isConfirmed){
+                                                                            handleProcessViolation(currentId,"DISMISSED");
+                                                                        }
+
+                                                                    }}
                                                                 >
                                                                     🚫 Bác bỏ
                                                                 </button>

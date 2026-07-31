@@ -49,36 +49,36 @@ export default function GapDiagnosisPage() {
                         {data.gaps.length === 0 ? "Không phát hiện lỗ hổng đáng kể 🎉" : `Phát hiện ${data.gaps.length} điểm yếu`}
                     </h2>
 
-                    <div className="gap-subjects-container">
-                        {Object.entries(
-                            data.gaps.reduce((acc, curr) => {
-                                const subj = curr.subject || "Khác";
-                                if (!acc[subj]) acc[subj] = [];
-                                acc[subj].push(curr);
-                                return acc;
-                            }, {})
-                        ).map(([subject, gaps]) => (
-                            <div className="gap-subject-card" key={subject}>
-                                <h3 className="gap-subject-heading">📚 Môn {subject}</h3>
-                                <div className="gap-list">
-                                    {gaps.map((g, i) => (
-                                        <div className="gap-item" key={i}>
-                                            <div className="gap-head">
-                                                <span className="gap-topic">{g.topic}</span>
-                                                <span className="gap-severity" style={{ background: g.color }}>{g.severity}</span>
-                                            </div>
-                                            <div className="gap-bar">
-                                                <div className="gap-bar-fill" style={{ width: `${g.accuracy}%`, background: g.color }} />
-                                            </div>
-                                            <div className="gap-acc">Độ chính xác: {g.accuracy}%</div>
-                                            <div className="gap-recommendation">
-                                                <strong>💡 Giải pháp:</strong> {g.recommendation}
-                                            </div>
+                    <div className="gap-grid">
+                        <div className="gap-col">
+                            <h3 className="gap-col-title">📉 Lỗ hổng phát hiện được</h3>
+                            <div className="gap-list">
+                                {data.gaps.map((g, i) => (
+                                    <div className="gap-item" key={i}>
+                                        <div className="gap-head">
+                                            <span className="gap-subject">{g.subject}{g.topic ? ` - ${g.topic}` : ''}</span>
+                                            <span className="gap-severity" style={{ background: g.color }}>{g.severity}</span>
                                         </div>
+                                        <div className="gap-bar">
+                                            <div className="gap-bar-fill" style={{ width: `${g.accuracy}%`, background: g.color }} />
+                                        </div>
+                                        <div className="gap-acc">Độ chính xác: {g.accuracy}%</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="gap-col">
+                            <h3 className="gap-col-title">🗺️ Lộ trình khắc phục & Giải pháp</h3>
+                            <div className="gap-roadmap">
+                                    {data.gaps.map((g, i) => (
+                                        <li key={i}>
+                                            <strong>{g.subject}{g.topic ? ` - ${g.topic}` : ''}:</strong> {g.recommendation}
+                                        </li>
                                     ))}
                                 </div>
                             </div>
-                        ))}
+                        ))
                     </div>
 
                     <div className="ai-cta" style={{ marginTop: '30px' }}>

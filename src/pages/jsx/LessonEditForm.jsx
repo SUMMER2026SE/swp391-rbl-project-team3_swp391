@@ -14,7 +14,7 @@ export default function LessonEditForm({ lesson, initialData, onSave, onCancel }
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         let finalVideoUrl = formData.videoUrl;
         if (videoFile) {
             setIsUploading(true);
@@ -41,7 +41,7 @@ export default function LessonEditForm({ lesson, initialData, onSave, onCancel }
         if (file) {
             const video = document.createElement('video');
             video.preload = 'metadata';
-            video.onloadedmetadata = function() {
+            video.onloadedmetadata = function () {
                 window.URL.revokeObjectURL(video.src);
                 const duration = video.duration;
                 const minutes = Math.floor(duration / 60);
@@ -214,7 +214,7 @@ export default function LessonEditForm({ lesson, initialData, onSave, onCancel }
 
     const handleDeleteMaterial = async (e, materialId) => {
         e.preventDefault();
-        if(!window.confirm("Xóa tài liệu này?")) return;
+        if (!window.confirm("Xóa tài liệu này?")) return;
         try {
             await axiosClient.delete(`/outlines/materials/${materialId}`);
             onSave(lesson.id, formData); // Gọi onSave ảo để reload danh sách
@@ -227,69 +227,68 @@ export default function LessonEditForm({ lesson, initialData, onSave, onCancel }
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%" }}>
             <div className="form-group" style={{ margin: 0 }}>
                 <label style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px", fontFamily: "'Segoe UI', sans-serif" }}>Tiêu đề bài học</label>
-                <input 
-                    type="text" 
-                    value={formData.title} 
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })} 
-                    placeholder="Tiêu đề bài học" 
-                    style={{ boxSizing: "border-box", padding: "10px 14px", borderRadius: "8px", border: "1px solid #2747d9", width: "100%", fontFamily: "'Segoe UI', sans-serif", fontSize: "14px" }} 
+                <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="Tiêu đề bài học"
+                    style={{ boxSizing: "border-box", padding: "10px 14px", borderRadius: "8px", border: "1px solid #2747d9", width: "100%", fontFamily: "'Segoe UI', sans-serif", fontSize: "14px" }}
                 />
             </div>
             <div className="form-group" style={{ margin: 0 }}>
                 <label style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px", fontFamily: "'Segoe UI', sans-serif" }}>Mô tả ngắn</label>
-                <input 
-                    type="text" 
-                    value={formData.description} 
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })} 
-                    placeholder="Mô tả bài học" 
-                    style={{ boxSizing: "border-box", padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontFamily: "'Segoe UI', sans-serif", fontSize: "14px" }} 
+                <input
+                    type="text"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Mô tả bài học"
+                    style={{ boxSizing: "border-box", padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontFamily: "'Segoe UI', sans-serif", fontSize: "14px" }}
                 />
             </div>
             <div style={{ display: "flex", gap: "24px", flexDirection: "column" }}>
                 <div style={{ display: "flex", gap: "24px" }}>
                     <div className="form-group" style={{ margin: 0, flex: 1 }}>
                         <label style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px", fontFamily: "'Segoe UI', sans-serif" }}>Tải video (Máy tính)</label>
-                        <input 
-                            type="file" 
+                        <input
+                            type="file"
                             accept="video/*"
-                            onChange={handleVideoSelect} 
-                            style={{ boxSizing: "border-box", padding: "7px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontFamily: "'Segoe UI', sans-serif", fontSize: "13px", background: "#fff" }} 
+                            onChange={handleVideoSelect}
+                            style={{ boxSizing: "border-box", padding: "7px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontFamily: "'Segoe UI', sans-serif", fontSize: "13px", background: "#fff" }}
                         />
                     </div>
-                    <div className="form-group" style={{ margin: 0, flex: 1 }}>
-                        <label style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px", fontFamily: "'Segoe UI', sans-serif" }}>Hoặc gắn link YouTube</label>
-                        <input 
-                            type="text" 
-                            value={formData.videoUrl} 
+                    <div className="form-group" style={{ margin: 0, flex: 1, display: "none" }}>
+                        <input
+                            type="text"
+                            value={formData.videoUrl}
                             onChange={(e) => {
                                 const newUrl = e.target.value;
                                 setFormData({ ...formData, videoUrl: newUrl });
                                 setVideoFile(null); // Ưu tiên link nếu vừa gõ link
-                                
+
                                 // Nếu là YouTube, tự động lấy thời lượng
                                 const ytVideoId = extractYouTubeVideoId(newUrl);
                                 if (ytVideoId) {
                                     fetchYouTubeDuration(ytVideoId);
                                 }
-                            }} 
-                            placeholder="https://youtube.com/watch?v=..." 
-                            style={{ boxSizing: "border-box", padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontFamily: "'Segoe UI', sans-serif", fontSize: "13px" }} 
+                            }}
+                            placeholder="https://youtube.com/watch?v=..."
+                            style={{ boxSizing: "border-box", padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", fontFamily: "'Segoe UI', sans-serif", fontSize: "13px" }}
                         />
                     </div>
                     <div className="form-group" style={{ margin: 0, width: "110px" }}>
                         <label style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px", textAlign: "center", fontFamily: "'Segoe UI', sans-serif" }}>Thời lượng</label>
-                        <input 
-                            type="text" 
-                            value={formData.duration} 
-                            onChange={(e) => setFormData({ ...formData, duration: e.target.value })} 
-                            placeholder="15:00" 
-                            style={{ boxSizing: "border-box", padding: "10px 0", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", height: "auto", background: "#fff", fontSize: "14px", textAlign: "center", fontFamily: "'Segoe UI', sans-serif" }} 
+                        <input
+                            type="text"
+                            value={formData.duration}
+                            onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                            placeholder="15:00"
+                            style={{ boxSizing: "border-box", padding: "10px 0", borderRadius: "8px", border: "1px solid #cbd5e1", width: "100%", height: "auto", background: "#fff", fontSize: "14px", textAlign: "center", fontFamily: "'Segoe UI', sans-serif" }}
                         />
                     </div>
                 </div>
             </div>
 
-            
+
             <div style={{ marginTop: "10px", padding: "15px", border: "1px dashed #cbd5e1", borderRadius: "8px", background: "#f8fafc" }}>
                 <label style={{ fontSize: "13px", color: "#475569", marginBottom: "8px", display: "block", fontWeight: "700", fontFamily: "'Segoe UI', sans-serif" }}>Tài liệu đính kèm (PDF, Word, PPT...)</label>
                 {lesson.materials && lesson.materials.length > 0 && (
@@ -313,7 +312,7 @@ export default function LessonEditForm({ lesson, initialData, onSave, onCancel }
 
             <div style={{ marginTop: "10px", padding: "15px", border: "1px dashed #f59e0b", borderRadius: "8px", background: "#fffbeb" }}>
                 <label style={{ fontSize: "13px", color: "#b45309", marginBottom: "8px", display: "block", fontWeight: "700", fontFamily: "'Segoe UI', sans-serif" }}>Câu hỏi tương tác Pop-up (In-Video Quizzes)</label>
-                
+
                 {questions.length > 0 && (
                     <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "12px" }}>
                         {questions.map(q => (
@@ -328,22 +327,22 @@ export default function LessonEditForm({ lesson, initialData, onSave, onCancel }
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px", background: "#fff", padding: "10px", borderRadius: "6px", border: "1px solid #fcd34d" }}>
                     <div style={{ display: "flex", gap: "10px" }}>
                         <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
-                            <input type="number" placeholder="Phút" value={newQuestion.minutes} onChange={e => setNewQuestion({...newQuestion, minutes: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", width: "60px", textAlign: "center" }} min="0" />
+                            <input type="number" placeholder="Phút" value={newQuestion.minutes} onChange={e => setNewQuestion({ ...newQuestion, minutes: e.target.value })} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", width: "60px", textAlign: "center" }} min="0" />
                             <span style={{ fontWeight: "bold" }}>:</span>
-                            <input type="number" placeholder="Giây" value={newQuestion.seconds} onChange={e => setNewQuestion({...newQuestion, seconds: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", width: "60px", textAlign: "center" }} min="0" max="59" />
+                            <input type="number" placeholder="Giây" value={newQuestion.seconds} onChange={e => setNewQuestion({ ...newQuestion, seconds: e.target.value })} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", width: "60px", textAlign: "center" }} min="0" max="59" />
                         </div>
-                        <input type="text" placeholder="Nhập câu hỏi..." value={newQuestion.questionText} onChange={e => setNewQuestion({...newQuestion, questionText: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
+                        <input type="text" placeholder="Nhập câu hỏi..." value={newQuestion.questionText} onChange={e => setNewQuestion({ ...newQuestion, questionText: e.target.value })} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
                     </div>
                     <div style={{ display: "flex", gap: "10px" }}>
-                        <input type="text" placeholder="Đáp án A" value={newQuestion.optionA} onChange={e => setNewQuestion({...newQuestion, optionA: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
-                        <input type="text" placeholder="Đáp án B" value={newQuestion.optionB} onChange={e => setNewQuestion({...newQuestion, optionB: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
-                        <input type="text" placeholder="Đáp án C" value={newQuestion.optionC} onChange={e => setNewQuestion({...newQuestion, optionC: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
-                        <input type="text" placeholder="Đáp án D" value={newQuestion.optionD} onChange={e => setNewQuestion({...newQuestion, optionD: e.target.value})} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
+                        <input type="text" placeholder="Đáp án A" value={newQuestion.optionA} onChange={e => setNewQuestion({ ...newQuestion, optionA: e.target.value })} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
+                        <input type="text" placeholder="Đáp án B" value={newQuestion.optionB} onChange={e => setNewQuestion({ ...newQuestion, optionB: e.target.value })} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
+                        <input type="text" placeholder="Đáp án C" value={newQuestion.optionC} onChange={e => setNewQuestion({ ...newQuestion, optionC: e.target.value })} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
+                        <input type="text" placeholder="Đáp án D" value={newQuestion.optionD} onChange={e => setNewQuestion({ ...newQuestion, optionD: e.target.value })} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", flex: 1 }} />
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div style={{ fontSize: "13px", color: "#475569" }}>
                             <strong>Đáp án đúng: </strong>
-                            <select value={newQuestion.correctOption} onChange={e => setNewQuestion({...newQuestion, correctOption: e.target.value})} style={{ padding: "4px 8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}>
+                            <select value={newQuestion.correctOption} onChange={e => setNewQuestion({ ...newQuestion, correctOption: e.target.value })} style={{ padding: "4px 8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}>
                                 <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
                             </select>
                         </div>
