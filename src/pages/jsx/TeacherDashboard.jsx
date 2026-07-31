@@ -5,6 +5,7 @@ import axiosClient from "../../api/axiosClient";
 import { logout } from "../../services/authService";
 import wordImportService from "../../services/wordImportService";
 import TeacherProfileEdit from "./TeacherProfileEdit";
+import Swal from "sweetalert2";
 
 export default function TeacherDashboard() {
     const navigate = useNavigate();
@@ -160,17 +161,54 @@ export default function TeacherDashboard() {
     };
 
     const handleRename = async (courseId, oldTitle) => {
-        const newTitle = window.prompt("Nhập tên mới cho khóa học:", oldTitle);
-        if (!newTitle || newTitle === oldTitle) return;
+        const { value: newTitle } = await Swal.fire({
+            title: "Đổi tên khóa học",
+            input: "text",
+            inputValue: oldTitle,
+            inputLabel: "Tên khóa học mới",
+            inputPlaceholder: "Nhập tên khóa học",
+            showCancelButton: true,
+            confirmButtonText: "Lưu",
+            cancelButtonText: "Hủy",
+            confirmButtonColor: "#0ea5e9",
+            cancelButtonColor: "#94a3b8",
+            inputValidator: (value) => {
+                if (!value.trim()) {
+                    return "Tên khóa học không được để trống!";
+                }
+            }
+        });
+
+        if (!newTitle || newTitle === oldTitle) {
+            return;
+        }
 
         try {
-            await axiosClient.put(`/courses/${courseId}`, { title: newTitle });
-            setMyCourses(prev => prev.map(c => 
-                c.id === courseId ? { ...c, title: newTitle } : c
-            ));
-            alert("✅ Đổi tên thành công!");
+            await axiosClient.put(`/courses/${courseId}`, {
+                title: newTitle.trim()
+            });
+
+            setMyCourses((prev) =>
+                prev.map((course) =>
+                    course.id === courseId
+                        ? { ...course, title: newTitle.trim() }
+                        : course
+                )
+            );
+
+            Swal.fire({
+                icon: "success",
+                title: "Thành công",
+                text: "Tên khóa học đã được cập nhật."
+            });
         } catch (error) {
-            alert("❌ Lỗi khi đổi tên: " + (error.response?.data?.message || error.message));
+            Swal.fire({
+                icon: "error",
+                title: "Lỗi",
+                text:
+                    error.response?.data?.message ||
+                    "Không thể đổi tên khóa học."
+            });
         }
     };
 
