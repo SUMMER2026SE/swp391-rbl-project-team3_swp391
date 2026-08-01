@@ -168,20 +168,11 @@ function ProfilePage() {
                                     <h3>Ảnh đại diện</h3>
                                     <AvatarUpload
                                         onUploaded={(url) => {
-                                            const updatedUser = {
-                                                ...user,
+                                            setUser((prev) => ({
+                                                ...prev,
                                                 avatarUrl: url,
-                                                avatar_url: url
-                                            };
-                                            setUser(updatedUser);
-                                            localStorage.setItem(
-                                                "user",
-                                                JSON.stringify(updatedUser)
-                                            );
-
-                                            axiosClient.put("/auth/avatar", {
-                                                avatarUrl: url
-                                            });
+                                                avatar_url: url,
+                                            }));
                                         }}
                                     />
                                 </div>
@@ -230,7 +221,11 @@ function ProfilePage() {
                                 <button className="password-btn" onClick={() => navigate("/change-password")}>
                                     🔐 Đổi mật khẩu
                                 </button>
-                                <button className="save-btn" onClick={handleSave} disabled={saving}>
+                                <button
+                                    className={`save-btn ${hasChanges ? "active" : ""}`}
+                                    onClick={handleSave}
+                                    disabled={saving || !hasChanges}
+                                >
                                     {saving ? "Đang lưu..." : "💾 Lưu thay đổi"}
                                 </button>
                             </div>
