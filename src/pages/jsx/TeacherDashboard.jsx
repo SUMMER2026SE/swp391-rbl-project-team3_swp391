@@ -253,7 +253,7 @@ export default function TeacherDashboard() {
 
         try {
             const token = localStorage.getItem("token");
-            const response = await fetch(`http://localhost:8080/api/reports/courses/${selectedCourseForReport.id}/export`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/reports/courses/${selectedCourseForReport.id}/export`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -526,7 +526,7 @@ export default function TeacherDashboard() {
                                                         <img
                                                             src={
                                                                 qa.userAvatarUrl && qa.userAvatarUrl !== "null" && qa.userAvatarUrl.trim() !== ""
-                                                                    ? (qa.userAvatarUrl.startsWith("http") ? qa.userAvatarUrl : `http://localhost:8080${qa.userAvatarUrl}`)
+                                                                    ? (qa.userAvatarUrl.startsWith("http") ? qa.userAvatarUrl : `${import.meta.env.VITE_API_URL.replace("/api","")}${qa.userAvatarUrl}`)
                                                                     : `https://ui-avatars.com/api/?name=${encodeURIComponent(qa.userFullName || "User")}&background=64748b&color=fff`
                                                             }
                                                             onError={(e) => {

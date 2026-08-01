@@ -24,7 +24,8 @@ export default function PaymentReturnPage() {
 
     const [result, setResult] = useState(null); // 'PAID' | 'FAILED'
     const [processing, setProcessing] = useState(false);
-    const [syncing, setSyncing] = useState(provider === "zalopay");
+    const isPayOSPending = Boolean(orderCode && !isCancel && payosStatus !== "CANCELLED");
+    const [syncing, setSyncing] = useState(provider === "zalopay" || isPayOSPending);
 
     // Xử lý PayOS return
     useEffect(() => {
@@ -32,7 +33,17 @@ export default function PaymentReturnPage() {
             if (isCancel || payosStatus === "CANCELLED") {
                 setResult("FAILED");
             } else {
-                setResult("PAID");
+                setSyncing(true);
+                paymentService.paymentStatus(orderCode)
+                    .then(res => {
+                        if (res.paymentStatus === 'SUCCESS') {
+                            setResult("PAID");
+                        } else {
+                            setResult("FAILED");
+                        }
+                    })
+                    .catch(() => setResult("FAILED"))
+                    .finally(() => setSyncing(false));
             }
         }
     }, [orderCode, isCancel, payosStatus]);
@@ -52,11 +63,11 @@ export default function PaymentReturnPage() {
             <div className="pay-page">
                 <div className="pay-card gateway">
                     <div className="pay-gateway-head">
-                        <span className="pay-logo">ZaloPay</span>
+                        <span className="pay-logo">{orderCode ? 'PayOS' : 'ZaloPay'}</span>
                         <span className="pay-sandbox">Đang xác nhận</span>
                     </div>
-                    <h2>Đang kiểm tra kết quả thanh toán ZaloPay...</h2>
-                    <div className="pay-ref">Mã giao dịch: {transactionRef}</div>
+                    <h2>Đang kiểm tra kết quả thanh toán...</h2>
+                    <div className="pay-ref">Mã giao dịch: {transactionRef || orderCode}</div>
                 </div>
             </div>
         );

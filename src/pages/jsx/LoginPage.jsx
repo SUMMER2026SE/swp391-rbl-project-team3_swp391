@@ -19,7 +19,7 @@ function LoginPage({ switchToRegister }) {
     // 🔥 HÀM HELPER: Gửi yêu cầu lưu log hoạt động xuống cơ sở dữ liệu
     const sendActivityLog = async (userId, token, actionText) => {
         try {
-            await fetch(`http://localhost:8080/api/admin/users/${userId}/activity`, {
+            await fetch(`${import.meta.env.VITE_API_URL}/admin/users/${userId}/activity`, {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json",
@@ -40,7 +40,7 @@ function LoginPage({ switchToRegister }) {
             setLoading(true);
             setMessage("");
 
-            const response = await fetch("http://localhost:8080/api/auth/login", {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
@@ -124,7 +124,7 @@ const currentUserId = decoded.userId || decoded.id;
     const handleGoogleLogin = async (credentialResponse) => {
         try {
             const res = await fetch(
-                "http://localhost:8080/api/auth/google",
+                `${import.meta.env.VITE_API_URL}/auth/google`,
                 {
                     method: "POST",
                     headers: {

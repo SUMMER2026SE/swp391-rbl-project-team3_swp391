@@ -39,7 +39,7 @@ const TeacherGrading = () => {
     const fetchPendingSessions = async () => {
         try {
             const token = localStorage.getItem("token");
-            const res = await fetch('http://localhost:8080/api/teacher/grading/pending-sessions', {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/teacher/grading/pending-sessions`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();
@@ -55,7 +55,7 @@ const TeacherGrading = () => {
         setSelectedSession(session);
         try {
             const token = localStorage.getItem("token");
-            const res = await fetch(`http://localhost:8080/api/teacher/grading/session/${session.sessionsId}/essay-answers`, {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/teacher/grading/session/${session.sessionsId}/essay-answers`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();
@@ -76,7 +76,7 @@ const TeacherGrading = () => {
 
         try {
             const token = localStorage.getItem("token");
-            const res = await fetch(`http://localhost:8080/api/teacher/grading/answer/${answerId}`, {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/teacher/grading/answer/${answerId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

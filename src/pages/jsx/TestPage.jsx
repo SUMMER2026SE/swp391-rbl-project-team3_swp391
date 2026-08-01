@@ -27,7 +27,7 @@ const TestPage = () => {
             const token = localStorage.getItem("token");
 
             const res = await fetch(
-                `http://localhost:8080/api/tests/${sessionsId}/questions`,
+                `${import.meta.env.VITE_API_URL}/tests/${sessionsId}/questions`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -77,7 +77,7 @@ const saveTimeoutRef = useRef(null);
         
         console.log(`📡 Đang tự động lưu câu ${questionId} về DB...`);
 
-        fetch(`http://localhost:8080/api/tests/${sessionsId}/answer`, {
+        fetch(`${import.meta.env.VITE_API_URL}/tests/${sessionsId}/answer`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -16,7 +16,7 @@ const TestResult = () => {
         try {
             const token = localStorage.getItem("token");
             const res = await fetch(
-                `http://localhost:8080/api/tests/${sessionsId}/result`,
+                `${import.meta.env.VITE_API_URL}/tests/${sessionsId}/result`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
