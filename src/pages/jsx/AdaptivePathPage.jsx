@@ -190,7 +190,12 @@ export default function AdaptivePathPage() {
                                         className="step-action-btn"
                                         onClick={() => {
                                             const isCourse = step.type === "review" || step.type === "next" || step.type === "video" || step.action?.toLowerCase().includes("video");
-                                            navigate(isCourse ? "/courses" : "/tests");
+                                            let searchParam = "";
+                                            if (step.subject) {
+                                                const translatedSub = translateSubject(step.subject);
+                                                searchParam = `?search=${encodeURIComponent(translatedSub)}`;
+                                            }
+                                            navigate(isCourse ? `/courses${searchParam}` : `/tests${searchParam}`);
                                         }}
                                     >
                                         {step.action}
