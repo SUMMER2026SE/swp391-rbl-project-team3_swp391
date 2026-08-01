@@ -1,12 +1,13 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL}`,
+    baseURL: "http://localhost:8080/api",
     headers: {
         "Content-Type": "application/json",
     },
     withCredentials: true
 });
+
 
 // Tự động gắn JWT vào mọi request
 axiosClient.interceptors.request.use(
@@ -22,11 +23,14 @@ axiosClient.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Xử lý khi token hết hạn
+
+// Xử lý lỗi response
 axiosClient.interceptors.response.use(
     (response) => response,
     (error) => {
+
         if (error?.response?.status === 401) {
+
             console.warn("Token hết hạn hoặc không hợp lệ.");
 
             localStorage.removeItem("token");
@@ -48,5 +52,6 @@ axiosClient.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+
 
 export default axiosClient;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
 import "../css/CoursesPage.css";
+const API_BASE_URL = "http://localhost:8080";
 
 export default function CoursesPage() {
     const navigate = useNavigate();
@@ -13,19 +14,31 @@ export default function CoursesPage() {
 
     const getSubjectThumbnail = (subjectName) => {
         const thumbMap = {
-            "Toán Học": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/math-course.jpg?v=2`,
-            "Vật Lý": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/vatli.jpg?v=2`,
-            "Hóa Học": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/hoa.jpg?v=2`,
-            "Hoá Học": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/hoa.jpg?v=2`,
-            "Ngữ Văn": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/van.jpg?v=2`,
-            "Tiếng Anh": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/english-course.jpg?v=2`,
-            "Lịch Sử": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/su.jpg?v=2`,
-            "Địa Lý": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/dia.jpg?v=2`,
-            "Sinh Học": "https://images.unsplash.com/photo-1530213786676-412f1262d512?auto=format&fit=crop&w=400&q=80",
-            "Tin Học": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=400&q=80",
-            "GDCD": "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=400&q=80"
+            "Toán Học":
+            `${API_BASE_URL}/uploads/thumbnails/math-course.jpg?v=2`,
+            "Vật Lý":
+            `${API_BASE_URL}/uploads/thumbnails/vatli.jpg?v=2`,
+            "Hóa Học":
+            `${API_BASE_URL}/uploads/thumbnails/hoa.jpg?v=2`,
+            "Hoá Học":
+            `${API_BASE_URL}/uploads/thumbnails/hoa.jpg?v=2`,
+            "Ngữ Văn":
+            `${API_BASE_URL}/uploads/thumbnails/van.jpg?v=2`,
+            "Tiếng Anh":
+            `${API_BASE_URL}/uploads/thumbnails/english-course.jpg?v=2`,
+            "Lịch Sử":
+            `${API_BASE_URL}/uploads/thumbnails/su.jpg?v=2`,
+            "Địa Lý":
+            `${API_BASE_URL}/uploads/thumbnails/dia.jpg?v=2`,
+            "Sinh Học":
+            "https://images.unsplash.com/photo-1530213786676-412f1262d512",
+            "Tin Học":
+            "https://images.unsplash.com/photo-1517694712202-14dd9538aa97",
+            "GDCD":
+            "https://images.unsplash.com/photo-1589829085413-56de8ae18c73"
         };
-        return thumbMap[subjectName] || "https://images.unsplash.com/photo-1516321310764-9f1e6e8b0c0a?auto=format&fit=crop&w=400&q=80";
+        return thumbMap[subjectName]
+            || "https://images.unsplash.com/photo-1516321310764-9f1e6e8b0c0a";
     };
     useEffect(() => {
         setSearchTerm(searchParams.get("search") || "");
@@ -110,8 +123,10 @@ export default function CoursesPage() {
                         sName = subjectTranslations[sName] || sName;
 
                         let thumbnail = c.thumbnail_url || c.thumbnailUrl || c.thumbnail;
-                        if (thumbnail && !thumbnail.startsWith("http")) {
-                            thumbnail = `${import.meta.env.VITE_API_URL.replace("/api","")}${thumbnail}`;
+                        if(thumbnail && !thumbnail.startsWith("http")){
+                            thumbnail =
+                            `${API_BASE_URL}${thumbnail}`;
+
                         }
                         if (!thumbnail) {
                             thumbnail = getSubjectThumbnail(sName);

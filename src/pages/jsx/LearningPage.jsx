@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
 import "../css/LearningPage.css";
+const SERVER_URL = "http://localhost:8080";
 
 export default function LearningPage() {
     const { courseId } = useParams();
@@ -739,7 +740,7 @@ export default function LearningPage() {
                                     ) : (
                                         <video
                                             ref={videoRef}
-                                            src={currentLesson.videoUrl.startsWith("http") ? currentLesson.videoUrl : `${import.meta.env.VITE_API_URL.replace("/api","")}${currentLesson.videoUrl}`}
+                                            src={currentLesson.videoUrl.startsWith("http") ? currentLesson.videoUrl : `${SERVER_URL}${currentLesson.videoUrl}`}
                                             controls
                                             onTimeUpdate={handleTimeUpdate}
                                             style={{ width: "100%", height: "100%", display: "block", position: "absolute", top: 0, left: 0 }}
@@ -913,7 +914,7 @@ export default function LearningPage() {
                                                         <img
                                                             src={
                                                                 q.userAvatarUrl && q.userAvatarUrl !== "null" && q.userAvatarUrl.trim() !== ""
-                                                                    ? (q.userAvatarUrl.startsWith("http") ? q.userAvatarUrl : `${import.meta.env.VITE_API_URL.replace("/api","")}${q.userAvatarUrl}`)
+                                                                    ? (q.userAvatarUrl.startsWith("http") ? q.userAvatarUrl : `${SERVER_URL}${q.userAvatarUrl}`)
                                                                     : `https://ui-avatars.com/api/?name=${encodeURIComponent(q.userFullName || "User")}&background=64748b&color=fff`
                                                             }
                                                             onError={(e) => {
@@ -989,7 +990,7 @@ export default function LearningPage() {
                                                                     <img
                                                                         src={
                                                                             ans.userAvatarUrl && ans.userAvatarUrl !== "null" && ans.userAvatarUrl.trim() !== ""
-                                                                                ? (ans.userAvatarUrl.startsWith("http") ? ans.userAvatarUrl : `${import.meta.env.VITE_API_URL.replace("/api","")}${ans.userAvatarUrl}`)
+                                                                                ? (ans.userAvatarUrl.startsWith("http") ? ans.userAvatarUrl : `${SERVER_URL}${ans.userAvatarUrl}`)
                                                                                 : `https://ui-avatars.com/api/?name=${encodeURIComponent(ans.userFullName || "User")}&background=64748b&color=fff`
                                                                         }
                                                                         onError={(e) => {

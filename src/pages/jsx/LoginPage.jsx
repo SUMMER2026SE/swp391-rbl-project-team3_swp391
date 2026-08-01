@@ -19,7 +19,7 @@ function LoginPage({ switchToRegister }) {
     // 🔥 HÀM HELPER: Gửi yêu cầu lưu log hoạt động xuống cơ sở dữ liệu
     const sendActivityLog = async (userId, token, actionText) => {
         try {
-            await fetch(`${import.meta.env.VITE_API_URL}/admin/users/${userId}/activity`, {
+            await fetch(`http://localhost:8080/api/admin/users/${userId}/activity`, {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json",
@@ -40,7 +40,7 @@ function LoginPage({ switchToRegister }) {
             setLoading(true);
             setMessage("");
 
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+            const response = await fetch("http://localhost:8080/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
@@ -124,7 +124,7 @@ const currentUserId = decoded.userId || decoded.id;
     const handleGoogleLogin = async (credentialResponse) => {
         try {
             const res = await fetch(
-                `${import.meta.env.VITE_API_URL}/auth/google`,
+                "http://localhost:8080/api/auth/google",
                 {
                     method: "POST",
                     headers: {
@@ -148,7 +148,7 @@ const currentUserId = decoded.userId || decoded.id;
             localStorage.setItem("token", data.token);
             localStorage.setItem("user", JSON.stringify(data.user));
 
-            setMessage(" Google Login Success!");
+            setMessage("✅ Google Login Success!");
             setMessageType("success");
 
             // 🔥 TỰ ĐỘNG GHI LOG: Đăng nhập bằng tài khoản Google thành công
@@ -181,6 +181,9 @@ const currentUserId = decoded.userId || decoded.id;
             console.error(error);
             setMessage("❌ Google Login Error");
         }
+
+        console.log("GOOGLE RESPONSE:", credentialResponse);
+        console.log("CREDENTIAL:", credentialResponse?.credential);
     };
 
     return (
@@ -237,7 +240,7 @@ const currentUserId = decoded.userId || decoded.id;
                             checked={rememberMe}
                             onChange={(e) => setRememberMe(e.target.checked)}
                         />
-                        <span style={{ whiteSpace: "nowrap" }}>Remember me</span>
+                        Remember me
                     </label>
                     <span onClick={() => navigate("/forgot-password")} className="auth-forgot-link">
                         Forgot Password?

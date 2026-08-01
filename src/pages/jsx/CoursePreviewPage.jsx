@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
-import "../css/CoursePreviewPage.css"; 
+import "../css/CoursePreviewPage.css";
+import { SERVER_URL } from "../../config/server";
 
 export default function CoursePreviewPage() {
     const { id } = useParams();
@@ -30,7 +31,7 @@ export default function CoursePreviewPage() {
     const getSafeAvatarUrl = (url) => {
         if (!url) return "https://via.placeholder.com/40";
         if (url.startsWith("http")) return url;
-        return `${import.meta.env.VITE_API_URL.replace("/api","")}${url}`;
+        return `${SERVER_URL}${url}`;
     };
 
     const calculatePercent = (count, total) => {

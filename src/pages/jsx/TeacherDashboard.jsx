@@ -6,6 +6,7 @@ import { logout } from "../../services/authService";
 import wordImportService from "../../services/wordImportService";
 import TeacherProfileEdit from "./TeacherProfileEdit";
 import Swal from "sweetalert2";
+import { SERVER_URL } from "../../config/server";
 
 export default function TeacherDashboard() {
     const navigate = useNavigate();
@@ -250,26 +251,33 @@ export default function TeacherDashboard() {
 
     const handleExportExcel = async () => {
         if (!selectedCourseForReport) return;
-
         try {
-            const token = localStorage.getItem("token");
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/reports/courses/${selectedCourseForReport.id}/export`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (!response.ok) throw new Error("Lỗi tải file");
-
-            const blob = await response.blob();
+            const response = await axiosClient.get(
+                `/reports/courses/${selectedCourseForReport.id}/export`,
+                {
+                    responseType: "blob"
+                }
+            );
+            const blob = new Blob(
+                [response.data],
+                {
+                    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                }
+            );
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `Bao_Cao_Tien_Do_${selectedCourseForReport.id}.xlsx`;
+            a.download = 
+                `Bao_Cao_Tien_Do_${selectedCourseForReport.id}.xlsx`;
             document.body.appendChild(a);
             a.click();
             a.remove();
             window.URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error("Lỗi xuất Excel:", error);
+        } catch(error){
+            console.error(
+                "Lỗi xuất Excel:",
+                error
+            );
             alert("❌ Không thể xuất file Excel.");
         }
     };
@@ -526,7 +534,7 @@ export default function TeacherDashboard() {
                                                         <img
                                                             src={
                                                                 qa.userAvatarUrl && qa.userAvatarUrl !== "null" && qa.userAvatarUrl.trim() !== ""
-                                                                    ? (qa.userAvatarUrl.startsWith("http") ? qa.userAvatarUrl : `${import.meta.env.VITE_API_URL.replace("/api","")}${qa.userAvatarUrl}`)
+                                                                    ? (qa.userAvatarUrl.startsWith("http") ? qa.userAvatarUrl : `${SERVER_URL}${qa.userAvatarUrl}`)
                                                                     : `https://ui-avatars.com/api/?name=${encodeURIComponent(qa.userFullName || "User")}&background=64748b&color=fff`
                                                             }
                                                             onError={(e) => {

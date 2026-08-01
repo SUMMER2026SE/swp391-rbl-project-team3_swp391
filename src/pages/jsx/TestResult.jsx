@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import '../css/TestResult.css';
+import { SERVER_URL } from '../../config/server';
 
 const TestResult = () => {
     const [result, setResult] = useState(null);
@@ -16,7 +17,7 @@ const TestResult = () => {
         try {
             const token = localStorage.getItem("token");
             const res = await fetch(
-                `${import.meta.env.VITE_API_URL}/tests/${sessionsId}/result`,
+                `${SERVER_URL}/tests/${sessionsId}/result`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`

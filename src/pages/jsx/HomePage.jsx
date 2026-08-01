@@ -4,6 +4,7 @@ import axiosClient from "../../api/axiosClient";
 import { logout } from "../../services/authService";
 import "../css/HomePage.css";
 import "../css/skeleton.css";
+import { SERVER_URL } from "../../config/server";
 
 export default function HomePage() {
     const navigate = useNavigate();
@@ -27,24 +28,41 @@ export default function HomePage() {
 
     const getSubjectThumbnail = (subjectName) => {
         const thumbMap = {
-            "Toán Học": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/math-course.jpg?v=2`,
-            "Vật Lý": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/vatli.jpg?v=2`,
-            "Hóa Học": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/hoa.jpg?v=2`,
-            "Hoá Học": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/hoa.jpg?v=2`,
-            "Ngữ Văn": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/van.jpg?v=2`,
-            "Tiếng Anh": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/english-course.jpg?v=2`,
-            "Lịch Sử": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/su.jpg?v=2`,
-            "Địa Lý": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/dia.jpg?v=2`,
-            "Sinh Học": "https://images.unsplash.com/photo-1530213786676-412f1262d512?auto=format&fit=crop&w=400&q=80",
-            "Tin Học": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=400&q=80",
-            "GDCD": "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=400&q=80"
+            "Toán Học":
+                `${SERVER_URL}/uploads/thumbnails/math-course.jpg?v=2`,
+            "Vật Lý":
+                `${SERVER_URL}/uploads/thumbnails/vatli.jpg?v=2`,
+            "Hóa Học":
+                `${SERVER_URL}/uploads/thumbnails/hoa.jpg?v=2`,
+            "Hoá Học":
+                `${SERVER_URL}/uploads/thumbnails/hoa.jpg?v=2`,
+            "Ngữ Văn":
+                `${SERVER_URL}/uploads/thumbnails/van.jpg?v=2`,
+            "Tiếng Anh":
+                `${SERVER_URL}/uploads/thumbnails/english-course.jpg?v=2`,
+            "Lịch Sử":
+                `${SERVER_URL}/uploads/thumbnails/su.jpg?v=2`,
+            "Địa Lý":
+                `${SERVER_URL}/uploads/thumbnails/dia.jpg?v=2`,
+            "Sinh Học":
+                "https://images.unsplash.com/photo-1530213786676-412f1262d512?auto=format&fit=crop&w=400&q=80",
+            "Tin Học":
+                "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=400&q=80",
+            "GDCD":
+                "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=400&q=80"
         };
         const translatedName = {
-            "Mathematics": "Toán Học", "Physics": "Vật Lý", "Chemistry": "Hóa Học",
-            "Literature": "Ngữ Văn", "English": "Tiếng Anh", "Biology": "Sinh Học",
-            "History": "Lịch Sử", "Geography": "Địa Lý"
+            "Mathematics": "Toán Học",
+            "Physics": "Vật Lý",
+            "Chemistry": "Hóa Học",
+            "Literature": "Ngữ Văn",
+            "English": "Tiếng Anh",
+            "Biology": "Sinh Học",
+            "History": "Lịch Sử",
+            "Geography": "Địa Lý"
         }[subjectName] || subjectName;
-        return thumbMap[translatedName] || "https://images.unsplash.com/photo-1516321310764-9f1e6e8b0c0a?auto=format&fit=crop&w=400&q=80";
+        return thumbMap[translatedName]
+            || "https://images.unsplash.com/photo-1516321310764-9f1e6e8b0c0a?auto=format&fit=crop&w=400&q=80";
     };
 
     const currentAvatar = user?.avatarUrl || user?.avatar_url || null;
@@ -123,7 +141,7 @@ export default function HomePage() {
                         let thumbnail = c.thumbnail_url || c.thumbnailUrl || c.thumbnail;
 
                         if (thumbnail && !thumbnail.startsWith("http")) {
-                            thumbnail = `${import.meta.env.VITE_API_URL.replace("/api","")}${thumbnail}`;
+                            thumbnail = `${SERVER_URL}${thumbnail}`;
                         }
 
                         if (!thumbnail) {
