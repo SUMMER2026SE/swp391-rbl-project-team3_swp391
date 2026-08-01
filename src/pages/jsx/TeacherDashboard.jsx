@@ -9,7 +9,7 @@ import Swal from "sweetalert2";
 
 export default function TeacherDashboard() {
     const navigate = useNavigate();
-    
+    const [hasUnsavedProfile, setHasUnsavedProfile] = useState(false);
     // State chính
     const [user, setUser] = useState(null);
     const [myCourses, setMyCourses] = useState([]);
@@ -114,8 +114,7 @@ export default function TeacherDashboard() {
             const response = await axiosClient.get(`/questions/teacher/${user.id}`);
             setQaList(response.data);
         } catch (error) {
-            console.error("Lỗi tải danh sách Q&A:", error);
-            alert("Không thể tải danh sách hỏi đáp.");
+            console.error(error);
         }
     };
 
@@ -211,6 +210,29 @@ export default function TeacherDashboard() {
                     "Không thể đổi tên khóa học."
             });
         }
+    };
+
+    const handleTabChange = async (tab) => {
+        if (hasUnsavedProfile) {
+            const result = await Swal.fire({
+                title: "⚠️ Thay đổi chưa được lưu",
+                text: "Bạn có chắc chắn muốn rời khỏi trang này không?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "🚪 Rời đi",
+                cancelButtonText: "✏️ Tiếp tục chỉnh sửa",
+                confirmButtonColor: "#ef4444",
+                cancelButtonColor: "#2747d9",
+                reverseButtons: true,
+                backdrop: true,
+            });
+
+            if (!result.isConfirmed) {
+                return;
+            }
+        }
+
+        setActiveTab(tab);
     };
 
     const handleOpenReport = async (course) => {
@@ -312,26 +334,75 @@ export default function TeacherDashboard() {
                     PrepAce <span>Teacher</span>
                 </div>
                 <ul className="teacher-menu">
-                    <li className={activeTab === "COURSES" ? "active" : ""} onClick={() => setActiveTab("COURSES")}>
+                    <li
+                        onClick={() => handleTabChange("COURSES")}
+                        className={activeTab === "COURSES" ? "active" : ""}
+                    >
                         📚 Khóa học của tôi
                     </li>
-                    <li className={activeTab === "QA" ? "active" : ""} onClick={() => setActiveTab("QA")}>
+
+                    <li
+                        onClick={() => handleTabChange("QA")}
+                        className={activeTab === "QA" ? "active" : ""}
+                    >
                         💬 Quản lý Hỏi & Đáp
                     </li>
-                    <li className={activeTab === "WORD_IMPORT" ? "active" : ""} onClick={() => setActiveTab("WORD_IMPORT")}>
-                        📄 Tạo Đề Từ File Word
+
+                    <li
+                        onClick={() => handleTabChange("WORD_IMPORT")}
+                        className={activeTab === "WORD_IMPORT" ? "active" : ""}
+                    >
+                        📄 Tạo đề từ Word
                     </li>
-                    <li className={activeTab === "PROFILE" ? "active" : ""} onClick={() => setActiveTab("PROFILE")}>
+
+                    <li
+                        onClick={() => handleTabChange("PROFILE")}
+                        className={activeTab === "PROFILE" ? "active" : ""}
+                    >
                         👤 Hồ sơ giảng viên
                     </li>
-                    <li onClick={() => navigate("/teacher/grading")}>
-                        ✍️ Chấm điểm Tự luận
+
+                    <li
+                        onClick={() => {
+                            if (
+                                hasUnsavedProfile &&
+                                !window.confirm(
+                                    "Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời đi không?"
+                                )
+                            ) {
+                                return;
+                            }
+
+                            navigate("/teacher/grading");
+                        }}
+                    >
+                        ✍️ Chấm điểm tự luận
                     </li>
-                    {/* 🔥 THÊM MỤC THÔNG BÁO Ở SIDEBAR */}
-                    <li onClick={() => navigate("/notifications")}>
+
+                    <li
+                        onClick={() => {
+                            if (
+                                hasUnsavedProfile &&
+                                !window.confirm(
+                                    "Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời đi không?"
+                                )
+                            ) {
+                                return;
+                            }
+
+                            navigate("/notifications");
+                        }}
+                    >
                         🔔 Thông báo
                     </li>
-                    <li style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.1)' }} onClick={handleLogout}>
+
+                    <li
+                        style={{
+                            marginTop: "auto",
+                            borderTop: "1px solid rgba(255,255,255,0.1)",
+                        }}
+                        onClick={handleLogout}
+                    >
                         🚪 Đăng xuất
                     </li>
                 </ul>
@@ -1042,7 +1113,11 @@ của biểu thức...
                 )}
 
                 {activeTab === "PROFILE" && (
-                    <TeacherProfileEdit user={user} setUser={setUser} />
+                    <TeacherProfileEdit
+                        user={user}
+                        setUser={setUser}
+                        setHasUnsavedProfile={setHasUnsavedProfile}
+                    />
                 )}
             </main>
 

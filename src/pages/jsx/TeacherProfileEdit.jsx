@@ -7,7 +7,7 @@ import AvatarUpload from "./AvatarUpload";
  * Được nhúng vào TeacherDashboard khi activeTab === "PROFILE".
  * Tham khảo cách làm từ ProfilePage.jsx (bên học sinh).
  */
-export default function TeacherProfileEdit({ user, setUser }) {
+export default function TeacherProfileEdit({ user, setUser, setHasUnsavedProfile }) {
     const [profileData, setProfileData] = useState(null);
     const [baselineData, setBaselineData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -37,12 +37,42 @@ export default function TeacherProfileEdit({ user, setUser }) {
     }, []);
 
     // Kiểm tra có thay đổi không
-    const hasChanges = profileData && baselineData && (
-        (profileData.fullName || "") !== (baselineData.fullName || "") ||
-        (profileData.phone || "") !== (baselineData.phone || "") ||
-        (profileData.school || "") !== (baselineData.school || "") ||
-        (profileData.bio || "") !== (baselineData.bio || "")
-    );
+    const hasChanges = profileData && baselineData &&
+        (
+            (profileData.fullName || "") !== (baselineData.fullName || "") ||
+            (profileData.phone || "") !== (baselineData.phone || "") ||
+            (profileData.school || "") !== (baselineData.school || "") ||
+            (profileData.bio || "") !== (baselineData.bio || "") ||
+            (profileData.avatarUrl || profileData.avatar_url || "") !==
+            (baselineData.avatarUrl || baselineData.avatar_url || "")
+        );
+
+    useEffect(() => {
+        if (setHasUnsavedProfile) {
+            setHasUnsavedProfile(!!hasChanges);
+        }
+    }, [hasChanges, setHasUnsavedProfile]);
+
+    // useEffect(() => {
+    //     const handleBeforeUnload = (e) => {
+    //         if (!hasChanges) return;
+
+    //         e.preventDefault();
+    //         e.returnValue = "";
+    //     };
+
+    //     window.addEventListener(
+    //         "beforeunload",
+    //         handleBeforeUnload
+    //     );
+
+    //     return () => {
+    //         window.removeEventListener(
+    //             "beforeunload",
+    //             handleBeforeUnload
+    //         );
+    //     };
+    // }, [hasChanges]);
 
     const handleSave = async () => {
         if (!profileData) return;
@@ -52,7 +82,8 @@ export default function TeacherProfileEdit({ user, setUser }) {
                 fullName: profileData.fullName,
                 phone: profileData.phone,
                 school: profileData.school,
-                bio: profileData.bio
+                bio: profileData.bio,
+                avatarUrl: profileData.avatarUrl
             });
 
             // Cập nhật localStorage và state cha
@@ -62,6 +93,11 @@ export default function TeacherProfileEdit({ user, setUser }) {
                 setUser(profileData);
             }
             alert("✅ Cập nhật hồ sơ thành công!");
+
+            setBaselineData(profileData);
+            if (setHasUnsavedProfile) {
+                setHasUnsavedProfile(false);
+            }
         } catch (err) {
             alert("❌ Cập nhật thất bại: " + (err.response?.data?.message || "Vui lòng thử lại!"));
         } finally {

@@ -22,7 +22,12 @@ const TeacherGrading = () => {
         }
 
         const userObj = JSON.parse(storedUser);
-        if (userObj.role !== "TEACHER") {
+        console.log(JSON.parse(localStorage.getItem("user")));
+        const isTeacher =
+            userObj.role === "TEACHER" ||
+            userObj.roleId === 2;
+
+        if (!isTeacher) {
             navigate("/home");
             return;
         }
