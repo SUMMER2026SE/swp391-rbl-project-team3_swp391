@@ -313,6 +313,12 @@ export default function HomePage() {
                                                     <img
                                                         src={course.thumbnail}
                                                         alt={course.title}
+                                                        onError={(e) => { 
+                                                            if (!e.target.dataset.errorHandled) {
+                                                                e.target.dataset.errorHandled = true;
+                                                                e.target.src = getSubjectThumbnail(course.subject); 
+                                                            }
+                                                        }}
                                                         style={{
                                                             width: "42px",
                                                             height: "42px",

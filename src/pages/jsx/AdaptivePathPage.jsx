@@ -64,6 +64,29 @@ function RadarChart({ skills }) {
     );
 }
 
+const SUBJECT_MAP = {
+    "math": "Toán", "physics": "Vật lý", "chemistry": "Hóa học",
+    "english": "Tiếng Anh", "literature": "Ngữ Văn", "history": "Lịch sử",
+    "geography": "Địa lý", "biology": "Sinh học", "it": "Tin học", "civic": "GDCD"
+};
+
+const translateSubject = (subject) => {
+    if (!subject) return "";
+    return SUBJECT_MAP[subject.toLowerCase()] || subject;
+};
+
+const translateText = (text) => {
+    if (!text) return "";
+    return text.replace(/\bmath\b/gi, "Toán")
+               .replace(/\bphysics\b/gi, "Vật lý")
+               .replace(/\bchemistry\b/gi, "Hóa học")
+               .replace(/\benglish\b/gi, "Tiếng Anh")
+               .replace(/\bliterature\b/gi, "Ngữ Văn")
+               .replace(/\bhistory\b/gi, "Lịch sử")
+               .replace(/\bgeography\b/gi, "Địa lý")
+               .replace(/\bbiology\b/gi, "Sinh học");
+};
+
 export default function AdaptivePathPage() {
     const navigate = useNavigate();
 
@@ -122,13 +145,13 @@ export default function AdaptivePathPage() {
                     <h2>Biểu đồ năng lực hiện tại</h2>
                     <p className="subtitle">Mức độ hoàn thiện mục tiêu THPT Quốc gia 2026</p>
 
-                    <RadarChart skills={skills} />
+                    <RadarChart skills={skills.map(s => ({...s, subject: translateSubject(s.subject)}))} />
 
                     <div className="skills-list">
                         {skills.map((skill, idx) => (
                             <div className="skill-item" key={idx}>
                                 <div className="skill-info">
-                                    <span className="skill-name">{skill.subject}</span>
+                                    <span className="skill-name">{translateSubject(skill.subject)}</span>
                                     <span className="skill-status" style={{ color: skill.color }}>
                                         {skill.status} ({skill.score}%)
                                     </span>
@@ -146,7 +169,7 @@ export default function AdaptivePathPage() {
 
                     <div className="ai-summary">
                         <h3>💡 Nhận xét từ AI PrepAce</h3>
-                        <p>{summary}</p>
+                        <p>{translateText(summary)}</p>
                     </div>
                 </div>
 
@@ -160,9 +183,9 @@ export default function AdaptivePathPage() {
                             <div className="timeline-item" key={index}>
                                 <div className="timeline-icon">{step.icon}</div>
                                 <div className="timeline-content">
-                                    <div className="step-badge">{step.subject}</div>
-                                    <h3 className="step-title">{step.title}</h3>
-                                    <p className="step-reason">{step.reason}</p>
+                                    <div className="step-badge">{translateSubject(step.subject)}</div>
+                                    <h3 className="step-title">{translateText(step.title)}</h3>
+                                    <p className="step-reason">{translateText(step.reason)}</p>
                                     <button
                                         className="step-action-btn"
                                         onClick={() => {
