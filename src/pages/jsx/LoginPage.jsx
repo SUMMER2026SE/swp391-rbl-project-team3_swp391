@@ -181,9 +181,6 @@ const currentUserId = decoded.userId || decoded.id;
             console.error(error);
             setMessage("❌ Google Login Error");
         }
-
-        console.log("GOOGLE RESPONSE:", credentialResponse);
-        console.log("CREDENTIAL:", credentialResponse?.credential);
     };
 
     return (

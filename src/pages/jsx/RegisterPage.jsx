@@ -188,9 +188,6 @@ export default function RegisterPage({ switchToLogin }) {
             console.error(error);
             setMessage("❌ Google Register Error");
         }
-
-        console.log("GOOGLE RESPONSE:", credentialResponse);
-        console.log("TOKEN:", credentialResponse.credential);
     };
 
     return (

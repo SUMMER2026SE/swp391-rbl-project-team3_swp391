@@ -48,6 +48,7 @@ const AdminQuestionBankPage = () => {
             const res = await axiosClient.get('/quizzes');
             if (res.data) {
                 if (Array.isArray(res.data)) {
+                    console.log(res.data);
                     setQuizzes(res.data);
                 } else if (res.data.content && Array.isArray(res.data.content)) {
                     setQuizzes(res.data.content);
