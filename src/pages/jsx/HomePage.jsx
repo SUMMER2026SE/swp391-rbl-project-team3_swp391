@@ -27,13 +27,13 @@ export default function HomePage() {
 
     const getSubjectThumbnail = (subjectName) => {
         const thumbMap = {
-            "Toán Học": "http://localhost:8080/uploads/thumbnails/math-course.jpg?v=2",
+            "Toán Học": "http://localhost:8080/uploads/thumbnails/toan.jpg?v=2",
             "Vật Lý": "http://localhost:8080/uploads/thumbnails/vatli.jpg?v=2",
             "Hóa Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
             "Hoá Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
             "Ngữ Văn": "http://localhost:8080/uploads/thumbnails/van.jpg?v=2",
-            "Tiếng Anh": "http://localhost:8080/uploads/thumbnails/english-course.jpg?v=2",
-            "Lịch Sử": "http://localhost:8080/uploads/thumbnails/su.jpg?v=2",
+            "Tiếng Anh": "http://localhost:8080/uploads/thumbnails/anh.jpg?v=2",
+            "Lịch Sử": "http://localhost:8080/uploads/thumbnails/lichsu.jpg?v=2",
             "Địa Lý": "http://localhost:8080/uploads/thumbnails/dia.jpg?v=2",
             "Sinh Học": "https://images.unsplash.com/photo-1530213786676-412f1262d512?auto=format&fit=crop&w=400&q=80",
             "Tin Học": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=400&q=80",
@@ -313,6 +313,12 @@ export default function HomePage() {
                                                     <img
                                                         src={course.thumbnail}
                                                         alt={course.title}
+                                                        onError={(e) => { 
+                                                            if (!e.target.dataset.errorHandled) {
+                                                                e.target.dataset.errorHandled = true;
+                                                                e.target.src = getSubjectThumbnail(course.subject); 
+                                                            }
+                                                        }}
                                                         style={{
                                                             width: "42px",
                                                             height: "42px",
