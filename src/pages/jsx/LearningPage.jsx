@@ -284,17 +284,6 @@ export default function LearningPage() {
                 if (res.data.chapterCompleted && res.data.chapterId) {
                     setCompletedChapterId(res.data.chapterId);
                     setShowSummaryPopup(true);
-
-                    try {
-                        await axiosClient.post(
-                            `/ai/chapter-summary/${res.data.chapterId}`
-                        );
-
-                        setSummaryLoading(false);
-
-                    } catch (e) {
-                        setSummaryLoading(false);
-                    }
                 }
             } else {
                 setCompletedLessonIds(prev => prev.filter(id => id !== lessonId));
@@ -936,7 +925,6 @@ export default function LearningPage() {
                                                                         🗑️ Gỡ câu hỏi
                                                                     </button>
                                                                 )}
-                                                                </div>
                                                             </div>
                                                             <p style={{ margin: "0 0 5px 0", fontSize: "15px", color: "#444" }}>{q.content}</p>
                                                             <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
@@ -968,6 +956,7 @@ export default function LearningPage() {
                                                                     </button>
                                                                 )}
                                                             </div>
+                                                        </div>
                                                     </div>
 
                                                     {/* Câu trả lời con */}
