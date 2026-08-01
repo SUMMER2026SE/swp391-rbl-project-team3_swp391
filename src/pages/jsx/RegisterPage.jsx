@@ -64,7 +64,7 @@ export default function RegisterPage({ switchToLogin }) {
             setMessage("");
 
             const response = await fetch(
-                "http://localhost:8080/api/auth/register",
+                `${import.meta.env.VITE_API_URL}/auth/register`,
                 {
                     method: "POST",
                     headers: {
@@ -141,7 +141,7 @@ export default function RegisterPage({ switchToLogin }) {
     const handleGoogleRegister = async (credentialResponse) => {
         try {
             const response = await fetch(
-                "http://localhost:8080/api/auth/google",
+                `${import.meta.env.VITE_API_URL}/auth/google`,
                 {
                     method: "POST",
                     headers: {
@@ -169,7 +169,7 @@ export default function RegisterPage({ switchToLogin }) {
             const currentUserId = data.user?.id || data.user?.userId;
             if (currentUserId) {
                 try {
-                    await fetch(`http://localhost:8080/api/admin/users/${currentUserId}/activity`, {
+                    await fetch(`${import.meta.env.VITE_API_URL}/admin/users/${currentUserId}/activity`, {
                         method: "POST",
                         headers: { 
                             "Content-Type": "application/json",
