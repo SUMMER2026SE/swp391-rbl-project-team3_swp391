@@ -140,7 +140,16 @@ export default function CourseDetailPage() {
                         id: data.course_id || data.id || id,
                         title: data.course_title || data.title || "Khóa học không tên",
                         description: data.description || data.course_desc || "",
-                        teacher: data.teacher_name || data.teacher || "Giáo viên",
+                        teacher:
+                            data.teacher_name ||
+                            data.teacherName ||
+                            data.teacher ||
+                            "Giáo viên",
+                        teacherId:
+                            data.teacher_id ||
+                            data.teacherId ||
+                            data.userId ||
+                            data.instructorId,
                         subjectName: data.subjectName,
                         price: cleanPrice > 0 ? `${cleanPrice.toLocaleString('vi-VN')}đ` : "Miễn phí",
                         originalPrice: cleanOriginal > 0 ? `${cleanOriginal.toLocaleString('vi-VN')}đ` : "",
@@ -305,7 +314,20 @@ export default function CourseDetailPage() {
                         </span>
                         <span className="rating">⭐ {evaluation.averageRating || course.rating} ({evaluation.totalReviews || course.reviews} đánh giá)</span>
                         <span className="students">👥 {course.students} học viên</span>
-                        <span className="teacher">👨‍🏫 Giảng viên: <strong>{course.teacher}</strong></span>
+                        <span
+                            style={{
+                                color: "#2563eb",
+                                cursor: "pointer",
+                                fontWeight: "600"
+                            }}
+                            onClick={() => {
+                                if (course.teacherId) {
+                                    navigate(`/instructor/${course.teacherId}`);
+                                }
+                            }}
+                        >
+                            👨‍🏫 {course.teacher}
+                        </span>
                     </div>
 
                     <div className="section-box">

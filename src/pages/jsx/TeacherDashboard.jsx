@@ -5,10 +5,11 @@ import axiosClient from "../../api/axiosClient";
 import { logout } from "../../services/authService";
 import wordImportService from "../../services/wordImportService";
 import TeacherProfileEdit from "./TeacherProfileEdit";
+import Swal from "sweetalert2";
 
 export default function TeacherDashboard() {
     const navigate = useNavigate();
-    
+    const [hasUnsavedProfile, setHasUnsavedProfile] = useState(false);
     // State chính
     const [user, setUser] = useState(null);
     const [myCourses, setMyCourses] = useState([]);
@@ -109,11 +110,15 @@ export default function TeacherDashboard() {
 
     const fetchQaList = async () => {
         try {
-            const response = await axiosClient.get("/questions/teacher/all");
+            const user = JSON.parse(localStorage.getItem("user"));
+
+            const response = await axiosClient.get(
+                `/questions/teacher/${user.id}`
+            );
+
             setQaList(response.data);
         } catch (error) {
-            console.error("Lỗi tải danh sách Q&A:", error);
-            alert("Không thể tải danh sách hỏi đáp.");
+            console.error(error);
         }
     };
 
@@ -160,18 +165,78 @@ export default function TeacherDashboard() {
     };
 
     const handleRename = async (courseId, oldTitle) => {
-        const newTitle = window.prompt("Nhập tên mới cho khóa học:", oldTitle);
-        if (!newTitle || newTitle === oldTitle) return;
+        const { value: newTitle } = await Swal.fire({
+            title: "Đổi tên khóa học",
+            input: "text",
+            inputValue: oldTitle,
+            inputLabel: "Tên khóa học mới",
+            inputPlaceholder: "Nhập tên khóa học",
+            showCancelButton: true,
+            confirmButtonText: "Lưu",
+            cancelButtonText: "Hủy",
+            confirmButtonColor: "#0ea5e9",
+            cancelButtonColor: "#94a3b8",
+            inputValidator: (value) => {
+                if (!value.trim()) {
+                    return "Tên khóa học không được để trống!";
+                }
+            }
+        });
+
+        if (!newTitle || newTitle === oldTitle) {
+            return;
+        }
 
         try {
-            await axiosClient.put(`/courses/${courseId}`, { title: newTitle });
-            setMyCourses(prev => prev.map(c => 
-                c.id === courseId ? { ...c, title: newTitle } : c
-            ));
-            alert("✅ Đổi tên thành công!");
+            await axiosClient.put(`/courses/${courseId}`, {
+                title: newTitle.trim()
+            });
+
+            setMyCourses((prev) =>
+                prev.map((course) =>
+                    course.id === courseId
+                        ? { ...course, title: newTitle.trim() }
+                        : course
+                )
+            );
+
+            Swal.fire({
+                icon: "success",
+                title: "Thành công",
+                text: "Tên khóa học đã được cập nhật."
+            });
         } catch (error) {
-            alert("❌ Lỗi khi đổi tên: " + (error.response?.data?.message || error.message));
+            Swal.fire({
+                icon: "error",
+                title: "Lỗi",
+                text:
+                    error.response?.data?.message ||
+                    "Không thể đổi tên khóa học."
+            });
         }
+    };
+
+    const handleTabChange = async (tab) => {
+        if (hasUnsavedProfile) {
+            const result = await Swal.fire({
+                title: "⚠️ Thay đổi chưa được lưu",
+                text: "Bạn có chắc chắn muốn rời khỏi trang này không?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "🚪 Rời đi",
+                cancelButtonText: "✏️ Tiếp tục chỉnh sửa",
+                confirmButtonColor: "#ef4444",
+                cancelButtonColor: "#2747d9",
+                reverseButtons: true,
+                backdrop: true,
+            });
+
+            if (!result.isConfirmed) {
+                return;
+            }
+        }
+
+        setActiveTab(tab);
     };
 
     const handleOpenReport = async (course) => {
@@ -273,26 +338,75 @@ export default function TeacherDashboard() {
                     PrepAce <span>Teacher</span>
                 </div>
                 <ul className="teacher-menu">
-                    <li className={activeTab === "COURSES" ? "active" : ""} onClick={() => setActiveTab("COURSES")}>
+                    <li
+                        onClick={() => handleTabChange("COURSES")}
+                        className={activeTab === "COURSES" ? "active" : ""}
+                    >
                         📚 Khóa học của tôi
                     </li>
-                    <li className={activeTab === "QA" ? "active" : ""} onClick={() => setActiveTab("QA")}>
+
+                    <li
+                        onClick={() => handleTabChange("QA")}
+                        className={activeTab === "QA" ? "active" : ""}
+                    >
                         💬 Quản lý Hỏi & Đáp
                     </li>
-                    <li className={activeTab === "WORD_IMPORT" ? "active" : ""} onClick={() => setActiveTab("WORD_IMPORT")}>
-                        📄 Tạo Đề Từ File Word
+
+                    <li
+                        onClick={() => handleTabChange("WORD_IMPORT")}
+                        className={activeTab === "WORD_IMPORT" ? "active" : ""}
+                    >
+                        📄 Tạo đề từ Word
                     </li>
-                    <li className={activeTab === "PROFILE" ? "active" : ""} onClick={() => setActiveTab("PROFILE")}>
+
+                    <li
+                        onClick={() => handleTabChange("PROFILE")}
+                        className={activeTab === "PROFILE" ? "active" : ""}
+                    >
                         👤 Hồ sơ giảng viên
                     </li>
-                    <li onClick={() => navigate("/teacher/grading")}>
-                        ✍️ Chấm điểm Tự luận
+
+                    <li
+                        onClick={() => {
+                            if (
+                                hasUnsavedProfile &&
+                                !window.confirm(
+                                    "Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời đi không?"
+                                )
+                            ) {
+                                return;
+                            }
+
+                            navigate("/teacher/grading");
+                        }}
+                    >
+                        ✍️ Chấm điểm tự luận
                     </li>
-                    {/* 🔥 THÊM MỤC THÔNG BÁO Ở SIDEBAR */}
-                    <li onClick={() => navigate("/notifications")}>
+
+                    <li
+                        onClick={() => {
+                            if (
+                                hasUnsavedProfile &&
+                                !window.confirm(
+                                    "Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời đi không?"
+                                )
+                            ) {
+                                return;
+                            }
+
+                            navigate("/notifications");
+                        }}
+                    >
                         🔔 Thông báo
                     </li>
-                    <li style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.1)' }} onClick={handleLogout}>
+
+                    <li
+                        style={{
+                            marginTop: "auto",
+                            borderTop: "1px solid rgba(255,255,255,0.1)",
+                        }}
+                        onClick={handleLogout}
+                    >
                         🚪 Đăng xuất
                     </li>
                 </ul>
@@ -1003,7 +1117,11 @@ của biểu thức...
                 )}
 
                 {activeTab === "PROFILE" && (
-                    <TeacherProfileEdit user={user} setUser={setUser} />
+                    <TeacherProfileEdit
+                        user={user}
+                        setUser={setUser}
+                        setHasUnsavedProfile={setHasUnsavedProfile}
+                    />
                 )}
             </main>
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import GlobalChatbot from './components/GlobalChatbot';
+import { useLocation } from 'react-router-dom';
 
 import AuthPage from './pages/jsx/AuthPage';
 import HomePage from './pages/jsx/HomePage';
@@ -60,10 +61,21 @@ import TeacherGrading from "./pages/jsx/TeacherGrading";
 
 function App() {
     const [count, setCount] = useState(0)
+    const location = useLocation();
+
+    const token = localStorage.getItem("token");
+
+    const hiddenRoutes = [
+        "/auth",
+        "/forgot-password",
+        "/reset-password"
+    ];
+
+    const shouldShowChatbot = token && !hiddenRoutes.includes(location.pathname);
 
     return (
         <>
-            <GlobalChatbot />
+            {shouldShowChatbot && <GlobalChatbot />}
             <Routes>
                 <Route path="/" element={<RootRedirect />} />
                 <Route path='/auth' element={<AuthPage />} />

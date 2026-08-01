@@ -120,6 +120,11 @@ const AdminQuestionBankPage = () => {
         }
     };
 
+    const handleCloseQuestions = () => {
+        setSelectedQuiz(null);
+        setQuestions([]);
+    };
+
     const handleOptionChange = (index, value) => {
         const newOpts = [...questionForm.options];
         newOpts[index] = value;
@@ -212,7 +217,7 @@ const AdminQuestionBankPage = () => {
                     <div style={{ flex: 1, background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                             <h3>Danh sách Đề thi (Quizzes)</h3>
-                            <button onClick={() => { setEditQuiz(null); setQuizForm({ quizTitle: '', durationMinutes: 60 }); setShowQuizModal(true); }} style={st.btnPrimary}>+ Tạo Đề thi</button>
+                            {/* <button onClick={() => { setEditQuiz(null); setQuizForm({ quizTitle: '', durationMinutes: 60 }); setShowQuizModal(true); }} style={st.btnPrimary}>+ Tạo Đề thi</button> */}
                         </div>
 
                         {loading ? <p>Đang tải...</p> : error ? <p style={{ color: 'red' }}>{error}</p> : (
@@ -254,9 +259,62 @@ const AdminQuestionBankPage = () => {
                     {/* Cột phải: Quản lý Questions */}
                     {selectedQuiz && (
                         <div style={{ flex: 1, background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                                <h3 style={{ maxWidth: '70%', wordBreak: 'break-word' }}>Câu hỏi: {selectedQuiz.quizTitle}</h3>
-                                <button onClick={() => { setEditQuestion(null); setQuestionForm({ questionContent: '', correctAnswer: '', explanation: '', options: ['', '', '', ''] }); setShowQuestionModal(true); }} style={st.btnPrimary}>+ Thêm câu hỏi</button>
+                            <div
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    marginBottom: "20px"
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "12px"
+                                    }}
+                                >
+                                    <button
+                                        onClick={handleCloseQuestions}
+                                        style={{
+                                            border: "none",
+                                            background: "#f1f5f9",
+                                            padding: "8px 12px",
+                                            borderRadius: "6px",
+                                            cursor: "pointer",
+                                            fontSize: "18px"
+                                        }}
+                                    >
+                                        ☰
+                                    </button>
+
+                                    <h3
+                                        style={{
+                                            margin: 0,
+                                            maxWidth: "70%",
+                                            wordBreak: "break-word"
+                                        }}
+                                    >
+                                        Câu hỏi: {selectedQuiz.quizTitle}
+                                    </h3>
+                                </div>
+
+                                <button
+                                    onClick={() => {
+                                        setEditQuestion(null);
+                                        setQuestionForm({
+                                            questionContent: "",
+                                            correctAnswer: "",
+                                            explanation: "",
+                                            options: ["", "", "", ""]
+                                        });
+
+                                        setShowQuestionModal(true);
+                                    }}
+                                    style={st.btnPrimary}
+                                >
+                                    + Thêm câu hỏi
+                                </button>
                             </div>
 
                             {questions.length === 0 ? <p>Đề thi này chưa có câu hỏi nào.</p> : (
@@ -334,7 +392,18 @@ const AdminQuestionBankPage = () => {
                         {questionForm.options.map((opt, idx) => (
                             <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
                                 <input type="radio" name="correct" checked={questionForm.correctAnswer === opt && opt !== ''} onChange={() => setQuestionForm({ ...questionForm, correctAnswer: opt })} style={{ cursor: 'pointer' }} />
-                                <input value={opt} onChange={e => handleOptionChange(idx, e.target.value)} style={{ ...st.input, margin: 0, flex: 1 }} placeholder={`Đáp án ${idx + 1}`} />
+                                <input
+                                    value={opt}
+                                    onChange={(e) => handleOptionChange(idx, e.target.value)}
+                                    placeholder={`Đáp án ${idx + 1}`}
+                                    style={{
+                                        flex: 1,
+                                        minWidth: "250px",
+                                        padding: "10px",
+                                        border: "1px solid #cbd5e1",
+                                        borderRadius: "6px"
+                                    }}
+                                />
                             </div>
                         ))}
                         <small style={{ color: '#64748b', display: 'block', marginBottom: '15px' }}>* Chọn nút tròn để đánh dấu đáp án đúng</small>

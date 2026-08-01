@@ -564,55 +564,76 @@ export default function LearningPage() {
         }
     };
 
-    const handlePostAnswer = async (question) => {
-        if (!replyContent.trim()) {
-            alert("Vui lòng nhập nội dung trả lời!");
-            return;
-        }
+   const handlePostAnswer = async (question) => {
+    if (!replyContent.trim()) {
+        alert("Vui lòng nhập nội dung trả lời!");
+        return;
+    }
 
-        // 🔍 ĐÃ SỬA: Tự động quét tìm ID chính xác của câu hỏi gốc từ Backend (id hoặc questionId)
-        const targetQuestionId = question.id || question.questionId || question.question_id;
+    const targetQuestionId = 
+        question.id || 
+        question.questionId || 
+        question.question_id;
 
-        if (!targetQuestionId) {
-            alert("❌ Lỗi hệ thống: Không tìm thấy ID của câu hỏi thảo luận để phản hồi!");
-            console.error("Dữ liệu câu hỏi bị thiếu ID:", question);
-            return;
-        }
+    if (!targetQuestionId) {
+        alert("❌ Lỗi hệ thống: Không tìm thấy ID của câu hỏi thảo luận để phản hồi!");
+        console.error("Dữ liệu câu hỏi bị thiếu ID:", question);
+        return;
+    }
 
-        try {
-            const response = await axiosClient.post(`/questions/${targetQuestionId}/answers`, {
+    try {
+        const response = await axiosClient.post(
+            `/questions/${targetQuestionId}/answers`,
+            {
                 content: replyContent
-            });
-            
-            const newAnswer = response.data;
-            if (!newAnswer.id) {
-                newAnswer.id = `temp_a_${Date.now()}`;
             }
-            
-            // Cập nhật lại danh sách questions
-            setQuestions(questions.map(q => {
-                const currentQId = q.id || q.questionId || q.question_id;
+        );
+
+        const newAnswer = response.data;
+
+        if (!newAnswer.id) {
+            newAnswer.id = `temp_a_${Date.now()}`;
+        }
+
+
+        // Update questions sau khi thêm answer
+        setQuestions(prevQuestions =>
+            prevQuestions.map(q => {
+
+                const currentQId =
+                    q.id ||
+                    q.questionId ||
+                    q.question_id;
+
                 if (currentQId === targetQuestionId) {
-
-            setQuestions(questions.map(q => {
-                const qId = q.id || q.questionId;
-                if (qId === questionId) {
-
                     return {
                         ...q,
-                        answers: [...(q.answers || []), newAnswer]
+                        answers: [
+                            ...(q.answers || []),
+                            newAnswer
+                        ]
                     };
                 }
-                return q;
-            }));
 
-            setReplyingTo(null);
-            setReplyContent("");
-        } catch (error) {
-            console.error("Lỗi khi đăng câu trả lời lên Server:", error);
-            alert("❌ Không thể gửi phản hồi. Vui lòng kiểm tra lại kết nối Server!");
-        }
-    };
+                return q;
+            })
+        );
+
+
+        setReplyingTo(null);
+        setReplyContent("");
+
+    } catch (error) {
+        console.error(
+            "Lỗi khi đăng câu trả lời lên Server:",
+            error
+        );
+
+        alert(
+            "❌ Không thể gửi phản hồi. Vui lòng kiểm tra lại kết nối Server!"
+        );
+    }
+};
 
     // 🔥 TÍNH NĂNG MỚI: Admin xóa bình luận phản hồi con
     const handleDeleteAnswer = async (questionId, answerId) => {
@@ -899,19 +920,22 @@ export default function LearningPage() {
                                                                     {q.userRoleId === 3 && <span style={{ backgroundColor: "#6c757d", color: "#fff", fontSize: "10px", padding: "2px 6px", borderRadius: "4px" }}>Học sinh</span>}
                                                                 </h5>
                                                                 {q.timestampSeconds != null && (
-                                                                    <button onClick={() => seekToTime(q.timestampSeconds)} className="timestamp-badge" style={{ margin: 0, padding: "2px 8px", fontSize: "12px" }}>
+                                                                    <button 
+                                                                        onClick={() => seekToTime(q.timestampSeconds)}
+                                                                        className="timestamp-badge"
+                                                                    >
                                                                         {formatTime(q.timestampSeconds)}
                                                                     </button>
+                                                                )}
 
-                                                                    {/* 🔥 ADMIN THÊM NÚT XÓA CÂU HỎI */}
-                                                                    {isAdmin && (
-                                                                        <button 
-                                                                            onClick={() => handleDeleteQuestion(qId)} 
-                                                                            style={{ fontSize: "12px", color: "#dc3545", background: "none", border: "none", cursor: "pointer", fontWeight: "600", padding: 0 }}
-                                                                        >
-                                                                            🗑️ Gỡ câu hỏi
-                                                                        </button>
-                                                                    )}
+                                                                {/* 🔥 ADMIN THÊM NÚT XÓA CÂU HỎI */}
+                                                                {isAdmin && (
+                                                                    <button 
+                                                                        onClick={() => handleDeleteQuestion(qId)}
+                                                                    >
+                                                                        🗑️ Gỡ câu hỏi
+                                                                    </button>
+                                                                )}
                                                                 </div>
                                                             </div>
                                                             <p style={{ margin: "0 0 5px 0", fontSize: "15px", color: "#444" }}>{q.content}</p>
@@ -944,7 +968,6 @@ export default function LearningPage() {
                                                                     </button>
                                                                 )}
                                                             </div>
-                                                        )}
                                                     </div>
 
                                                     {/* Câu trả lời con */}
