@@ -75,7 +75,7 @@ export default function TeacherProfileEdit({ user, setUser }) {
             return `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData?.fullName || "Teacher")}&background=2747d9&color=fff`;
         }
         if (url.startsWith("http")) return url;
-        return `http://localhost:8080${url}`;
+        return `${import.meta.env.VITE_API_URL.replace("/api","")}${url}`;
     };
 
     if (loading) {
