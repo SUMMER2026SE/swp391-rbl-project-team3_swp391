@@ -240,7 +240,7 @@ const currentUserId = decoded.userId || decoded.id;
                             checked={rememberMe}
                             onChange={(e) => setRememberMe(e.target.checked)}
                         />
-                        Remember me
+                        <span style={{ whiteSpace: "nowrap" }}>Remember me</span>
                     </label>
                     <span onClick={() => navigate("/forgot-password")} className="auth-forgot-link">
                         Forgot Password?

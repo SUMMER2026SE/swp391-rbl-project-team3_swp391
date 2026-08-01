@@ -85,6 +85,7 @@
 }
 
 .auth-form-input {
+    box-sizing: border-box;
     width: 100%;
     padding: 14px 16px;
     background: #f8fafc;
@@ -117,6 +118,8 @@
     gap: 8px;
     color: #475569;
     cursor: pointer;
+    text-align: left;
+    white-space: nowrap;
 }
 
 .auth-forgot-link {
