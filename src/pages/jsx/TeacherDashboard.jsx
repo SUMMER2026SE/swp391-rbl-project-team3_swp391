@@ -109,8 +109,9 @@ export default function TeacherDashboard() {
     };
 
     const fetchQaList = async () => {
+        if (!user) return;
         try {
-            const response = await axiosClient.get("/questions/teacher/all");
+            const response = await axiosClient.get(`/questions/teacher/${user.id}`);
             setQaList(response.data);
         } catch (error) {
             console.error("Lỗi tải danh sách Q&A:", error);
