@@ -40,13 +40,24 @@ export default function BankTransferPage() {
         paymentService
             .createBank(Number(courseId))
             .then((d) => {
-                if (d.checkoutUrl) {
-                    window.location.href = d.checkoutUrl;
-                } else {
-                    setOrder(d);
-                    setQrLoading(true);
-                    setCreatingOrder(false);
-                }
+                // d = PaymentResponse từ backend (đã có đầy đủ thông tin PayOS)
+                const mappedOrder = {
+                    courseId: d.courseId || courseId,
+                    courseTitle: d.courseTitle || ("Khóa học #" + courseId),
+                    amount: d.amount,
+                    // description từ PayOS là nội dung chuyển khoản thực tế
+                    transferContent: d.description,
+                    // transactionCode = orderCode số, dùng để polling
+                    transactionCode: d.transactionCode,
+                    accountNumber: d.accountNumber,
+                    accountName: d.accountName,
+                    // Tạo QR VietQR từ thông tin ngân hàng thực từ PayOS
+                    qrUrl: `https://img.vietqr.io/image/${d.bin}-${d.accountNumber}-compact2.jpg?amount=${d.amount}&addInfo=${encodeURIComponent(d.description || "")}&accountName=${encodeURIComponent(d.accountName || "")}`
+                };
+                console.log("DEBUG mappedOrder:", mappedOrder);
+                setOrder(mappedOrder);
+                setQrLoading(true);
+                setCreatingOrder(false);
             })
             .catch((e) => {
                 setError(
@@ -72,7 +83,7 @@ export default function BankTransferPage() {
                     setPaid(true);
                     setTimeout(() => {
                         navigate(`/learn/${order.courseId}`);
-                    }, 1500);
+                    }, 3000);
                 }
             } catch (err) {
                 console.error("Lỗi khi kiểm tra trạng thái thanh toán tự động:", err);
@@ -102,15 +113,120 @@ export default function BankTransferPage() {
 
     if (paid) {
         return (
-            <div style={st.page}>
-                <div style={st.card}>
-                    <div style={{ fontSize: 64, animation: "bounce 1s infinite" }}>✅</div>
-                    <h1 style={{ color: "#10b981", margin: "16px 0 8px", fontSize: 24, fontWeight: 800 }}>
+            <div style={{
+                position: "fixed", inset: 0,
+                background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)",
+                display: "flex", flexDirection: "column",
+                justifyContent: "center", alignItems: "center",
+                fontFamily: "'Inter', sans-serif", zIndex: 9999,
+                overflow: "hidden"
+            }}>
+                <style>{`
+                    @keyframes success-pop {
+                        0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+                        60% { transform: scale(1.2) rotate(10deg); opacity: 1; }
+                        100% { transform: scale(1) rotate(0deg); opacity: 1; }
+                    }
+                    @keyframes success-ring {
+                        0% { transform: scale(0.8); opacity: 1; }
+                        100% { transform: scale(2.5); opacity: 0; }
+                    }
+                    @keyframes text-rise {
+                        0% { transform: translateY(30px); opacity: 0; }
+                        100% { transform: translateY(0); opacity: 1; }
+                    }
+                    @keyframes shimmer {
+                        0% { background-position: -200% center; }
+                        100% { background-position: 200% center; }
+                    }
+                    @keyframes float-particle {
+                        0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+                        10% { opacity: 1; }
+                        90% { opacity: 1; }
+                        100% { transform: translateY(-120vh) translateX(20px); opacity: 0; }
+                    }
+                    @keyframes progress-bar {
+                        from { width: 100%; }
+                        to { width: 0%; }
+                    }
+                    .particle { position: absolute; bottom: -20px; width: 8px; height: 8px; border-radius: 50%; animation: float-particle linear infinite; }
+                `}</style>
+
+                {/* Confetti particles */}
+                {[...Array(12)].map((_, i) => (
+                    <div key={i} className="particle" style={{
+                        left: `${(i + 1) * 8}%`,
+                        background: ["#6366f1","#8b5cf6","#a78bfa","#34d399","#fbbf24","#f472b6"][i % 6],
+                        animationDuration: `${3 + (i % 4)}s`,
+                        animationDelay: `${i * 0.3}s`,
+                        width: `${6 + (i % 3) * 4}px`,
+                        height: `${6 + (i % 3) * 4}px`
+                    }} />
+                ))}
+
+                {/* Glow ring */}
+                <div style={{ position: "relative", marginBottom: 32 }}>
+                    <div style={{
+                        position: "absolute", inset: -20,
+                        borderRadius: "50%", border: "3px solid rgba(99,102,241,0.6)",
+                        animation: "success-ring 1.5s ease-out infinite"
+                    }} />
+                    <div style={{
+                        width: 120, height: 120, borderRadius: "50%",
+                        background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 56, boxShadow: "0 0 60px rgba(99,102,241,0.5)",
+                        animation: "success-pop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards"
+                    }}>
+                        ✅
+                    </div>
+                </div>
+
+                {/* Text */}
+                <div style={{ textAlign: "center", animation: "text-rise 0.6s 0.3s both" }}>
+                    <h1 style={{
+                        fontSize: 32, fontWeight: 900, margin: "0 0 8px",
+                        background: "linear-gradient(90deg, #a78bfa, #34d399, #a78bfa)",
+                        backgroundSize: "200% auto",
+                        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                        animation: "shimmer 2s linear infinite"
+                    }}>
                         Thanh toán thành công!
                     </h1>
-                    <p style={{ color: "#64748b" }}>
-                        Khóa học đã được kích hoạt. Đang chuyển hướng vào lớp học...
+                    <p style={{ color: "#94a3b8", fontSize: 16, margin: "0 0 6px" }}>
+                        🎉 Khóa học <strong style={{ color: "#e2e8f0" }}>{order?.courseTitle}</strong> đã được mở khóa
                     </p>
+                    <p style={{ color: "#64748b", fontSize: 14, marginBottom: 32 }}>
+                        Đang chuyển hướng đến trang học...
+                    </p>
+
+                    {/* Progress bar countdown */}
+                    <div style={{
+                        width: 280, height: 4, background: "rgba(255,255,255,0.1)",
+                        borderRadius: 99, overflow: "hidden", margin: "0 auto 28px"
+                    }}>
+                        <div style={{
+                            height: "100%", borderRadius: 99,
+                            background: "linear-gradient(90deg, #6366f1, #8b5cf6)",
+                            animation: "progress-bar 3s linear forwards"
+                        }} />
+                    </div>
+
+                    {/* Go now button */}
+                    <button
+                        onClick={() => navigate(`/learn/${order?.courseId}`)}
+                        style={{
+                            padding: "14px 36px", borderRadius: 14, border: "none",
+                            background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                            color: "#fff", fontSize: 15, fontWeight: 700,
+                            cursor: "pointer", boxShadow: "0 8px 32px rgba(99,102,241,0.4)",
+                            transition: "all 0.2s"
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
+                        onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+                    >
+                        🚀 Vào học ngay
+                    </button>
                 </div>
             </div>
         );
@@ -177,9 +293,9 @@ export default function BankTransferPage() {
 
                 {/* Thông tin chuyển khoản chi tiết */}
                 <div style={st.infoList}>
-                    <Row label="Ngân hàng" value="TPBank" />
-                    <Row label="Số tài khoản" value="10001805232" copy />
-                    <Row label="Chủ tài khoản" value="NGUYEN VAN HAI" />
+                    <Row label="Ngân hàng" value="Quét mã VietQR" />
+                    <Row label="Số tài khoản" value={order?.accountNumber} copy />
+                    <Row label="Chủ tài khoản" value={order?.accountName} />
                     <Row label="Số tiền" value={formatVnd(order?.amount)} />
                     <Row label="Nội dung CK" value={order?.transferContent} copy highlight />
                 </div>

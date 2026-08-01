@@ -30,7 +30,7 @@ export default function CoursePreviewPage() {
     const getSafeAvatarUrl = (url) => {
         if (!url) return "https://via.placeholder.com/40";
         if (url.startsWith("http")) return url;
-        return `http://localhost:8080${url}`;
+        return `${import.meta.env.VITE_API_URL.replace("/api","")}${url}`;
     };
 
     const calculatePercent = (count, total) => {

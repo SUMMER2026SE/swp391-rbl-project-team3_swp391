@@ -106,7 +106,7 @@ function ProfilePage() {
             return `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || "User")}&background=64748b&color=fff`;
         }
         if (url.startsWith("http")) return url;
-        return `http://localhost:8080${url}`;
+        return `${import.meta.env.VITE_API_URL.replace("/api","")}${url}`;
     };
     const currentAvatar = getAvatarUrl();
 
@@ -254,7 +254,7 @@ function ProfilePage() {
                                                         course.thumbnail_url
                                                             ? (course.thumbnail_url.startsWith("http")
                                                                 ? course.thumbnail_url
-                                                                : `http://localhost:8080${course.thumbnail_url}`)
+                                                                : `${import.meta.env.VITE_API_URL.replace("/api","")}${course.thumbnail_url}`)
                                                             : "https://placehold.co/600x400?text=PrepAce"
                                                     }
                                                     alt={course.title}

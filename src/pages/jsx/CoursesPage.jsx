@@ -13,14 +13,14 @@ export default function CoursesPage() {
 
     const getSubjectThumbnail = (subjectName) => {
         const thumbMap = {
-            "Toán Học": "http://localhost:8080/uploads/thumbnails/toan.jpg?v=2",
-            "Vật Lý": "http://localhost:8080/uploads/thumbnails/vatli.jpg?v=2",
-            "Hóa Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
-            "Hoá Học": "http://localhost:8080/uploads/thumbnails/hoa.jpg?v=2",
-            "Ngữ Văn": "http://localhost:8080/uploads/thumbnails/van.jpg?v=2",
-            "Tiếng Anh": "http://localhost:8080/uploads/thumbnails/anh.jpg?v=2",
-            "Lịch Sử": "http://localhost:8080/uploads/thumbnails/lichsu.jpg?v=2",
-            "Địa Lý": "http://localhost:8080/uploads/thumbnails/dia.jpg?v=2",
+            "Toán Học": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/math-course.jpg?v=2`,
+            "Vật Lý": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/vatli.jpg?v=2`,
+            "Hóa Học": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/hoa.jpg?v=2`,
+            "Hoá Học": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/hoa.jpg?v=2`,
+            "Ngữ Văn": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/van.jpg?v=2`,
+            "Tiếng Anh": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/english-course.jpg?v=2`,
+            "Lịch Sử": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/su.jpg?v=2`,
+            "Địa Lý": `${import.meta.env.VITE_API_URL.replace('/api','')}/uploads/thumbnails/dia.jpg?v=2`,
             "Sinh Học": "https://images.unsplash.com/photo-1530213786676-412f1262d512?auto=format&fit=crop&w=400&q=80",
             "Tin Học": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=400&q=80",
             "GDCD": "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=400&q=80"
@@ -111,7 +111,7 @@ export default function CoursesPage() {
 
                         let thumbnail = c.thumbnail_url || c.thumbnailUrl || c.thumbnail;
                         if (thumbnail && !thumbnail.startsWith("http")) {
-                            thumbnail = `http://localhost:8080${thumbnail}`;
+                            thumbnail = `${import.meta.env.VITE_API_URL.replace("/api","")}${thumbnail}`;
                         }
                         if (!thumbnail) {
                             thumbnail = getSubjectThumbnail(sName);
