@@ -17,9 +17,25 @@ export default function PaymentReturnPage() {
     const courseTitle = location.state?.courseTitle;
     const courseId = location.state?.courseId;
 
+    // PayOS parameters
+    const orderCode = params.get("orderCode");
+    const isCancel = params.get("cancel") === "true";
+    const payosStatus = params.get("status");
+
     const [result, setResult] = useState(null); // 'PAID' | 'FAILED'
     const [processing, setProcessing] = useState(false);
     const [syncing, setSyncing] = useState(provider === "zalopay");
+
+    // Xử lý PayOS return
+    useEffect(() => {
+        if (orderCode) {
+            if (isCancel || payosStatus === "CANCELLED") {
+                setResult("FAILED");
+            } else {
+                setResult("PAID");
+            }
+        }
+    }, [orderCode, isCancel, payosStatus]);
 
     // Trở về từ ZaloPay: tự động đồng bộ trạng thái đơn
     useEffect(() => {
