@@ -110,11 +110,15 @@ export default function TeacherDashboard() {
 
     const fetchQaList = async () => {
         try {
-            const response = await axiosClient.get("/questions/teacher/all");
+            const user = JSON.parse(localStorage.getItem("user"));
+
+            const response = await axiosClient.get(
+                `/questions/teacher/${user.id}`
+            );
+
             setQaList(response.data);
         } catch (error) {
-            console.error("Lỗi tải danh sách Q&A:", error);
-            alert("Không thể tải danh sách hỏi đáp.");
+            console.error(error);
         }
     };
 
