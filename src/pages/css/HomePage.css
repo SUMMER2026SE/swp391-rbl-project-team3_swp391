@@ -8,6 +8,7 @@
 
 /* ============ SIDEBAR ============ */
 .sidebar{
+    box-sizing: border-box;
     width:350px;
     min-width:350px;
     background:#fff;
@@ -371,6 +372,7 @@
 =========================== */
 
 .sidebar{
+    box-sizing: border-box;
     width:280px;
     background:#fff;
     border-right:1px solid #eef2f7;

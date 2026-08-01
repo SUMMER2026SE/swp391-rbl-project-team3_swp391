@@ -78,15 +78,29 @@ function AIChapterSummaryPage() {
 
     return (
         <div className="summary-page">
-            <div
-                className="topbar-left"
-                onClick={() => navigate(-1)}
-                style={{ cursor: "pointer", marginBottom: "20px" }}
-            >
-                ← Quay về khóa học
-            </div>
             <div className="summary-card">
                 <div className="summary-header">
+                    <div
+                        onClick={() => navigate(-1)}
+                        style={{
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            background: "rgba(255, 255, 255, 0.2)",
+                            padding: "8px 16px",
+                            borderRadius: "99px",
+                            fontSize: "14px",
+                            fontWeight: "600",
+                            marginBottom: "20px",
+                            transition: "background 0.2s",
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)"}
+                        onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)"}
+                    >
+                        <span>&larr;</span> Quay về khóa học
+                    </div>
+                    <br/>
                     <span className="summary-badge">
                         🤖 AI Chapter Summary
                     </span>
