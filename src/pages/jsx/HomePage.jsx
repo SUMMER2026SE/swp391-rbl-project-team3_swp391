@@ -262,7 +262,6 @@ export default function HomePage() {
                                 onFocus={() => setShowSuggestions(true)}
                                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                             />
-                            <div className="shortcut">⌘K</div>
                             <button type="submit" className="search-icon-btn">Tìm</button>
                         </form>
 

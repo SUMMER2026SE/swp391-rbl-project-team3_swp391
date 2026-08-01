@@ -233,24 +233,25 @@ export default function RegisterPage({ switchToLogin }) {
                     />
                 </div>
 
-                <div className="password-wrapper">
+                <div className="auth-form-group">
                     <label>Password</label>
-                    <input
-                        type={showPassword ? "text" : "password"}
-                        name="password"
-                        className="auth-form-input"
-                        placeholder="Enter your password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        required
-                    />
-
-                    <span
-                        className="password-toggle"
-                        onClick={() => setShowPassword(!showPassword)}
-                    >
-                        {showPassword ? "🙈" : "👁️"}
-                    </span>
+                    <div className="password-wrapper">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            name="password"
+                            className="auth-form-input"
+                            placeholder="Enter your password"
+                            value={formData.password}
+                            onChange={handleChange}
+                            required
+                        />
+                        <span
+                            className="password-toggle"
+                            onClick={() => setShowPassword(!showPassword)}
+                        >
+                            {showPassword ? "🙈" : "👁️"}
+                        </span>
+                    </div>
                 </div>
 
                 <div className="auth-form-group">
