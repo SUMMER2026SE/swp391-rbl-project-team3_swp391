@@ -26,6 +26,20 @@ const translateText = (text) => {
                .replace(/\bbiology\b/gi, "Sinh học");
 };
 
+const parseRecommendation = (text) => {
+    if (!text) return null;
+    // Tìm cụm "sai X/Y câu, đúng Z% — Lời khuyên"
+    const match = text.match(/sai\s+(\d+\/\d+)\s+câu,\s+đúng\s+(\d+%?)\s*(?:—|-)\s*(.*)/i);
+    if (match) {
+        return {
+            mistakes: match[1],
+            accuracy: match[2],
+            advice: match[3]
+        };
+    }
+    return null;
+};
+
 export default function GapDiagnosisPage() {
     const navigate = useNavigate();
     const [data, setData] = useState(null);
@@ -93,12 +107,47 @@ export default function GapDiagnosisPage() {
 
                         <div className="gap-col">
                             <h3 className="gap-col-title">🗺️ Lộ trình khắc phục & Giải pháp</h3>
-                            <div className="gap-roadmap">
-                                    {data.gaps.map((g, i) => (
-                                        <li key={i}>
-                                            <strong>{translateSubject(g.subject)}{g.topic ? ` - ${g.topic}` : ''}:</strong> {translateText(g.recommendation)}
-                                        </li>
-                                    ))}
+                            <div className="gap-roadmap" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    {data.gaps.map((g, i) => {
+                                        const rawText = translateText(g.recommendation);
+                                        const parsed = parseRecommendation(rawText);
+
+                                        return (
+                                            <div key={i} style={{
+                                                background: '#ffffff',
+                                                borderLeft: '4px solid #ef4444',
+                                                border: '1px solid #e2e8f0',
+                                                padding: '16px',
+                                                borderRadius: '12px',
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                                            }}>
+                                                <div style={{ fontWeight: '700', fontSize: '15px', color: '#0f172a', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    🎯 {translateSubject(g.subject)}{g.topic ? ` - ${g.topic}` : ''}
+                                                </div>
+                                                
+                                                {parsed ? (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                        <div style={{ display: 'flex', gap: '12px' }}>
+                                                            <span style={{ background: '#fef2f2', color: '#b91c1c', padding: '4px 10px', borderRadius: '6px', fontSize: '13px', fontWeight: '600' }}>
+                                                                ❌ Sai: {parsed.mistakes} câu
+                                                            </span>
+                                                            <span style={{ background: '#f0fdf4', color: '#15803d', padding: '4px 10px', borderRadius: '6px', fontSize: '13px', fontWeight: '600' }}>
+                                                                ✅ Đúng: {parsed.accuracy}
+                                                            </span>
+                                                        </div>
+                                                        <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', fontSize: '13.5px', color: '#334155', lineHeight: '1.5' }}>
+                                                            <strong style={{ color: '#2563eb', display: 'block', marginBottom: '4px' }}>💡 Giải pháp khắc phục:</strong>
+                                                            {parsed.advice}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div style={{ fontSize: '14px', lineHeight: '1.6', color: '#475569' }}>
+                                                        {rawText}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                     </div>
