@@ -40,16 +40,19 @@ export default function BankTransferPage() {
         paymentService
             .createBank(Number(courseId))
             .then((d) => {
-                setOrder(d);
-                setQrLoading(true);
+                if (d.checkoutUrl) {
+                    window.location.href = d.checkoutUrl;
+                } else {
+                    setOrder(d);
+                    setQrLoading(true);
+                    setCreatingOrder(false);
+                }
             })
             .catch((e) => {
                 setError(
                     e.response?.data?.message ||
                     "Không tạo được đơn thanh toán."
                 );
-            })
-            .finally(() => {
                 setCreatingOrder(false);
             });
     }, [courseId]);

@@ -250,127 +250,9 @@ export default function AdminDashboardPage() {
                         </div>
                     </div>
 
-                    {/* PENDING PAYMENTS */}
-
-                    <div className="payment-confirm-section">
-                        <div className="section-head">
-                            <h3>
-                                💳 Thanh toán chờ xác nhận
-                            </h3>
-                            <span>
-                                {pendingPayments.length} giao dịch
-                            </span>
-                        </div>
-                        {
-                            pendingPayments.length === 0 ?
-                            (
-                                <div className="empty-payment">
-                                    Không có giao dịch chờ xác nhận
-                                </div>
-                            )
-                            :
-                            (
-                            <table className="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>
-                                            Học viên
-                                        </th>
-
-                                        <th>
-                                            Khóa học
-                                        </th>
-
-                                        <th>
-                                            Số tiền
-                                        </th>
-
-                                        <th>
-                                            Mã GD
-                                        </th>
-
-                                        <th>
-                                            Action
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                {
-                                    pendingPayments.map(payment=>(
-                                    <tr key={payment.paymentId}>
-                                        <td>
-                                            {payment.studentName}
-                                        </td>
-                                        <td>
-                                            {payment.courseTitle}
-                                        </td>
-                                        <td className="tx-amount">
-                                            {
-                                                Number(payment.amount)
-                                                .toLocaleString("vi-VN")
-                                            }đ
-                                        </td>
-                                        <td>
-                                            <b>
-                                                {payment.transactionCode}
-                                            </b>
-                                        </td>
-                                        <td>
-                                            <div className="payment-action-group">
-                                            <button
-                                                className="confirm-payment-btn"
-                                                disabled={
-                                                    confirmingPayment === payment.transactionCode ||
-                                                    cancelingPayment === payment.transactionCode
-                                                }
-                                                onClick={()=> 
-                                                    handleConfirmPayment(
-                                                        payment.transactionCode
-                                                    )
-                                                }
-                                            >
-                                            {
-                                            confirmingPayment === payment.transactionCode
-                                            ?
-                                            "Đang xử lý..."
-                                            :
-                                            "Xác nhận"
-                                            }
-                                            </button>
-                                            <button
-                                                className="cancel-payment-btn"
-                                                disabled={
-                                                    confirmingPayment === payment.transactionCode ||
-                                                    cancelingPayment === payment.transactionCode
-                                                }
-                                                onClick={()=>
-                                                    handleCancelPayment(
-                                                        payment.transactionCode
-                                                    )
-                                                }
-                                            >
-                                            {
-                                            cancelingPayment === payment.transactionCode
-                                            ?
-                                            "Đang hủy..."
-                                            :
-                                            "Hủy"
-                                            }
-                                            </button>
-                                            </div>
-                                            </td>
-                                    </tr>
-                                    ))
-                                }
-                                </tbody>
-                            </table>
-                            )
-                        }
-                    </div>
-
                     <div className="dashboard-sections">
                         {/* CHART SECTION */}
-                        <div className="chart-section">
+                        {/* <div className="chart-section">
                             <div className="section-head">
                                 <h3>Biểu đồ tăng trưởng doanh thu (2026)</h3>
                                 <select className="chart-filter">
@@ -392,7 +274,7 @@ export default function AdminDashboardPage() {
                                     ))
                                 )}
                             </div>
-                        </div>
+                        </div> */}
 
                         {/* RECENT TRANSACTIONS */}
                         <div className="transactions-section">
