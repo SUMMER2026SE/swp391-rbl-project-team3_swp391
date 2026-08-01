@@ -3,6 +3,29 @@ import { useNavigate } from "react-router-dom";
 import aiService from "../../services/aiService";
 import "../css/AiInsights.css";
 
+const SUBJECT_MAP = {
+    "math": "Toán", "physics": "Vật lý", "chemistry": "Hóa học",
+    "english": "Tiếng Anh", "literature": "Ngữ Văn", "history": "Lịch sử",
+    "geography": "Địa lý", "biology": "Sinh học", "it": "Tin học", "civic": "GDCD"
+};
+
+const translateSubject = (subject) => {
+    if (!subject) return "";
+    return SUBJECT_MAP[subject.toLowerCase()] || subject;
+};
+
+const translateText = (text) => {
+    if (!text) return "";
+    return text.replace(/\bmath\b/gi, "Toán")
+               .replace(/\bphysics\b/gi, "Vật lý")
+               .replace(/\bchemistry\b/gi, "Hóa học")
+               .replace(/\benglish\b/gi, "Tiếng Anh")
+               .replace(/\bliterature\b/gi, "Ngữ Văn")
+               .replace(/\bhistory\b/gi, "Lịch sử")
+               .replace(/\bgeography\b/gi, "Địa lý")
+               .replace(/\bbiology\b/gi, "Sinh học");
+};
+
 export default function GapDiagnosisPage() {
     const navigate = useNavigate();
     const [data, setData] = useState(null);
@@ -30,7 +53,7 @@ export default function GapDiagnosisPage() {
 
             {!data.hasData ? (
                 <div className="ai-empty">
-                    <p>{data.summary}</p>
+                    <p>{translateText(data.summary)}</p>
                     <button onClick={() => navigate("/entry-test")}>Làm bài kiểm tra đầu vào</button>
                 </div>
             ) : (
@@ -41,7 +64,7 @@ export default function GapDiagnosisPage() {
                         </div>
                         <div className="ai-overview-text">
                             <h3>Độ chính xác trung bình</h3>
-                            <p>{data.summary}</p>
+                            <p>{translateText(data.summary)}</p>
                         </div>
                     </div>
 
@@ -56,7 +79,7 @@ export default function GapDiagnosisPage() {
                                 {data.gaps.map((g, i) => (
                                     <div className="gap-item" key={i}>
                                         <div className="gap-head">
-                                            <span className="gap-subject">{g.subject}{g.topic ? ` - ${g.topic}` : ''}</span>
+                                            <span className="gap-subject">{translateSubject(g.subject)}{g.topic ? ` - ${g.topic}` : ''}</span>
                                             <span className="gap-severity" style={{ background: g.color }}>{g.severity}</span>
                                         </div>
                                         <div className="gap-bar">
@@ -73,12 +96,11 @@ export default function GapDiagnosisPage() {
                             <div className="gap-roadmap">
                                     {data.gaps.map((g, i) => (
                                         <li key={i}>
-                                            <strong>{g.subject}{g.topic ? ` - ${g.topic}` : ''}:</strong> {g.recommendation}
+                                            <strong>{translateSubject(g.subject)}{g.topic ? ` - ${g.topic}` : ''}:</strong> {translateText(g.recommendation)}
                                         </li>
                                     ))}
                                 </div>
                             </div>
-                        ))
                     </div>
 
                     <div className="ai-cta" style={{ marginTop: '30px' }}>

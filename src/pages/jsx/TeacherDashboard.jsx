@@ -74,15 +74,15 @@ export default function TeacherDashboard() {
 
         setUser(userObj);
         fetchCourses(userObj);
-        
+
         // Lấy danh sách môn học cho dropdown
-        axiosClient.get("/public/subjects").then(res => setSubjects(res.data)).catch(() => {});
+        axiosClient.get("/public/subjects").then(res => setSubjects(res.data)).catch(() => { });
 
         // 🔥 Lấy danh sách danh mục cho dropdown
         axiosClient.get("/public/categories")
             .then(res => setCategories(res.data))
             .catch(() => {
-                axiosClient.get("/categories").then(res => setCategories(res.data)).catch(() => {});
+                axiosClient.get("/categories").then(res => setCategories(res.data)).catch(() => { });
             });
     }, [navigate]);
 
@@ -97,7 +97,7 @@ export default function TeacherDashboard() {
         try {
             const response = await axiosClient.get("/courses");
             // Lọc danh sách chỉ lấy khóa học do chính giáo viên này tạo/dạy
-            const teacherCourses = response.data.filter(course => 
+            const teacherCourses = response.data.filter(course =>
                 course.teacherId === userObj.id || course.teacher_id === userObj.id
             );
             setMyCourses(teacherCourses);
@@ -150,7 +150,7 @@ export default function TeacherDashboard() {
 
     const handleDelete = async (courseId) => {
         if (!window.confirm("Bạn có chắc chắn muốn xóa khóa học này? Hành động này không thể hoàn tác!")) return;
-        
+
         try {
             await axiosClient.delete(`/courses/${courseId}`);
             setMyCourses(prev => prev.filter(c => c.id !== courseId));
@@ -238,7 +238,7 @@ export default function TeacherDashboard() {
     const handleOpenReport = async (course) => {
         setSelectedCourseForReport(course);
         setReportModalOpen(true);
-        
+
         try {
             const response = await axiosClient.get(`/reports/courses/${course.id}`);
             setCourseReports(response.data);
@@ -250,7 +250,7 @@ export default function TeacherDashboard() {
 
     const handleExportExcel = async () => {
         if (!selectedCourseForReport) return;
-        
+
         try {
             const token = localStorage.getItem("token");
             const response = await fetch(`http://localhost:8080/api/reports/courses/${selectedCourseForReport.id}/export`, {
@@ -326,7 +326,7 @@ export default function TeacherDashboard() {
             alert("❌ Lỗi khi gửi trả lời: " + (error.response?.data?.message || error.message));
         }
     };
-    
+
     return (
         <div className="teacher-dashboard-layout">
             <aside className="teacher-sidebar">
@@ -461,15 +461,15 @@ export default function TeacherDashboard() {
                                             </span>
                                         </div>
                                     </div>
-                                    
+
                                     <div style={{ display: "flex", gap: "10px", flexWrap: "nowrap", justifyContent: "flex-end" }}>
-                                        <button 
+                                        <button
                                             style={{ padding: "10px 18px", background: "#f1f5f9", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: "600", color: "#334155" }}
                                             onClick={() => handleRename(course.id, course.title)}
                                         >
                                             📝 Đổi tên
                                         </button>
-                                        <button 
+                                        <button
                                             style={{ padding: "10px 18px", background: "#f1f5f9", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: "600", color: "#334155" }}
                                             onClick={() => navigate(`/teacher/course/${course.id}/edit`)}
                                             title="Biên soạn nội dung khóa học"
@@ -477,14 +477,14 @@ export default function TeacherDashboard() {
                                             ✏️ Biên soạn
                                         </button>
 
-                                        <button 
+                                        <button
                                             style={{ padding: "10px 18px", background: "#f0fdf4", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: "600", color: "#166534" }}
                                             onClick={() => handleOpenReport(course)}
                                             title="Xem báo cáo học tập"
                                         >
                                             📊 Báo cáo
                                         </button>
-                                        <button 
+                                        <button
                                             style={{ padding: "10px 18px", background: "#fef2f2", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: "600", color: "#b91c1c" }}
                                             onClick={() => handleDeleteCourse(course.id)}
                                             title="Xóa khóa học"
@@ -523,18 +523,18 @@ export default function TeacherDashboard() {
                                             <tr key={qa.questionId || qa.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                                                 <td style={{ padding: "16px", verticalAlign: "top" }}>
                                                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                        <img 
+                                                        <img
                                                             src={
                                                                 qa.userAvatarUrl && qa.userAvatarUrl !== "null" && qa.userAvatarUrl.trim() !== ""
                                                                     ? (qa.userAvatarUrl.startsWith("http") ? qa.userAvatarUrl : `http://localhost:8080${qa.userAvatarUrl}`)
                                                                     : `https://ui-avatars.com/api/?name=${encodeURIComponent(qa.userFullName || "User")}&background=64748b&color=fff`
                                                             }
                                                             onError={(e) => {
-                                                                e.target.onerror = null; 
+                                                                e.target.onerror = null;
                                                                 e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(qa.userFullName || "User")}&background=64748b&color=fff`;
                                                             }}
-                                                            alt="" 
-                                                            style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }} 
+                                                            alt=""
+                                                            style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }}
                                                         />
                                                         <div>
                                                             <div style={{ fontWeight: "600", color: "#1e293b", fontSize: "14px" }}>{qa.userFullName}</div>
@@ -559,7 +559,7 @@ export default function TeacherDashboard() {
                                                     )}
                                                 </td>
                                                 <td style={{ padding: "16px", verticalAlign: "top" }}>
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleOpenReplyModal(qa)}
                                                         style={{
                                                             padding: "6px 12px",
@@ -868,7 +868,7 @@ export default function TeacherDashboard() {
                                                     onMouseOver={(e) => e.currentTarget.style.background = "#e2e8f0"}
                                                     onMouseOut={(e) => e.currentTarget.style.background = "#f1f5f9"}
                                                 >
-                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
                                                     Xem chi tiết toàn màn hình
                                                 </button>
                                             </div>
@@ -1126,11 +1126,11 @@ của biểu thức...
                 <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100 }}>
                     <div style={{ background: "#fff", width: "500px", borderRadius: "16px", padding: "30px", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}>
                         <h3 style={{ margin: "0 0 20px 0", fontSize: "20px", fontWeight: "700", color: "#0f172a" }}>🚀 Khởi tạo khóa học mới</h3>
-                        
+
                         <form onSubmit={handleCreateCourseSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                             <div style={{ display: "flex", flexDirection: "column", gap: "6px", textAlign: "left" }}>
                                 <label style={{ fontWeight: "600", fontSize: "14px", color: "#334155" }}>Tên khóa học *:</label>
-                                <input 
+                                <input
                                     type="text"
                                     required
                                     placeholder="Nhập tên khóa học (Ví dụ: Toán nâng cao 12...)"
@@ -1142,14 +1142,14 @@ của biểu thức...
 
                             <div style={{ display: "flex", flexDirection: "column", gap: "6px", textAlign: "left" }}>
                                 <label style={{ fontWeight: "600", fontSize: "14px", color: "#334155" }}>Môn học *:</label>
-                                <select 
+                                <select
                                     value={newCourseData.subjectId}
                                     onChange={(e) => setNewCourseData({ ...newCourseData, subjectId: e.target.value })}
                                     style={{ padding: "11px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px" }}
                                 >
                                     {subjects.map(sub => (
                                         <option key={sub.id} value={sub.id}>
-                                            {{"Mathematics": "Toán Học", "Physics": "Vật Lý", "Chemistry": "Hóa Học", "Literature": "Ngữ Văn", "English": "Tiếng Anh", "Biology": "Sinh Học", "History": "Lịch Sử", "Geography": "Địa Lý", "Civic Education": "GDCD", "Informatics": "Tin Học"}[sub.subjectName] || sub.subjectName}
+                                            {{ "Mathematics": "Toán Học", "Physics": "Vật Lý", "Chemistry": "Hóa Học", "Literature": "Ngữ Văn", "English": "Tiếng Anh", "Biology": "Sinh Học", "History": "Lịch Sử", "Geography": "Địa Lý", "Civic Education": "GDCD", "Informatics": "Tin Học" }[sub.subjectName] || sub.subjectName}
                                         </option>
                                     ))}
                                 </select>
@@ -1160,7 +1160,7 @@ của biểu thức...
                                 <label style={{ fontWeight: "600", fontSize: "14px", color: "#334155" }}>
                                     Danh mục khóa học <span style={{ color: "#94a3b8", fontWeight: "normal" }}>(Không bắt buộc)</span>:
                                 </label>
-                                <select 
+                                <select
                                     value={newCourseData.categoryId}
                                     onChange={(e) => setNewCourseData({ ...newCourseData, categoryId: e.target.value })}
                                     style={{ padding: "11px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px", background: "#fff" }}
@@ -1176,7 +1176,7 @@ của biểu thức...
 
                             <div style={{ display: "flex", flexDirection: "column", gap: "6px", textAlign: "left" }}>
                                 <label style={{ fontWeight: "600", fontSize: "14px", color: "#334155" }}>Giá tiền (VNĐ):</label>
-                                <input 
+                                <input
                                     type="number"
                                     min="0"
                                     placeholder="Nhập giá khóa học (bỏ trống nếu miễn phí)"
@@ -1187,14 +1187,14 @@ của biểu thức...
                             </div>
 
                             <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "15px" }}>
-                                <button 
-                                    type="button" 
+                                <button
+                                    type="button"
                                     onClick={() => { setCreateCourseModalOpen(false); setNewCourseData({ title: "", subjectId: "1", categoryId: "", price: "" }); }}
                                     style={{ padding: "10px 16px", background: "#f1f5f9", color: "#475569", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}
                                 >
                                     Hủy bỏ
                                 </button>
-                                <button 
+                                <button
                                     type="submit"
                                     style={{ padding: "10px 20px", background: "#2747d9", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}
                                 >
@@ -1210,7 +1210,7 @@ của biểu thức...
             {reportModalOpen && selectedCourseForReport && (
                 <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
                     <div style={{ background: "#fff", width: "800px", maxWidth: "90%", borderRadius: "16px", padding: "30px", boxShadow: "0 10px 30px rgba(0,0,0,0.2)", position: "relative" }}>
-                        <button 
+                        <button
                             onClick={() => setReportModalOpen(false)}
                             style={{ position: "absolute", top: "20px", right: "20px", background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "#64748b" }}
                         >
@@ -1219,9 +1219,9 @@ của biểu thức...
                         <h2 style={{ margin: "0 0 20px 0", fontSize: "22px", color: "#0f172a" }}>
                             📊 Báo cáo tiến độ: {selectedCourseForReport.title}
                         </h2>
-                        
+
                         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
-                            <button 
+                            <button
                                 onClick={handleExportExcel}
                                 style={{ padding: "10px 20px", background: "#16a34a", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}
                             >
@@ -1274,15 +1274,15 @@ của biểu thức...
             {replyModalOpen && selectedQa && (
                 <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
                     <div style={{ background: "#fff", width: "600px", borderRadius: "16px", padding: "30px", boxShadow: "0 10px 30px rgba(0,0,0,0.2)", position: "relative" }}>
-                        <button 
+                        <button
                             onClick={() => setReplyModalOpen(false)}
                             style={{ position: "absolute", top: "20px", right: "20px", background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "#64748b" }}
                         >
                             &times;
                         </button>
-                        
+
                         <h2 style={{ margin: "0 0 20px 0", fontSize: "20px", color: "#0f172a" }}>Phản hồi câu hỏi</h2>
-                        
+
                         <div style={{ background: "#f8fafc", padding: "15px", borderRadius: "8px", marginBottom: "20px", border: "1px solid #e2e8f0" }}>
                             <div style={{ fontWeight: "600", marginBottom: "5px" }}>{selectedQa.userFullName} hỏi:</div>
                             <div>{selectedQa.content}</div>
@@ -1300,7 +1300,7 @@ của biểu thức...
                             </div>
                         )}
 
-                        <textarea 
+                        <textarea
                             value={replyContent}
                             onChange={(e) => setReplyContent(e.target.value)}
                             placeholder="Nhập câu trả lời của bạn..."
@@ -1309,13 +1309,13 @@ của biểu thức...
                         />
 
                         <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-                            <button 
+                            <button
                                 onClick={() => setReplyModalOpen(false)}
                                 style={{ padding: "10px 20px", background: "#f1f5f9", border: "none", borderRadius: "8px", cursor: "pointer" }}
                             >
                                 Hủy
                             </button>
-                            <button 
+                            <button
                                 onClick={handleSendReply}
                                 style={{ padding: "10px 20px", background: "#2747d9", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer" }}
                             >
