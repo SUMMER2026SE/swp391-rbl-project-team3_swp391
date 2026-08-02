@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axiosClient from "../../api/axiosClient";
 import AvatarUpload from "./AvatarUpload";
-
+import { SERVER_URL } from "../../config/server";
 /**
  * Component chỉnh sửa hồ sơ giảng viên.
  * Được nhúng vào TeacherDashboard khi activeTab === "PROFILE".
@@ -108,10 +108,14 @@ export default function TeacherProfileEdit({ user, setUser, setHasUnsavedProfile
     const getAvatarUrl = () => {
         let url = profileData?.avatarUrl || profileData?.avatar_url;
         if (!url || url === "null" || url.trim() === "") {
-            return `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData?.fullName || "Teacher")}&background=2747d9&color=fff`;
+            return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                profileData?.fullName || "Teacher"
+            )}&background=2747d9&color=fff`;
         }
-        if (url.startsWith("http")) return url;
-        return `${import.meta.env.VITE_API_URL.replace("/api","")}${url}`;
+        if (url.startsWith("http")) {
+            return url;
+        }
+        return `${SERVER_URL}${url}`;
     };
 
     if (loading) {

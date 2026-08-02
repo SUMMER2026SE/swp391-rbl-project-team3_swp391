@@ -64,7 +64,7 @@ export default function RegisterPage({ switchToLogin }) {
             setMessage("");
 
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/auth/register`,
+                "http://localhost:8080/api/auth/register",
                 {
                     method: "POST",
                     headers: {
@@ -141,7 +141,7 @@ export default function RegisterPage({ switchToLogin }) {
     const handleGoogleRegister = async (credentialResponse) => {
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/auth/google`,
+                "http://localhost:8080/api/auth/google",
                 {
                     method: "POST",
                     headers: {
@@ -169,7 +169,7 @@ export default function RegisterPage({ switchToLogin }) {
             const currentUserId = data.user?.id || data.user?.userId;
             if (currentUserId) {
                 try {
-                    await fetch(`${import.meta.env.VITE_API_URL}/admin/users/${currentUserId}/activity`, {
+                    await fetch(`http://localhost:8080/api/admin/users/${currentUserId}/activity`, {
                         method: "POST",
                         headers: { 
                             "Content-Type": "application/json",
@@ -233,25 +233,23 @@ export default function RegisterPage({ switchToLogin }) {
                     />
                 </div>
 
-                <div className="auth-form-group">
-                    <label>Password</label>
-                    <div className="password-wrapper">
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            name="password"
-                            className="auth-form-input"
-                            placeholder="Enter your password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            required
-                        />
-                        <span
-                            className="password-toggle"
-                            onClick={() => setShowPassword(!showPassword)}
-                        >
-                            {showPassword ? "🙈" : "👁️"}
-                        </span>
-                    </div>
+                <div className="password-wrapper">
+                    <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        className="auth-form-input"
+                        placeholder="Enter your password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                    />
+
+                    <span
+                        className="password-toggle"
+                        onClick={() => setShowPassword(!showPassword)}
+                    >
+                        {showPassword ? "🙈" : "👁️"}
+                    </span>
                 </div>
 
                 <div className="auth-form-group">

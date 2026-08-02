@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
 import "../css/CourseEditPage.css"; 
-import LessonEditForm from "./LessonEditForm"; 
+import LessonEditForm from "./LessonEditForm";
+import { SERVER_URL } from "../../config/server";
 
 export default function CourseEditPage() {
     const { id } = useParams(); 
@@ -332,7 +333,7 @@ export default function CourseEditPage() {
                 <div style={{ display: "flex", gap: "20px" }}>
                     <div style={{ position: "relative", width: "160px", height: "100px", borderRadius: "8px", overflow: "hidden", border: "1px solid #cbd5e1" }}>
                         <img 
-                            src={courseThumbnail && courseThumbnail.startsWith("http") ? courseThumbnail : (courseThumbnail ? `${import.meta.env.VITE_API_URL.replace("/api","")}${courseThumbnail}` : "https://placehold.co/600x400?text=Course")}
+                            src={courseThumbnail && courseThumbnail.startsWith("http") ? courseThumbnail : (courseThumbnail ? `${SERVER_URL}${courseThumbnail}` : "https://placehold.co/600x400?text=Course")}
                             alt="Course Thumbnail"
                             style={{ width: "100%", height: "100%", objectFit: "cover" }}
                         />

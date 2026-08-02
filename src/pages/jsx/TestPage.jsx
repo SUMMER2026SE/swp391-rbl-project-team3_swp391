@@ -5,6 +5,7 @@ import Timer from './Timer';
 import QuestionCard from './QuestionCard';
 import QuestionNavigator from './QuestionNavigator';
 import '../css/TestPage.css';
+import { SERVER_URL } from '../../config/server';
 
 const TestPage = () => {
     const { sessionsId } = useParams();   // Lấy sessionId từ URL
@@ -27,7 +28,7 @@ const TestPage = () => {
             const token = localStorage.getItem("token");
 
             const res = await fetch(
-                `${import.meta.env.VITE_API_URL}/tests/${sessionsId}/questions`,
+                `${SERVER_URL}/tests/${sessionsId}/questions`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -77,7 +78,7 @@ const saveTimeoutRef = useRef(null);
         
         console.log(`📡 Đang tự động lưu câu ${questionId} về DB...`);
 
-        fetch(`${import.meta.env.VITE_API_URL}/tests/${sessionsId}/answer`, {
+        fetch(`${SERVER_URL}/tests/${sessionsId}/answer`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

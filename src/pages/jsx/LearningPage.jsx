@@ -2,10 +2,17 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
 import "../css/LearningPage.css";
+import Swal from "sweetalert2";
+const SERVER_URL = "http://localhost:8080";
 
 export default function LearningPage() {
     const { courseId } = useParams();
     const navigate = useNavigate();
+    const [reportModalOpen, setReportModalOpen] = useState(false);
+    const [selectedReportQuestion, setSelectedReportQuestion] = useState(null);
+
+    const [reportTarget,setReportTarget] = useState(null);
+    const [reportReason,setReportReason] = useState("");
 
     const [course, setCourse] = useState(null);
     const [currentLesson, setCurrentLesson] = useState(null);
@@ -15,6 +22,7 @@ export default function LearningPage() {
     const [showSummaryPopup, setShowSummaryPopup] = useState(false);
     const [summaryLoading, setSummaryLoading] = useState(false);
     const [completedChapterId, setCompletedChapterId] = useState(null);
+    const [showCongratsPopup, setShowCongratsPopup] = useState(false);
 
     // Xác định quyền người dùng hiện tại để hiển thị chức năng quản trị
     const [currentUser, setCurrentUser] = useState(() => {
@@ -84,6 +92,88 @@ export default function LearningPage() {
         }
     };
 
+    const handleOpenReport = (question) => {
+        setSelectedReportQuestion(question);
+        setReportReason("");
+        setReportModalOpen(true);
+    };
+
+    const handleSubmitReport = async () => {
+        if (!reportReason.trim()) {
+            Swal.fire({
+                icon: "warning",
+                title: "Thiếu nội dung báo cáo",
+                text: "Vui lòng nhập lý do báo cáo!"
+            });
+            return;
+        }
+        try {
+            const user = JSON.parse(localStorage.getItem("user"));
+            await axiosClient.post(
+                "/admin/violations/submit",
+                {
+                    reporterId: user.userId,
+
+                    reportedTarget:
+                    `
+                    ${reportTarget.type}
+                    ID: ${reportTarget.id}
+                    Người đăng: ${reportTarget.owner}
+                    Nội dung:
+                    ${reportTarget.content}
+                    `,
+
+                    reason: reportReason
+                }
+            );
+            Swal.fire({
+                icon: "success",
+                title: "Đã gửi báo cáo",
+                text: "Báo cáo của bạn đã được gửi tới quản trị viên.",
+                timer: 2000,
+                showConfirmButton: false
+            });
+            setReportTarget(null);
+            setReportReason("");
+        } catch(err) {
+            console.error("Report error:", err);
+            Swal.fire({
+                icon: "error",
+                title: "Gửi báo cáo thất bại",
+                text: "Không thể gửi báo cáo, vui lòng thử lại sau!"
+            });
+        }
+    };
+
+    const handleReportQuestion = (q)=>{
+        Swal.fire({
+            title:"Báo cáo bình luận này?",
+            text:"Bạn sẽ được yêu cầu nhập lý do báo cáo.",
+            icon:"warning",
+            showCancelButton:true,
+            confirmButtonText:"Tiếp tục",
+            cancelButtonText:"Hủy"
+        }).then((result)=>{
+            if(result.isConfirmed){
+                setReportTarget({
+                    type:"QUESTION",
+                    id:q.questionId,
+                    content:q.content,
+                    owner:q.userFullName
+                });
+            }
+        });
+    };
+
+    const handleReportAnswer=(q,ans)=>{
+        setReportTarget({
+            type:"ANSWER",
+            id:ans.answerId,
+            content:ans.content,
+            owner:ans.userFullName
+        });
+    };
+
     const seekToTime = (seconds) => {
         if (currentLesson && isYouTube(currentLesson.videoUrl)) {
             if (youtubePlayerRef.current && youtubePlayerRef.current.seekTo) {
@@ -115,12 +205,13 @@ export default function LearningPage() {
 
                 let userIsEnrolled = false;
 
-                // 🔥 ĐẶC QUYỀN ADMIN: Luôn mở khóa 100% không cần check mua
+                // 🔥 ĐẶC QUYỀN ADMIN & TEACHER: Luôn mở khóa 100% không cần check mua
                 const token = localStorage.getItem("token");
                 const userObj = JSON.parse(localStorage.getItem("user") || "{}");
                 const isAdminUser = userObj?.role === "ADMIN" || userObj?.roleName === "ADMIN" || userObj?.roleId === 1;
+                const isTeacherUser = userObj?.role === "TEACHER" || userObj?.roleName === "TEACHER" || userObj?.roleId === 2;
 
-                if (isAdminUser) {
+                if (isAdminUser || isTeacherUser) {
                     userIsEnrolled = true;
                     setIsEnrolled(true);
                 } else if (token) {
@@ -648,6 +739,17 @@ export default function LearningPage() {
     const totalLessons = course?.chapters?.reduce((acc, ch) => acc + (ch.lessons?.length || 0), 0) || 0;
     const progress = totalLessons > 0 ? Math.round((completedLessonIds.length / totalLessons) * 100) : 0;
 
+    useEffect(() => {
+        if (progress === 100) {
+            const userId = currentUser?.user_id || currentUser?.userId || currentUser?.id || 'guest';
+            const cacheKey = `congrats_${courseId}_${userId}`;
+            if (!localStorage.getItem(cacheKey)) {
+                setShowCongratsPopup(true);
+                localStorage.setItem(cacheKey, "true");
+            }
+        }
+    }, [progress, courseId, currentUser]);
+
     if (!course || !currentLesson) {
         return <div className="loading-spinner" style={{ textAlign: "center", paddingTop: "100px", fontSize: "18px" }}>⏳ Đang tải bài giảng...</div>;
     }
@@ -658,7 +760,16 @@ export default function LearningPage() {
     return (
         <div className="learning-page">
             <header className="learning-topbar">
-                <div className="topbar-left" onClick={() => navigate(`/course/${courseId || 1}`)} style={{ cursor: 'pointer' }}>
+                <div className="topbar-left" onClick={() => {
+                    const role = currentUser?.role || currentUser?.roleName || "STUDENT";
+                    if (role === "TEACHER") {
+                        navigate(`/teacher/preview/${courseId || 1}`);
+                    } else if (role === "ADMIN") {
+                        navigate(`/admin/preview/${courseId || 1}`);
+                    } else {
+                        navigate(`/course/${courseId || 1}`);
+                    }
+                }} style={{ cursor: 'pointer' }}>
                     <span className="back-arrow">←</span>
                     <h2 className="course-nav-title">{course.title || course.course_title}</h2>
                 </div>
@@ -717,7 +828,7 @@ export default function LearningPage() {
                                     ) : (
                                         <video
                                             ref={videoRef}
-                                            src={currentLesson.videoUrl.startsWith("http") ? currentLesson.videoUrl : `${import.meta.env.VITE_API_URL.replace("/api","")}${currentLesson.videoUrl}`}
+                                            src={currentLesson.videoUrl.startsWith("http") ? currentLesson.videoUrl : `${SERVER_URL}${currentLesson.videoUrl}`}
                                             controls
                                             onTimeUpdate={handleTimeUpdate}
                                             style={{ width: "100%", height: "100%", display: "block", position: "absolute", top: 0, left: 0 }}
@@ -857,11 +968,11 @@ export default function LearningPage() {
                                                         handlePostQuestion();
                                                     }
                                                 }}
-                                                style={{ flex: 1, padding: "10px", borderRadius: "6px", border: "1px solid #ccc" }}
+                                                style={{ flex: 1, padding: "0 15px", borderRadius: "6px", border: "1px solid #ccc", height: "42px", boxSizing: "border-box", outline: "none", fontSize: "14px" }}
                                             />
-                                            <button className="ask-btn" onClick={handlePostQuestion} style={{ padding: "10px 20px", borderRadius: "6px", backgroundColor: "#007bff", color: "#fff", border: "none", cursor: "pointer" }}>Gửi câu hỏi</button>
+                                            <button className="ask-btn" onClick={handlePostQuestion} style={{ padding: "0 20px", borderRadius: "6px", backgroundColor: "#007bff", color: "#fff", border: "none", cursor: "pointer", height: "42px", boxSizing: "border-box", fontWeight: "600", fontSize: "14px", whiteSpace: "nowrap" }}>Gửi câu hỏi</button>
                                         </div>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "8px", alignSelf: "flex-start", marginTop: "-5px", marginLeft: "5px" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "8px", alignSelf: "flex-start", marginTop: "2px" }}>
                                             <input
                                                 type="checkbox"
                                                 id="qna-timestamp-checkbox"
@@ -875,7 +986,7 @@ export default function LearningPage() {
                                                 }}
                                                 style={{ cursor: "pointer", width: "16px", height: "16px", margin: 0 }}
                                             />
-                                            <label htmlFor="qna-timestamp-checkbox" style={{ fontSize: "14px", color: "#555", cursor: "pointer", userSelect: "none" }}>
+                                            <label htmlFor="qna-timestamp-checkbox" style={{ fontSize: "14px", color: "#555", cursor: "pointer", userSelect: "none", lineHeight: "16px", transform: "translateY(2px)" }}>
                                                 Đính kèm thời gian hiện tại {qnaTimestamp !== null ? `[${formatTime(qnaTimestamp)}]` : ""}
                                             </label>
                                         </div>
@@ -891,7 +1002,7 @@ export default function LearningPage() {
                                                         <img
                                                             src={
                                                                 q.userAvatarUrl && q.userAvatarUrl !== "null" && q.userAvatarUrl.trim() !== ""
-                                                                    ? (q.userAvatarUrl.startsWith("http") ? q.userAvatarUrl : `${import.meta.env.VITE_API_URL.replace("/api","")}${q.userAvatarUrl}`)
+                                                                    ? (q.userAvatarUrl.startsWith("http") ? q.userAvatarUrl : `${SERVER_URL}${q.userAvatarUrl}`)
                                                                     : `https://ui-avatars.com/api/?name=${encodeURIComponent(q.userFullName || "User")}&background=64748b&color=fff`
                                                             }
                                                             onError={(e) => {
@@ -940,10 +1051,36 @@ export default function LearningPage() {
                                                                             setReplyContent(`@${q.userFullName}: `);
                                                                         }
                                                                     }}
-                                                                    style={{ fontSize: "12px", color: "#007bff", background: "none", border: "none", cursor: "pointer", fontWeight: "600", padding: 0 }}
+                                                                    style={{
+                                                                        fontSize:"12px",
+                                                                        color:"#007bff",
+                                                                        background:"none",
+                                                                        border:"none",
+                                                                        cursor:"pointer",
+                                                                        fontWeight:"600",
+                                                                        padding:0
+                                                                    }}
                                                                 >
                                                                     Gửi
                                                                 </button>
+
+
+                                                                {/* Report giống Youtube */}
+                                                                {!isAdmin && (
+                                                                    <button
+                                                                        onClick={() => handleReportQuestion(q)}
+                                                                        style={{
+                                                                            fontSize: "12px",
+                                                                            color: "#dc3545",
+                                                                            background: "none",
+                                                                            border: "none",
+                                                                            cursor: "pointer",
+                                                                            fontWeight: "600"
+                                                                        }}
+                                                                    >
+                                                                        🚨 Báo cáo
+                                                                    </button>
+                                                                )}
 
                                                                 {/* Tìm đoạn này trong qna-tab và sửa lại */}
                                                                 {isAdmin && (
@@ -967,7 +1104,7 @@ export default function LearningPage() {
                                                                     <img
                                                                         src={
                                                                             ans.userAvatarUrl && ans.userAvatarUrl !== "null" && ans.userAvatarUrl.trim() !== ""
-                                                                                ? (ans.userAvatarUrl.startsWith("http") ? ans.userAvatarUrl : `${import.meta.env.VITE_API_URL.replace("/api","")}${ans.userAvatarUrl}`)
+                                                                                ? (ans.userAvatarUrl.startsWith("http") ? ans.userAvatarUrl : `${SERVER_URL}${ans.userAvatarUrl}`)
                                                                                 : `https://ui-avatars.com/api/?name=${encodeURIComponent(ans.userFullName || "User")}&background=64748b&color=fff`
                                                                         }
                                                                         onError={(e) => {
@@ -1136,6 +1273,62 @@ export default function LearningPage() {
                             </button>
                             <button className="summary-btn-secondary" onClick={() => setShowSummaryPopup(false)}>
                                 Để sau
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Popup chúc mừng 100% */}
+            {showCongratsPopup && (
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", justifyContent: "center", alignItems: "center" }}>
+                    <div style={{ background: "#fff", padding: "40px", borderRadius: "12px", textAlign: "center", maxWidth: "450px", boxShadow: "0 10px 25px rgba(0,0,0,0.2)", margin: "0 20px" }}>
+                        <div style={{ fontSize: "60px", marginBottom: "15px", animation: "bounce 1s infinite" }}>🎉</div>
+                        <h2 style={{ margin: "0 0 15px 0", color: "#16a34a", fontSize: "28px", fontWeight: "700" }}>Chúc mừng!</h2>
+                        <p style={{ margin: "0 0 25px 0", fontSize: "16px", color: "#4b5563", lineHeight: 1.5 }}>Bạn đã hoàn thành xuất sắc 100% tiến độ của khóa học này. Hãy tiếp tục giữ vững phong độ học tập tuyệt vời này nhé!</p>
+                        <button onClick={() => setShowCongratsPopup(false)} style={{ padding: "12px 30px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer", fontSize: "16px", transition: "all 0.2s ease" }}>Tuyệt vời</button>
+                    </div>
+                </div>
+            )}
+            {reportTarget && (
+                <div className="report-overlay">
+                    <div className="report-modal">
+                        <h3>
+                            🚨 Báo cáo bình luận
+                        </h3>
+                        <div className="report-info">
+                            <p>
+                                Người dùng:
+                                <b>{reportTarget.owner}</b>
+                            </p>
+                            <p>
+                                Nội dung:
+                            </p>
+                            <div className="report-content">
+                                {reportTarget.content}
+                            </div>
+                        </div>
+                        <textarea
+                            className="report-textarea"
+                            placeholder="Nhập lý do báo cáo..."
+                            value={reportReason}
+                            onChange={(e)=>setReportReason(e.target.value)}
+                        />
+                        <div className="report-actions">
+                            <button
+                                className="report-cancel-btn"
+                                onClick={()=>{
+                                    setReportTarget(null);
+                                    setReportReason("");
+                                }}
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                className="report-submit-btn"
+                                onClick={handleSubmitReport}
+                            >
+                                🚨 Gửi báo cáo
                             </button>
                         </div>
                     </div>
