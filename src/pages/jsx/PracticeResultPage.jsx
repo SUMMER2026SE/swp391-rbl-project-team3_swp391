@@ -250,7 +250,7 @@ export default function PracticeResultPage() {
                         {d.questionType && (d.questionType === "ESSAY" || d.questionType === "SHORT_ANSWER") && (d.score !== null && d.score !== undefined) && (
                             <div className={`pr-explanation ${d.correct ? "pr-explanation-correct" : "pr-explanation-wrong"}`} style={{ marginTop: "15px", backgroundColor: d.correct ? "#f0fdf4" : "#fef2f2", borderColor: d.correct ? "#bbf7d0" : "#fecaca" }}>
                                 <div className="pr-explanation-title" style={{ color: d.correct ? "#166534" : "#991b1b" }}>
-                                    {d.questionType === "ESSAY" ? "🤖 Nhận xét từ AI (Giáo viên)" : "✔️ Đánh giá câu trả lời ngắn"}
+                                    {d.questionType === "ESSAY" ? "🤖 Nhận xét từ Giáo viên" : "✔️ Đánh giá câu trả lời ngắn"}
                                     <span style={{ float: "right", fontWeight: "bold" }}>Điểm: <span style={{ color: d.correct ? "#16a34a" : "#dc2626" }}>{d.score.toFixed(1)}/10.0</span></span>
                                 </div>
                                 {d.teacherComment && (
