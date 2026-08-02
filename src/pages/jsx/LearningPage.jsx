@@ -14,6 +14,9 @@ export default function LearningPage() {
     const [reportTarget,setReportTarget] = useState(null);
     const [reportReason,setReportReason] = useState("");
 
+    const [reportAnswerTarget, setReportAnswerTarget] = useState(null);
+    const [answerReportReason, setAnswerReportReason] = useState("");
+
     const [course, setCourse] = useState(null);
     const [currentLesson, setCurrentLesson] = useState(null);
     const [activeTab, setActiveTab] = useState("overview");
@@ -165,13 +168,55 @@ export default function LearningPage() {
         });
     };
 
-    const handleReportAnswer=(q,ans)=>{
-        setReportTarget({
-            type:"ANSWER",
-            id:ans.answerId,
-            content:ans.content,
-            owner:ans.userFullName
+    const openReportAnswer = (ans) => {
+        Swal.fire({
+            title: "Báo cáo phản hồi này?",
+            text: "Bạn sẽ được yêu cầu nhập lý do báo cáo.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Tiếp tục",
+            cancelButtonText: "Hủy"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                setReportAnswerTarget({
+                    id: ans.id,
+                    content: ans.content,
+                    owner: ans.userFullName
+                });
+            }
         });
+    };
+
+    const handleReportAnswer = async () => {
+        try {
+            await axiosClient.post(
+                `/questions/answers/${reportAnswerTarget.id}/report`,
+                {
+                    reason: answerReportReason
+                }
+            );
+
+            // Đóng modal trước
+            setReportAnswerTarget(null);
+            setAnswerReportReason("");
+
+            // Hiển thị thông báo sau
+            Swal.fire({
+                toast: true,
+                position: "top-end",
+                icon: "success",
+                title: "Đã gửi báo cáo",
+                showConfirmButton: false,
+                timer: 2000,
+            });
+
+        } catch (err) {
+            Swal.fire({
+                icon: "error",
+                title: "Thất bại",
+                text: err.response?.data?.message || "Không thể gửi báo cáo."
+            });
+        }
     };
 
     const seekToTime = (seconds) => {
@@ -649,7 +694,6 @@ export default function LearningPage() {
         alert("Vui lòng nhập nội dung trả lời!");
         return;
     }
-
     const targetQuestionId = 
         question.id || 
         question.questionId || 
@@ -668,14 +712,10 @@ export default function LearningPage() {
                 content: replyContent
             }
         );
-
         const newAnswer = response.data;
-
         if (!newAnswer.id) {
             newAnswer.id = `temp_a_${Date.now()}`;
         }
-
-
         // Update questions sau khi thêm answer
         setQuestions(prevQuestions =>
             prevQuestions.map(q => {
@@ -1132,6 +1172,20 @@ export default function LearningPage() {
                                                                             >
                                                                                 Trả lời
                                                                             </button>
+                                                                            <button
+                                                                                onClick={() => openReportAnswer(ans)}
+                                                                                style={{
+                                                                                    fontSize: "12px",
+                                                                                    color: "#dc3545",
+                                                                                    background: "none",
+                                                                                    border: "none",
+                                                                                    cursor: "pointer",
+                                                                                    fontWeight: "500",
+                                                                                    padding: 0
+                                                                                }}
+                                                                            >
+                                                                                🚨 Báo cáo
+                                                                            </button>
 
                                                                             {isAdmin && (
                                                                                 <button onClick={() => handleDeleteAnswer(q.id, ans.id)} style={{ fontSize: "12px", color: "#dc3545", background: "none", border: "none", cursor: "pointer", fontWeight: "500", padding: 0 }}>
@@ -1327,6 +1381,52 @@ export default function LearningPage() {
                             <button
                                 className="report-submit-btn"
                                 onClick={handleSubmitReport}
+                            >
+                                🚨 Gửi báo cáo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {reportAnswerTarget && (
+                <div className="report-overlay">
+                    <div className="report-modal">
+                        <h3>🚨 Báo cáo phản hồi</h3>
+
+                        <div className="report-info">
+                            <p>
+                                Người dùng:
+                                <b>{reportAnswerTarget.userFullName}</b>
+                            </p>
+
+                            <p>Nội dung:</p>
+
+                            <div className="report-content">
+                                {reportAnswerTarget.content}
+                            </div>
+                        </div>
+
+                        <textarea
+                            className="report-textarea"
+                            placeholder="Nhập lý do báo cáo..."
+                            value={answerReportReason}
+                            onChange={(e) => setAnswerReportReason(e.target.value)}
+                        />
+
+                        <div className="report-actions">
+                            <button
+                                className="report-cancel-btn"
+                                onClick={() => {
+                                    setReportAnswerTarget(null);
+                                    setAnswerReportReason("");
+                                }}
+                            >
+                                Hủy
+                            </button>
+
+                            <button
+                                className="report-submit-btn"
+                                onClick={handleReportAnswer}
                             >
                                 🚨 Gửi báo cáo
                             </button>
