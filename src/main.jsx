@@ -13,7 +13,7 @@ import {
 // thêm http://localhost:5173 vào "Authorized JavaScript origins", rồi đặt vào .env.
 const GOOGLE_CLIENT_ID =
   import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-  "257199987910-2tfe97p674iljqh5uqbgpvqe5b3a55dl.apps.googleusercontent.com";
+  "257199987910-15ik5296h8h676ssi3ntje737sta6upk.apps.googleusercontent.com";
 
 // Tự động Ghi đè (Override) window.alert thành Custom Toast cực xịn 
 window.alert = function(message) {

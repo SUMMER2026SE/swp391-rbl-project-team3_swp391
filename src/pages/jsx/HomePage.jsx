@@ -235,7 +235,6 @@ export default function HomePage() {
                     <li onClick={() => navigate("/ai/university-advising")}><span>🎓</span> Tư vấn ngành</li>
                     <li onClick={() => navigate("/calendar")}><span>📅</span> Lịch học</li>
                     <li onClick={() => navigate("/notifications")}><span>🔔</span> Thông báo</li>
-                    <li onClick={() => navigate("/report-violation")}><span>🚨</span> Báo cáo vi phạm</li>
                     <li onClick={() => navigate("/request-teacher")}><span>👨‍🏫</span> Đăng ký làm Giáo viên</li>
                 </ul>
 

@@ -1244,7 +1244,6 @@ của biểu thức...
                                         <th style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0" }}>Học sinh</th>
                                         <th style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0" }}>Đã học</th>
                                         <th style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0" }}>Tiến độ</th>
-                                        <th style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0" }}>Điểm TB</th>
                                     </tr>
                                 </thead>
                                 <tbody>

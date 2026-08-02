@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from "../../api/axiosClient";
-import '../css/HomePage.css';
+import "../css/TeacherGrading.css"
 
 
 const TeacherGrading = () => {
@@ -88,55 +88,29 @@ const TeacherGrading = () => {
         } finally {
 
             setLoading(false);
-
         }
     };
-
-
-
-
-
     // ============================
     // CHỌN BÀI THI
     // ============================
     const handleSelectSession = async(session)=>{
-
-
         setSelectedSession(session);
-
-
         try {
-
-
             const res = await axiosClient.get(
                 `/teacher/grading/session/${session.sessionsId}/essay-answers`
             );
-
-
             setEssayAnswers(
                 Array.isArray(res.data)
                 ? res.data
                 : []
             );
-
-
         }catch(error){
-
             console.error(error);
-
             alert(
                 "Lỗi khi tải chi tiết bài làm"
             );
-
         }
-
     };
-
-
-
-
-
-
     // ============================
     // LƯU ĐIỂM
     // ============================
@@ -144,30 +118,16 @@ const TeacherGrading = () => {
         answerId,
         questionId
     )=>{
-
-
         const current = gradingData[questionId];
-
-
         const score = current?.score;
         const comment = current?.comment || "";
-
-
-
         if(score === undefined){
-
             alert(
                 "Vui lòng chọn Được hoặc Không được"
             );
-
             return;
         }
-
-
-
         try{
-
-
             await axiosClient.put(
                 `/teacher/grading/answer/${answerId}`,
                 {
@@ -200,25 +160,12 @@ const TeacherGrading = () => {
             );
 
         }
-
-
     };
-
-
-
-
-
     const handleLogout = ()=>{
-
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-
         navigate("/auth");
-
     };
-
-
-
 
     if(loading)
         return (
@@ -226,15 +173,8 @@ const TeacherGrading = () => {
                 Đang tải dữ liệu chấm bài...
             </div>
         );
-
-
-
-
     return (
-
         <div className="home-layout">
-
-
             <aside className="sidebar">
 
                 <div 
@@ -243,54 +183,31 @@ const TeacherGrading = () => {
                 >
                     PrepAce
                 </div>
-
-
                 <ul className="menu">
-
-
                     <li
                         onClick={()=>navigate("/teacher/dashboard")}
                     >
                         👨‍🏫 Quản lý khóa học
                     </li>
-
-
                     <li className="active">
                         📝 Chấm bài tự luận
                     </li>
-
-
                 </ul>
-
-
-
                 <div className="sidebar-actions">
-
                     <button
                         className="profile-btn"
                         onClick={()=>navigate("/profile")}
                     >
                         👤 {user?.fullName || "Giáo viên"}
                     </button>
-
-
-
                     <button
                         className="logout-btn"
                         onClick={handleLogout}
                     >
                         Đăng xuất
                     </button>
-
-
                 </div>
-
-
             </aside>
-
-
-
-
 
             <main 
                 className="content"
@@ -301,11 +218,7 @@ const TeacherGrading = () => {
                     gap:"24px"
                 }}
             >
-
-
-
             {/* LEFT */}
-
             <div
                 style={{
                     flex:1,
@@ -314,14 +227,9 @@ const TeacherGrading = () => {
                     borderRadius:"18px"
                 }}
             >
-
-
                 <h3>
                     📝 Danh sách bài chờ chấm
                 </h3>
-
-
-
                 {
                 pendingSessions.length===0
 
@@ -376,14 +284,7 @@ const TeacherGrading = () => {
 
                 }
 
-
-
             </div>
-
-
-
-
-
             {/* RIGHT */}
 
             <div
@@ -403,86 +304,84 @@ const TeacherGrading = () => {
             essayAnswers.map((q,index)=>(
 
 
-            <div
-            key={q.questionId}
-            style={{
-                border:"1px solid #ddd",
-                padding:"20px",
-                marginBottom:"20px",
-                borderRadius:"12px"
-            }}
-            >
-                <h4>
-                    Câu {index+1}: {q.content}
+            <div className="grading-card" key={q.questionId}>
+                <h4 className="grading-title">
+                    Câu {index + 1}: {q.content}
                 </h4>
-                <p>
-                    <b>
-                    Bài làm:
-                    </b>
-                    <br/>
-                    {q.selectedAnswer || "Bỏ trống"}
-                </p>
-                <p>
-                    <b>
-                    Đáp án:
-                    </b>
-                    <br/>
-                    {q.correctedAnswer}
-                </p>
-                <button
-                onClick={()=>
-                    setGradingData({
-                        ...gradingData,
-                        [q.questionId]:
-                        {
-                            ...gradingData[q.questionId],
-                            score:1
+
+                <div className="grading-section">
+                    <b>Bài làm:</b>
+                    <p>{q.selectedAnswer || "Bỏ trống"}</p>
+                </div>
+
+                <div className="grading-section">
+                    <b>Đáp án:</b>
+                    <p>{q.correctedAnswer}</p>
+                </div>
+
+                <div className="grading-actions">
+                    <button
+                        className={`pass-btn ${
+                            gradingData[q.questionId]?.score === 1
+                                ? "selected"
+                                : ""
+                        }`}
+                        onClick={() =>
+                            setGradingData({
+                                ...gradingData,
+                                [q.questionId]: {
+                                    ...gradingData[q.questionId],
+                                    score: 1,
+                                },
+                            })
                         }
-                    })
-                }
-                >
-                    ✓ Được
-                </button>
-                <button
-                onClick={()=>
-                    setGradingData({
-                        ...gradingData,
-                        [q.questionId]:
-                        {
-                            ...gradingData[q.questionId],
-                            score:0
+                    >
+                        ✓ Được
+                    </button>
+
+                    <button
+                        className={`fail-btn ${
+                            gradingData[q.questionId]?.score === 0
+                                ? "selected"
+                                : ""
+                        }`}
+                        onClick={() =>
+                            setGradingData({
+                                ...gradingData,
+                                [q.questionId]: {
+                                    ...gradingData[q.questionId],
+                                    score: 0,
+                                },
+                            })
                         }
-                    })
-                }
-                >
-                    ✗ Không được
-                </button>
-                <input
-                placeholder="Nhận xét"
-                value={
-                    gradingData[q.questionId]?.comment || ""
-                }
-                onChange={(e)=>
-                    setGradingData({
-                        ...gradingData,
-                        [q.questionId]:
-                        {
-                            ...gradingData[q.questionId],
-                            comment:e.target.value
+                    >
+                        ✗ Không được
+                    </button>
+
+                    <input
+                        className="grading-input"
+                        placeholder="Nhập nhận xét..."
+                        value={gradingData[q.questionId]?.comment || ""}
+                        onChange={(e) =>
+                            setGradingData({
+                                ...gradingData,
+                                [q.questionId]: {
+                                    ...gradingData[q.questionId],
+                                    comment: e.target.value,
+                                },
+                            })
                         }
-                    })
-                }
-                />
-                <button
-                onClick={()=>
-                    handleSaveGrade(
-                        q.answerId,
-                        q.questionId
-                    )
-                }
-                >
-                    Xác nhận
-                </button>
+                    />
+
+                    <button
+                        className="save-btn"
+                        onClick={() =>
+                            handleSaveGrade(q.answerId, q.questionId)
+                        }
+                    >
+                        Xác nhận
+                    </button>
+                </div>
             </div>
             ))
             :
